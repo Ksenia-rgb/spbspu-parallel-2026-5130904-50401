@@ -1,6 +1,27 @@
 #include <iostream>
 #include <cstddef>
 
+struct p_t {
+  int x_;
+  int y_;
+};
+
+struct Circle {
+  p_t center_;
+  int radius_;
+};
+
+struct Elips : Circle {
+  int radius2_;
+
+  Elips(int r1, int r2, int x, int y)
+  {
+    radius_ = r1;
+    radius2_ = r2;
+    center_ = p_t{x, y};
+  }
+};
+
 int main(int argc, char const *argv[])
 {
   if (argc < 3)
