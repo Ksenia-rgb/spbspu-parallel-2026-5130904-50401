@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -67,6 +68,61 @@ namespace chernov {
       }
     }
     return {count_in_any, count_in_all};
+  }
+
+  frame_t getFrameOf(const std::vector< circle_t > &circles)
+  {
+    auto cmp_min_x = [](const circle_t &a, const circle_t &b)
+    {
+      return a.center.x - a.radius < b.center.x - b.radius;
+    };
+    auto cmp_min_y = [](const circle_t &a, const circle_t &b)
+    {
+      return a.center.y - a.radius < b.center.y - b.radius;
+    };
+    auto cmp_max_x = [](const circle_t &a, const circle_t &b)
+    {
+      return a.center.x + a.radius < b.center.x + b.radius;
+    };
+    auto cmp_max_y = [](const circle_t &a, const circle_t &b)
+    {
+      return a.center.y + a.radius < b.center.y + b.radius;
+    };
+    const auto it_min_x = std::max_element(circles.begin(), circles.end(), cmp_min_x);
+    const auto it_min_y = std::max_element(circles.begin(), circles.end(), cmp_min_y);
+    const auto it_max_x = std::max_element(circles.begin(), circles.end(), cmp_max_x);
+    const auto it_max_y = std::max_element(circles.begin(), circles.end(), cmp_max_y);
+    const double min_x = it_min_x->center.x - it_min_x->radius;
+    const double min_y = it_min_y->center.y - it_min_y->radius;
+    const double max_x = it_max_x->center.x + it_max_x->radius;
+    const double max_y = it_max_y->center.y + it_max_y->radius;
+    const frame_t frame{.left_bottom = {.x = min_x, .y = min_y}, .right_top = {.x = max_x, .y = max_y}};
+    return frame;
+  }
+
+  std::pair< double, double > area(const std::vector< circle_t > &circles, size_t threads, size_t tries, size_t seed)
+  {
+    frame_t frame = getFrameOf(circles);
+
+    std::vector< std::future< std::pair< size_t, size_t > > > futures(threads);
+    const size_t batch = tries / threads;
+    futures.emplace_back(std::async(std::launch::async, calc, circles, frame, batch + tries % threads, seed));
+    for (size_t i = 1; i < threads; ++i) {
+      futures.emplace_back(std::async(std::launch::async, calc, circles, frame, tries, seed + i));
+    }
+
+    size_t count_in_any = 0;
+    size_t count_in_all = 0;
+    for (size_t i = 0; i < threads; ++i) {
+      const std::pair< size_t, size_t > thread_result = futures[i].get();
+      count_in_any += thread_result.first;
+      count_in_all += thread_result.second;
+    }
+
+    const double frame_area = (frame.right_top.x - frame.left_bottom.x) * (frame.right_top.y - frame.left_bottom.y);
+    const double total_area = frame_area * count_in_any / tries;
+    const double intersection_area = frame_area * count_in_all / tries;
+    return {total_area, intersection_area};
   }
 }
 
