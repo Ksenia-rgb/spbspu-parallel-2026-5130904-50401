@@ -106,9 +106,9 @@ namespace chernov {
 
     std::vector< std::future< std::pair< size_t, size_t > > > futures;
     const size_t batch = tries / threads;
-    futures.emplace_back(std::async(std::launch::async, calc, circles, frame, batch + tries % threads, seed));
+    futures.emplace_back(std::async(std::launch::async, calc, std::cref(circles), frame, batch + tries % threads, seed));
     for (size_t i = 1; i < threads; ++i) {
-      futures.emplace_back(std::async(std::launch::async, calc, circles, frame, batch, seed + i));
+      futures.emplace_back(std::async(std::launch::async, calc, std::cref(circles), frame, batch, seed + i));
     }
 
     size_t count_in_any = 0;
