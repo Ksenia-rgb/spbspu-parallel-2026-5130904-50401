@@ -1,7 +1,28 @@
 #include <iostream>
+#include <vector>
+
+namespace chernov {
+  struct Circle {
+    int x, y, radius;
+  };
+
+  void inputCircles(std::vector< Circle > &circles)
+  {
+    int radius = 0, _ = 0, x = 0, y = 0;
+    while (std::cin >> radius >> _ >> x >> y) {
+      circles.push_back(Circle{x, y, radius});
+    }
+
+    if (!std::cin.eof()) {
+      throw std::runtime_error("input error");
+    }
+  }
+}
 
 int main(int argc, char **argv)
 {
+  using namespace chernov;
+
   if (argc < 3 || argc > 4) {
     std::cerr << "count of arguments is incorrect\n";
     return 1;
@@ -45,5 +66,13 @@ int main(int argc, char **argv)
       std::cerr << "seed is incorrect\n";
       return 1;
     }
+  }
+
+  std::vector< Circle > circles;
+  try {
+    inputCircles(circles);
+  } catch (const std::runtime_error &e) {
+    std::cerr << e.what() << '\n';
+    return 1;
   }
 }
