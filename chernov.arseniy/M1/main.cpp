@@ -120,9 +120,9 @@ namespace chernov {
     }
 
     const double frame_area = (frame.right_top.x - frame.left_bottom.x) * (frame.right_top.y - frame.left_bottom.y);
-    const double total_area = frame_area * count_in_any / tries;
+    const double union_area = frame_area * count_in_any / tries;
     const double intersection_area = frame_area * count_in_all / tries;
-    return {total_area, intersection_area};
+    return {union_area, intersection_area};
   }
 }
 
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
   }
 
   const std::pair< double, double > area = areaOf(circles, threads, tries, seed);
-  const double total_area = area.first;
+  const double union_area = area.first;
   const double intersection_area = area.second;
-  std::cout << total_area << " " << intersection_area << "\n";
+  std::cout << union_area << " " << intersection_area << "\n";
 }
