@@ -88,8 +88,8 @@ namespace chernov {
     {
       return a.center.y + a.radius < b.center.y + b.radius;
     };
-    const auto it_min_x = std::max_element(circles.begin(), circles.end(), cmp_min_x);
-    const auto it_min_y = std::max_element(circles.begin(), circles.end(), cmp_min_y);
+    const auto it_min_x = std::min_element(circles.begin(), circles.end(), cmp_min_x);
+    const auto it_min_y = std::min_element(circles.begin(), circles.end(), cmp_min_y);
     const auto it_max_x = std::max_element(circles.begin(), circles.end(), cmp_max_x);
     const auto it_max_y = std::max_element(circles.begin(), circles.end(), cmp_max_y);
     const double min_x = it_min_x->center.x - it_min_x->radius;
