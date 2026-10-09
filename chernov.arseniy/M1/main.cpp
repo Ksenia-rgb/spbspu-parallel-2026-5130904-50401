@@ -100,11 +100,11 @@ namespace chernov {
     return frame;
   }
 
-  std::pair< double, double > area(const std::vector< circle_t > &circles, size_t threads, size_t tries, size_t seed)
+  std::pair< double, double > areaOf(const std::vector< circle_t > &circles, size_t threads, size_t tries, size_t seed)
   {
     frame_t frame = getFrameOf(circles);
 
-    std::vector< std::future< std::pair< size_t, size_t > > > futures(threads);
+    std::vector< std::future< std::pair< size_t, size_t > > > futures;
     const size_t batch = tries / threads;
     futures.emplace_back(std::async(std::launch::async, calc, circles, frame, batch + tries % threads, seed));
     for (size_t i = 1; i < threads; ++i) {
@@ -182,4 +182,9 @@ int main(int argc, char **argv)
     std::cerr << e.what() << '\n';
     return 1;
   }
+
+  const std::pair< double, double > area = areaOf(circles, threads, tries, seed);
+  const double total_area = area.first;
+  const double intersection_area = area.second;
+  std::cout << total_area << " " << intersection_area << "\n";
 }
