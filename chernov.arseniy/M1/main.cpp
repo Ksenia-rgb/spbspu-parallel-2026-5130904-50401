@@ -49,7 +49,7 @@ namespace chernov {
   std::pair< size_t, size_t > calc(
       const std::vector< circle_t > &circles, const frame_t &frame, const size_t tests, const size_t seed)
   {
-    std::mt19937 gen(seed);
+    std::default_random_engine gen(seed);
     std::uniform_real_distribution<> dis_x(frame.left_bottom.x, frame.right_top.x);
     std::uniform_real_distribution<> dis_y(frame.left_bottom.y, frame.right_top.y);
 
