@@ -9,6 +9,7 @@
 #include <random>
 #include <iomanip>
 #include <exception>
+#include <limits>
 
 namespace ulanova
 {
