@@ -24,6 +24,7 @@ namespace kondrat
 
   long long parseArgument(const char * argument);
   Rectangle findRectangle(const std::vector< Ellipse > & ellipses);
+  bool contains(const Ellipse & ellipse, double x, double y);
 }
 
 int main(int argc, char ** argv)
@@ -129,4 +130,12 @@ kondrat::Rectangle kondrat::findRectangle(const std::vector< Ellipse > & ellipse
   }
 
   return rectangle;
+}
+
+bool kondrat::contains(const Ellipse & ellipse, double x, double y)
+{
+  const double dx = (x - ellipse.x) / ellipse.horizontalRadius;
+  const double dy = (y - ellipse.y) / ellipse.verticalRadius;
+
+  return dx * dx + dy * dy <= 1.0;
 }
