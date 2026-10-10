@@ -1,5 +1,197 @@
+#include <algorithm>
+#include <cstddef>
+#include <iomanip>
 #include <iostream>
-int main()
+#include <limits>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+#include <future>
+#include <random>
+namespace zubarev
 {
-  std::cout << "zubarev.arsenii\n";
+  bool isInside(std::tuple< double, double, double > circle, double x, double y)
+  {
+    double circle_x = std::get< 0 >(circle);
+    double circle_y = std::get< 1 >(circle);
+    double circle_r = std::get< 2 >(circle);
+
+    return (x - circle_x) * (x - circle_x) + (y - circle_y) * (y - circle_y) <= circle_r * circle_r;
+  }
+
+  std::pair< double, double > calc(const std::vector< std::tuple< double, double, double > >& circles,
+      const size_t& tests, const size_t& seed, const double& min_x, const double& min_y, const double& max_x,
+      const double& max_y)
+  {
+    std::default_random_engine gen(seed);
+    std::uniform_real_distribution< double > dist_x(min_x, max_x);
+    std::uniform_real_distribution< double > dist_y(min_y, max_y);
+
+    size_t hits_one = 0;
+    size_t hits_all = 0;
+
+    for (size_t j = 0; j < tests; ++j)
+    {
+      bool is_hits_one = false;
+      bool is_hits_all = true;
+
+      double x = dist_x(gen);
+      double y = dist_y(gen);
+      for (size_t i = 0; i < circles.size(); ++i)
+      {
+        if (isInside(circles[i], x, y))
+        {
+          is_hits_one = true;
+        }
+        else
+        {
+          is_hits_all = false;
+        }
+      }
+      if (is_hits_one)
+      {
+        hits_one++;
+      }
+      if (is_hits_all)
+      {
+        hits_all++;
+      }
+    }
+    return std::make_pair(hits_one, hits_all);
+  }
+
+  std::pair< double, double > area(std::vector< std::tuple< double, double, double > > circles, const size_t& tests,
+      const size_t& seed, const double& min_x, const double& min_y, const double& max_x, const double& max_y,
+      size_t threads)
+  {
+    std::vector< std::future< std::pair< double, double > > > tasks(threads);
+
+    for (size_t i = 0; i < threads; ++i)
+    {
+      size_t tests_per_thread = tests / threads;
+
+      if (i < tests % threads)
+      {
+        tests_per_thread += 1;
+      }
+
+      tasks[i] = std::async(
+          std::launch::async, calc, std::cref(circles), tests_per_thread, seed + i, min_x, min_y, max_x, max_y);
+    }
+
+    size_t count_in = 0;
+    size_t count_in_all = 0;
+
+    for (size_t i = 0; i < threads; ++i)
+    {
+      const std::pair< size_t, size_t > result_i = tasks[i].get();
+      count_in += result_i.first;
+      count_in_all += result_i.second;
+    }
+
+    return std::make_pair((max_x - min_x) * (max_y - min_y) * (static_cast< double >(count_in) / tests),
+        (max_x - min_x) * (max_y - min_y) * (static_cast< double >(count_in_all) / tests));
+  }
+
 }
+
+int main(int argc, char** argv)
+{
+  if (argc != 3 && argc != 4)
+  {
+    std::cerr << "Invalid count of arguments" << '\n';
+    return 1;
+  }
+
+  size_t threads = 1;
+  size_t tests = 0;
+  size_t seed = 0;
+
+  try
+  {
+    size_t pos = 0;
+
+    threads = std::stoll(argv[1], &pos);
+    if (argv[1][pos] != '\0')
+    {
+      throw;
+    }
+
+    tests = std::stoll(argv[1], &pos);
+    if (argv[2][pos] != '\0')
+    {
+      throw;
+    }
+
+    if (argc == 4)
+    {
+      seed = std::stoll(argv[1], &pos);
+      if (argv[3][pos] != '\0')
+      {
+        throw;
+      }
+    }
+  }
+  catch (...)
+  {
+    std::cerr << "Invalid type of arguments" << '\n';
+    return 1;
+  }
+
+  if (threads < 0)
+  {
+    std::cerr << "Invalid number of threads" << '\n';
+    return 1;
+  }
+  if (tests <= 0)
+  {
+    std::cerr << "Invalid number of tries" << '\n';
+    return 1;
+  }
+  if (seed < 0)
+  {
+    std::cerr << "Invalid seed" << '\n';
+    return 1;
+  }
+
+  double min_x = std::numeric_limits< double >::max();
+  double min_y = std::numeric_limits< double >::max();
+  double max_x = std::numeric_limits< double >::min();
+  double max_y = std::numeric_limits< double >::min();
+
+  std::vector< std::tuple< double, double, double > > circles;
+
+  while (!std::cin.eof())
+  {
+    double r = 0.0;
+    if (!(std::cin >> r))
+    {
+      std::cerr << "Invalid data" << '\n';
+      return 1;
+    }
+    double ignored_r = 0.0;
+    if (!(std::cin >> ignored_r))
+    {
+      std::cerr << "Invalid data" << '\n';
+      return 1;
+    }
+    double x = 0.0;
+    if (!(std::cin >> x))
+    {
+      std::cerr << "Invalid data" << '\n';
+      return 1;
+    }
+    double y = 0.0;
+    if (!(std::cin >> y))
+    {
+      std::cerr << "Invalid data" << '\n';
+      return 1;
+    }
+    circles.push_back(std::make_tuple(r, x, y));
+  }
+  std::pair< double, double > result = zubarev::area(circles, tests, seed, min_x, min_y, max_x, max_y, threads);
+
+  std::cout << result.first << " " << result.second << '\n';
+}
+
