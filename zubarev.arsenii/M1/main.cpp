@@ -104,21 +104,21 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  size_t threads = 1;
-  size_t tests = 0;
-  size_t seed = 0;
+  long long threads_arg = 0;
+  long long tests_arg = 0;
+  long long seed_arg = 0;
 
   try
   {
     size_t pos = 0;
 
-    threads = std::stoll(argv[1], &pos);
+    threads_arg = std::stoll(argv[1], &pos);
     if (argv[1][pos] != '\0')
     {
       throw;
     }
 
-    tests = std::stoll(argv[1], &pos);
+    tests_arg = std::stoll(argv[2], &pos);
     if (argv[2][pos] != '\0')
     {
       throw;
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 
     if (argc == 4)
     {
-      seed = std::stoll(argv[1], &pos);
+      seed_arg = std::stoll(argv[3], &pos);
       if (argv[3][pos] != '\0')
       {
         throw;
@@ -139,21 +139,29 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (threads < 0)
+  if (threads_arg < 0)
   {
     std::cerr << "Invalid number of threads" << '\n';
     return 1;
   }
-  if (tests <= 0)
+  if (threads_arg == 0)
+  {
+    threads_arg = 1;
+  }
+  if (tests_arg <= 0)
   {
     std::cerr << "Invalid number of tries" << '\n';
     return 1;
   }
-  if (seed < 0)
+  if (seed_arg < 0)
   {
     std::cerr << "Invalid seed" << '\n';
     return 1;
   }
+
+  size_t threads = static_cast< size_t >(threads_arg);
+  size_t tests = static_cast< size_t >(tests_arg);
+  size_t seed = static_cast< size_t >(seed_arg);
 
   double min_x = std::numeric_limits< double >::max();
   double min_y = std::numeric_limits< double >::max();
@@ -188,7 +196,11 @@ int main(int argc, char** argv)
       std::cerr << "Invalid data" << '\n';
       return 1;
     }
-    circles.push_back(std::make_tuple(r, x, y));
+    min_x = std::min(min_x, x - r);
+    min_y = std::min(min_y, y - r);
+    max_x = std::max(max_x, x + r);
+    max_y = std::max(max_y, y + r);
+    circles.push_back(std::make_tuple( x, y,r));
   }
 
   std::pair< double, double > result = zubarev::area(circles, tests, seed, min_x, min_y, max_x, max_y, threads);
