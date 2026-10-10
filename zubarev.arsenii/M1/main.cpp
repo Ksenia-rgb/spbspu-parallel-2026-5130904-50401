@@ -190,6 +190,7 @@ int main(int argc, char** argv)
     }
     circles.push_back(std::make_tuple(r, x, y));
   }
+  
   std::pair< double, double > result = zubarev::area(circles, tests, seed, min_x, min_y, max_x, max_y, threads);
 
   std::cout << result.first << " " << result.second << '\n';
