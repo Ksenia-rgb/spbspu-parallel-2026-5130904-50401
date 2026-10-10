@@ -6,33 +6,37 @@
 #include <limits>
 #include <cstddef>
 
-int main()
+int main(int argc, char* argv[])
 {
   try
   {
+    const zhuravleva::Args args = zhuravleva::parseArgs(argc, argv);
+
     const std::vector< zhuravleva::Circle > circles = zhuravleva::readCircles(std::cin);
     if (circles.empty())
     {
       std::cout << "0 0\n";
       return 0;
     }
+
     const zhuravleva::Bounds bounds = zhuravleva::getBounds(circles);
-    const double width = bounds.maxX - bounds.minX;
-    const double height = bounds.maxY - bounds.minY;
+    const double width = bounds.max_x - bounds.min_x;
+    const double height = bounds.max_y - bounds.min_y;
     const double area = width * height;
 
-    const std::size_t tries = 1000000;
-    const zhuravleva::Hits hits = zhuravleva::calcMonte(circles, bounds, tries, 0);
-    const double areaAny = area * static_cast< double >(hits.any) / tries;
-    const double areaAll = area * static_cast< double >(hits.all) / tries;
+    const zhuravleva::Hits hits = zhuravleva::calcMonte(circles, bounds, args.tries, args.seed);
+
+    const double area_any = area * static_cast< double >(hits.any) / args.tries;
+    const double area_all = area * static_cast< double >(hits.all) / args.tries;
 
     std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
-    std::cout << areaAny << ' ' << areaAll << '\n';
+    std::cout << area_any << ' ' << area_all << '\n';
   }
-  catch (const std::invalid_argument& e)
+  catch (const std::exception& e)
   {
     std::cerr << e.what() << '\n';
     return 1;
   }
+
   return 0;
 }

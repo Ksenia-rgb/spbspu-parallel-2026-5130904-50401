@@ -14,7 +14,7 @@ namespace zhuravleva
 
   struct Bounds
   {
-    double minX, maxX, minY, maxY;
+    double min_x, max_x, min_y, max_y;
   };
 
   struct Hits
@@ -23,11 +23,19 @@ namespace zhuravleva
     std::size_t all;
   };
 
+  struct Args
+  {
+    std::size_t threads;
+    std::size_t tries;
+    std::size_t seed;
+  };
+
   bool isInside(const Circle& circle, double x, double y);
-  Bounds getBounds(const std::vector<Circle>& circles);
+  Bounds getBounds(const std::vector< Circle >& circles);
   std::vector< Circle > readCircles(std::istream& in);
   Hits checkPoint(const std::vector< Circle >& circles, double x, double y);
   Hits calcMonte(const std::vector< Circle >& circles, const Bounds& bounds, std::size_t tries, std::size_t seed);
+  Args parseArgs(int argc, char* argv[]);
 }
 
 #endif
