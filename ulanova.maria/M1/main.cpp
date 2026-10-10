@@ -7,6 +7,8 @@
 #include <functional>
 #include <future>
 #include <random>
+#include <iomanip>
+#include <exception>
 
 namespace ulanova {
    struct circle_t
@@ -21,7 +23,7 @@ namespace ulanova {
 
 bool ulanova::isInside(double x, double y, const circle_t& circle)
 {
-  const double deltaX = x = circle.centerX;
+  const double deltaX = x - circle.centerX;
   const double deltaY = y - circle.centerY;
   return ((deltaX * deltaX) + (deltaY * deltaY)) <= (circle.radius * circle.radius);
 }
@@ -44,7 +46,7 @@ namespace {
   const int triesIndex = 2;
   const int seedIndex = 3;
 
-  long long parseInteger(const std::string& text; const std::string& name)
+  long long parseInteger(const std::string& text, const std::string& name)
   {
     size_t parsedLength = 0;
     long long value = 0;
@@ -67,12 +69,15 @@ ulanova::options_t ulanova::parseOptions(int argc, const char* const* argv)
   }
   const long long threads = parseInteger(argv[threadsIndex], "threads");
   const long long tries = parseInteger(argv[triesIndex], "tries");
-  const long long seed = (argc > seedIndex) ? parseInteger(argv[seedIndex], "seed");
+  const long long seed = (argc > seedIndex) ? parseInteger(argv[seedIndex], "seed") : 0;
 
   if (threads < 0) {
     throw std::invalid_argument("threads must not be negative");
   }
   if (tries <= 0) {
+    throw std::invalid_argument("tries must be positive");
+  }
+  if (seed < 0) {
     throw std::invalid_argument("seed must not be negative");
   }
   options_t options = {0, 0, 0};
@@ -138,13 +143,13 @@ namespace {
   const size_t minThreads = 1;
   const size_t maxThreads = 1000;
 
-  box_t findBoundingBox(const std::vector< ulanova::circle_t& circles >)
+  box_t findBoundingBox(const std::vector< ulanova::circle_t>& circles)
   {
     const ulanova::circle_t& first = circles.front();
-    box_t box = {first.centerX -first.radius,
+    box_t box = {first.centerX - first.radius,
       first.centerX + first.radius,
       first.centerY - first.radius,
-      first.centerY -first.radius};
+      first.centerY + first.radius};
     for (const ulanova::circle_t& circle: circles) {
       box.minX = std::min(box.minX, circle.centerX - circle.radius);
       box.maxX = std::max(box.maxX, circle.centerX + circle.radius);
@@ -167,7 +172,7 @@ namespace {
   hits_t countHits(const box_t& box, const std::vector< ulanova::circle_t>& circles,
     size_t tries, size_t seed)
   {
-    std::default_random_egine engine(seed);
+    std::default_random_engine engine(seed);
     
     std::uniform_real_distribution< double > distributionX(box.minX, box.maxX);
     std::uniform_real_distribution< double > distributionY(box.minY, box.maxY);
@@ -177,7 +182,7 @@ namespace {
     for (size_t i = 0; i < tries; ++i) {
       const double x = distributionX(engine);
       const double y = distributionY(engine);
-      const size_t contaning = countContaining(x, t, circles);
+      const size_t contaning = countContaining(x, y, circles);
       if ( contaning > 0) {
         ++hits.covered;
       }
