@@ -1,6 +1,8 @@
 #include <cstddef>
 #include <stdexcept>
 #include <string>
+#include <iostream>
+#include <vector>
 
 namespace ulanova {
    struct circle_t
@@ -78,6 +80,34 @@ ulanova::options_t ulanova::parseOptions(int argc, const char* const* argv)
   options.tries = static_cast< size_t >(tries);
   options.seed = static_cast< size_t >(seed);
   return options;
+}
+
+namespace ulanova {
+  std::vector< circle_t > readCircles(std::istream& input);
+}
+
+namespace {
+  const char* const invalidCircleMessage = "invalid figure parameters";
+}
+
+std::vector< ulanova::circle_t > ulanova::readCircles(std::istream& input)
+{
+  std::vector< circle_t > circles;
+  long long radius = 0;
+  while (input >> radius) {
+    long long centerX = 0;
+    long long centerY = 0;
+    if (!(input >> ignored >> centerX >> centerY)) {
+      throw std::invalid_argument(invalidCircleMessage);
+    }
+    circles.push_back({static_cast< double >(radius),
+      static_cast< double >(centerX),
+      static_cast< double >(centerY)});
+  }
+  if (!input.eof()) {
+    throw std::invalid_argument(invalidCircleMessage);
+  }
+  return circles;
 }
 
 int main()
