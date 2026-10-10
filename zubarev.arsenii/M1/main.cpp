@@ -9,13 +9,14 @@
 #include <vector>
 #include <future>
 #include <random>
+#include <functional>
 namespace zubarev
 {
   bool isInside(std::tuple< double, double, double > circle, double x, double y)
   {
-    double circle_x = std::get< 0 >(circle);
-    double circle_y = std::get< 1 >(circle);
-    double circle_r = std::get< 2 >(circle);
+    const double circle_x = std::get< 0 >(circle);
+    const double circle_y = std::get< 1 >(circle);
+    const double circle_r = std::get< 2 >(circle);
 
     return (x - circle_x) * (x - circle_x) + (y - circle_y) * (y - circle_y) <= circle_r * circle_r;
   }
@@ -36,8 +37,8 @@ namespace zubarev
       bool is_hits_one = false;
       bool is_hits_all = true;
 
-      double x = dist_x(gen);
-      double y = dist_y(gen);
+      const double x = dist_x(gen);
+      const double y = dist_y(gen);
       for (size_t i = 0; i < circles.size(); ++i)
       {
         if (isInside(circles[i], x, y))
@@ -159,9 +160,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  size_t threads = static_cast< size_t >(threads_arg);
-  size_t tests = static_cast< size_t >(tests_arg);
-  size_t seed = static_cast< size_t >(seed_arg);
+  const size_t threads = static_cast< size_t >(threads_arg);
+  const size_t tests = static_cast< size_t >(tests_arg);
+  const size_t seed = static_cast< size_t >(seed_arg);
 
   double min_x = std::numeric_limits< double >::max();
   double min_y = std::numeric_limits< double >::max();
@@ -177,9 +178,9 @@ int main(int argc, char** argv)
     record.push_back(value);
     if (record.size() == 4)
     {
-      double r = record[0];
-      double x = record[2];
-      double y = record[3];
+      const double r = record[0];
+      const double x = record[2];
+      const double y = record[3];
 
       circles.push_back(std::make_tuple(x, y, r));
 
@@ -204,7 +205,7 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  std::pair< double, double > result = zubarev::area(circles, tests, seed, min_x, min_y, max_x, max_y, threads);
+  const std::pair< double, double > result = zubarev::area(circles, tests, seed, min_x, min_y, max_x, max_y, threads);
 
   std::cout << std::setprecision(std::numeric_limits< double >::max_digits10) << result.first << " " << result.second
             << '\n';
