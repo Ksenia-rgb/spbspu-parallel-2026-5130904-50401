@@ -170,40 +170,44 @@ int main(int argc, char** argv)
 
   std::vector< std::tuple< double, double, double > > circles;
 
-  while (!std::cin.eof())
+  std::vector< double > record;
+  double value = 0.0;
+  while (std::cin >> value)
   {
-    double r = 0.0;
-    if (!(std::cin >> r))
+    record.push_back(value);
+    if (record.size() == 4)
     {
-      std::cerr << "Invalid data" << '\n';
-      return 1;
+      double r = record[0];
+      double x = record[2];
+      double y = record[3];
+
+      circles.push_back(std::make_tuple(x, y, r));
+
+      min_x = std::min(min_x, x - r);
+      min_y = std::min(min_y, y - r);
+      max_x = std::max(max_x, x + r);
+      max_y = std::max(max_y, y + r);
+
+      record.clear();
     }
-    double ignored_r = 0.0;
-    if (!(std::cin >> ignored_r))
-    {
-      std::cerr << "Invalid data" << '\n';
-      return 1;
-    }
-    double x = 0.0;
-    if (!(std::cin >> x))
-    {
-      std::cerr << "Invalid data" << '\n';
-      return 1;
-    }
-    double y = 0.0;
-    if (!(std::cin >> y))
-    {
-      std::cerr << "Invalid data" << '\n';
-      return 1;
-    }
-    min_x = std::min(min_x, x - r);
-    min_y = std::min(min_y, y - r);
-    max_x = std::max(max_x, x + r);
-    max_y = std::max(max_y, y + r);
-    circles.push_back(std::make_tuple( x, y,r));
+  }
+
+  if (!std::cin.eof() || !record.empty())
+  {
+    std::cerr << "Invalid data" << '\n';
+    return 1;
+  }
+
+  if (circles.empty())
+  {
+    std::cout << 0 << " " << 0 << '\n';
+    return 0;
   }
 
   std::pair< double, double > result = zubarev::area(circles, tests, seed, min_x, min_y, max_x, max_y, threads);
 
-  std::cout << result.first << " " << result.second << '\n';
+  std::cout << std::setprecision(std::numeric_limits< double >::max_digits10) << result.first << " " << result.second
+            << '\n';
+
+  return 0;
 }
