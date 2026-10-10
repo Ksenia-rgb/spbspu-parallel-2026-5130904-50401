@@ -5,17 +5,21 @@
 #include <random>
 #include <vector>
 
-namespace chernov {
-  struct point_t {
+namespace chernov
+{
+  struct point_t
+  {
     double x, y;
   };
 
-  struct circle_t {
+  struct circle_t
+  {
     point_t center;
     double radius;
   };
 
-  struct frame_t {
+  struct frame_t
+  {
     point_t left_bottom;
     point_t right_top;
   };
@@ -23,11 +27,13 @@ namespace chernov {
   void inputCircles(std::vector< circle_t > &circles)
   {
     double radius = 0, _ = 0, x = 0, y = 0;
-    while (std::cin >> radius >> _ >> x >> y) {
+    while (std::cin >> radius >> _ >> x >> y)
+    {
       circles.push_back(circle_t{.center = {.x = x, .y = y}, .radius = radius});
     }
 
-    if (!std::cin.eof()) {
+    if (!std::cin.eof())
+    {
       throw std::runtime_error("input error");
     }
   }
@@ -55,15 +61,18 @@ namespace chernov {
 
     size_t count_in_any = 0;
     size_t count_in_all = 0;
-    for (size_t i = 0; i < tests; ++i) {
+    for (size_t i = 0; i < tests; ++i)
+    {
       const double x = dis_x(gen);
       const double y = dis_y(gen);
       const size_t count_insides = circlesOf({.x = x, .y = y}, circles);
 
-      if (count_insides == circles.size()) {
+      if (count_insides == circles.size())
+      {
         ++count_in_all;
       }
-      if (count_insides) {
+      if (count_insides)
+      {
         ++count_in_any;
       }
     }
@@ -106,14 +115,17 @@ namespace chernov {
 
     std::vector< std::future< std::pair< size_t, size_t > > > futures;
     const size_t batch = tries / threads;
-    futures.emplace_back(std::async(std::launch::async, calc, std::cref(circles), frame, batch + tries % threads, seed));
-    for (size_t i = 1; i < threads; ++i) {
+    futures.emplace_back(
+        std::async(std::launch::async, calc, std::cref(circles), frame, batch + tries % threads, seed));
+    for (size_t i = 1; i < threads; ++i)
+    {
       futures.emplace_back(std::async(std::launch::async, calc, std::cref(circles), frame, batch, seed + i));
     }
 
     size_t count_in_any = 0;
     size_t count_in_all = 0;
-    for (size_t i = 0; i < threads; ++i) {
+    for (size_t i = 0; i < threads; ++i)
+    {
       const std::pair< size_t, size_t > thread_result = futures[i].get();
       count_in_any += thread_result.first;
       count_in_all += thread_result.second;
@@ -130,55 +142,73 @@ int main(int argc, char **argv)
 {
   using namespace chernov;
 
-  if (argc < 3 || argc > 4) {
+  if (argc < 3 || argc > 4)
+  {
     std::cerr << "count of arguments is incorrect\n";
     return 1;
   }
 
   long long threads = 0, tries = 0, seed = 0;
 
-  try {
+  try
+  {
     threads = std::stoll(argv[1]);
-  } catch (const std::invalid_argument &e) {
+  }
+  catch (const std::invalid_argument &e)
+  {
     std::cerr << "count of threads is incorrect\n";
     return 1;
   }
-  if (threads < 0) {
+  if (threads < 0)
+  {
     std::cerr << "count of threads is incorrect\n";
     return 1;
   }
-  if (threads == 0) {
+  if (threads == 0)
+  {
     threads = 1;
   }
 
-  try {
+  try
+  {
     tries = std::stoll(argv[2]);
-  } catch (const std::invalid_argument &e) {
+  }
+  catch (const std::invalid_argument &e)
+  {
     std::cerr << "count of tries is incorrect\n";
     return 1;
   }
-  if (tries < 1) {
+  if (tries < 1)
+  {
     std::cerr << "count of tries is incorrect\n";
     return 1;
   }
 
-  if (argc == 4) {
-    try {
+  if (argc == 4)
+  {
+    try
+    {
       seed = std::stoll(argv[3]);
-    } catch (const std::invalid_argument &e) {
+    }
+    catch (const std::invalid_argument &e)
+    {
       std::cerr << "seed is incorrect\n";
       return 1;
     }
-    if (seed < 0) {
+    if (seed < 0)
+    {
       std::cerr << "seed is incorrect\n";
       return 1;
     }
   }
 
   std::vector< circle_t > circles;
-  try {
+  try
+  {
     inputCircles(circles);
-  } catch (const std::runtime_error &e) {
+  }
+  catch (const std::runtime_error &e)
+  {
     std::cerr << e.what() << '\n';
     return 1;
   }
