@@ -15,8 +15,8 @@ namespace ulanova
   struct circle_t
   {
     double radius;
-    double centerX;
-    double centerY;
+    double center_x;
+    double center_y;
   };
 
   bool isInside(double x, double y, const circle_t& circle);
@@ -24,8 +24,8 @@ namespace ulanova
 
 bool ulanova::isInside(double x, double y, const circle_t& circle)
 {
-  const double deltaX = x - circle.centerX;
-  const double deltaY = y - circle.centerY;
+  const double deltaX = x - circle.center_x;
+  const double deltaY = y - circle.center_y;
   return ((deltaX * deltaX) + (deltaY * deltaY)) <= (circle.radius * circle.radius);
 }
 
@@ -51,17 +51,17 @@ namespace
 
   long long parseInteger(const std::string& text, const std::string& name)
   {
-    size_t parsedLength = 0;
+    size_t parsed_length = 0;
     long long value = 0;
     try
     {
-      value = std::stoll(text, &parsedLength);
+      value = std::stoll(text, &parsed_length);
     }
     catch (const std::logic_error&)
     {
-      parsedLength = 0;
+      parsed_length = 0;
     }
-    if ((parsedLength == 0) || (parsedLength != text.size()))
+    if ((parsed_length == 0) || (parsed_length != text.size()))
     {
       throw std::invalid_argument(name + "must be integer");
     }
@@ -115,13 +115,14 @@ std::vector< ulanova::circle_t > ulanova::readCircles(std::istream& input)
   while (input >> radius)
   {
     long long ignored = 0;
-    long long centerX = 0;
-    long long centerY = 0;
-    if (!(input >> ignored >> centerX >> centerY))
+    long long center_x = 0;
+    long long center_y = 0;
+    if (!(input >> ignored >> center_x >> center_y))
     {
       throw std::invalid_argument(invalidCircleMessage);
     }
-    circles.push_back({static_cast< double >(radius), static_cast< double >(centerX), static_cast< double >(centerY)});
+    circles.push_back(
+        {static_cast< double >(radius), static_cast< double >(center_x), static_cast< double >(center_y)});
   }
   if (!input.eof())
   {
@@ -144,10 +145,10 @@ namespace
 {
   struct box_t
   {
-    double minX;
-    double maxX;
-    double minY;
-    double maxY;
+    double min_x;
+    double max_x;
+    double min_y;
+    double max_y;
   };
 
   struct hits_t
@@ -162,14 +163,14 @@ namespace
   box_t findBoundingBox(const std::vector< ulanova::circle_t >& circles)
   {
     const ulanova::circle_t& first = circles.front();
-    box_t box = {first.centerX - first.radius, first.centerX + first.radius, first.centerY - first.radius,
-        first.centerY + first.radius};
+    box_t box = {first.center_x - first.radius, first.center_x + first.radius, first.center_y - first.radius,
+        first.center_y + first.radius};
     for (const ulanova::circle_t& circle : circles)
     {
-      box.minX = std::min(box.minX, circle.centerX - circle.radius);
-      box.maxX = std::max(box.maxX, circle.centerX + circle.radius);
-      box.minY = std::min(box.minY, circle.centerY - circle.radius);
-      box.maxY = std::max(box.maxY, circle.centerY + circle.radius);
+      box.min_x = std::min(box.min_x, circle.center_x - circle.radius);
+      box.max_x = std::max(box.max_x, circle.center_x + circle.radius);
+      box.min_y = std::min(box.min_y, circle.center_y - circle.radius);
+      box.max_y = std::max(box.max_y, circle.center_y + circle.radius);
     }
     return box;
   }
@@ -188,15 +189,15 @@ namespace
   {
     std::default_random_engine engine(seed);
 
-    std::uniform_real_distribution< double > distributionX(box.minX, box.maxX);
-    std::uniform_real_distribution< double > distributionY(box.minY, box.maxY);
+    std::uniform_real_distribution< double > distribution_x(box.min_x, box.max_x);
+    std::uniform_real_distribution< double > distribution_y(box.min_y, box.max_y);
 
     hits_t hits = {0, 0};
 
     for (size_t i = 0; i < tries; ++i)
     {
-      const double x = distributionX(engine);
-      const double y = distributionY(engine);
+      const double x = distribution_x(engine);
+      const double y = distribution_y(engine);
       const size_t contaning = countContaining(x, y, circles);
       if (contaning > 0)
       {
@@ -227,12 +228,12 @@ ulanova::areas_t ulanova::estimateAreas(
   futures.reserve(workers);
   for (size_t i = 0; i < workers; ++i)
   {
-    size_t workTries = baseTries;
+    size_t work_tries = baseTries;
     if (i < extraTries)
     {
-      ++workTries;
+      ++work_tries;
     }
-    futures.push_back(std::async(std::launch::async, countHits, box, std::cref(circles), workTries, seed + i));
+    futures.push_back(std::async(std::launch::async, countHits, box, std::cref(circles), work_tries, seed + i));
   }
 
   hits_t total = {0, 0};
@@ -243,7 +244,7 @@ ulanova::areas_t ulanova::estimateAreas(
     total.intersection += hits.intersection;
   }
 
-  const double scale = ((box.maxX - box.minX) * (box.maxY - box.minY)) / static_cast< double >(tries);
+  const double scale = ((box.max_x - box.min_x) * (box.max_y - box.min_y)) / static_cast< double >(tries);
   const double covered = scale * static_cast< double >(total.covered);
   const double intersection = scale * static_cast< double >(total.intersection);
   return {covered, intersection};
