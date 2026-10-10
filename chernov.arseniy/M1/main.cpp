@@ -1,9 +1,13 @@
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <future>
 #include <iostream>
 #include <random>
 #include <vector>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace chernov
 {
