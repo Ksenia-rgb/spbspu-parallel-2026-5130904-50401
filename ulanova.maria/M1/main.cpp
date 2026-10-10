@@ -173,7 +173,7 @@ namespace {
     size_t tries, size_t seed)
   {
     std::default_random_engine engine(seed);
-    
+
     std::uniform_real_distribution< double > distributionX(box.minX, box.maxX);
     std::uniform_real_distribution< double > distributionY(box.minY, box.maxY);
 
