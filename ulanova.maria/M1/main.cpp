@@ -3,6 +3,10 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <functional>
+#include <future>
+#include <random>
 
 namespace ulanova {
    struct circle_t
@@ -13,10 +17,6 @@ namespace ulanova {
   };
 
   bool isInside(double x, double y, const circle_t& circle);
-}
-
-namespace {
-  const double normolizeLimit = 1.0;
 }
 
 bool ulanova::isInside(double x, double y, const circle_t& circle)
@@ -95,6 +95,7 @@ std::vector< ulanova::circle_t > ulanova::readCircles(std::istream& input)
   std::vector< circle_t > circles;
   long long radius = 0;
   while (input >> radius) {
+    long long ignored = 0;
     long long centerX = 0;
     long long centerY = 0;
     if (!(input >> ignored >> centerX >> centerY)) {
@@ -109,6 +110,126 @@ std::vector< ulanova::circle_t > ulanova::readCircles(std::istream& input)
   }
   return circles;
 }
+
+namespace ulanova {
+  struct areas_t
+  {
+    double covered;
+    double intersection;
+  };
+  areas_t estimateAreas(const std::vector< circle_t >& circles, size_t threads, size_t tries, size_t seed);
+}
+
+namespace {
+  struct box_t
+  {
+    double minX;
+    double maxX;
+    double minY;
+    double maxY;
+  };
+
+  struct hits_t
+  {
+    size_t covered;
+    size_t intersection;
+  };
+
+  const size_t minThreads = 1;
+  const size_t maxThreads = 1000;
+
+  box_t findBoundingBox(const std::vector< ulanova::circle_t& circles >)
+  {
+    const ulanova::circle_t& first = circles.front();
+    box_t box = {first.centerX -first.radius,
+      first.centerX + first.radius,
+      first.centerY - first.radius,
+      first.centerY -first.radius};
+    for (const ulanova::circle_t& circle: circles) {
+      box.minX = std::min(box.minX, circle.centerX - circle.radius);
+      box.maxX = std::max(box.maxX, circle.centerX + circle.radius);
+      box.minY = std::min(box.minY, circle.centerY - circle.radius);
+      box.maxY = std::max(box.maxY, circle.centerY + circle.radius);
+    }
+    return box;
+  }
+
+  size_t countContaining(double x, double y, const std::vector< ulanova::circle_t>& circles)
+  {
+    const auto count = std::count_if(circles.begin(), circles.end(),
+      [x, y](const ulanova::circle_t& circle) -> bool
+      {
+        return ulanova::isInside(x, y, circle);
+      });
+    return static_cast< size_t>(count);
+  }
+
+  hits_t countHits(const box_t& box, const std::vector< ulanova::circle_t>& circles,
+    size_t tries, size_t seed)
+  {
+    std::default_random_egine engine(seed);
+    
+    std::uniform_real_distribution< double > distributionX(box.minX, box.maxX);
+    std::uniform_real_distribution< double > distributionY(box.minY, box.maxY);
+
+    hits_t hits = {0, 0};
+
+    for (size_t i = 0; i < tries; ++i) {
+      const double x = distributionX(engine);
+      const double y = distributionY(engine);
+      const size_t contaning = countContaining(x, t, circles);
+      if ( contaning > 0) {
+        ++hits.covered;
+      }
+      if (contaning == circles.size()) {
+        ++hits.intersection;
+      }
+    }
+    return hits;
+  }
+}
+
+ulanova::areas_t ulanova::estimateAreas(const std::vector< circle_t>& circles,
+  size_t threads,
+  size_t tries,
+  size_t seed)
+{
+  if (circles.empty()) {
+    return {0.0, 0.0};
+  }
+  const box_t box = findBoundingBox(circles);
+  const size_t workers = std::min(std::max(threads, minThreads), maxThreads);
+  const size_t baseTries = tries / workers;
+  const size_t extraTries = tries % workers;
+
+  std::vector< std::future<hits_t > > futures;
+  futures.reserve(workers);
+  for (size_t i = 0; i < workers; ++i) {
+    size_t workTries = baseTries;
+    if (i < extraTries) {
+      ++workTries;
+    }
+    futures.push_back(std::async(std::launch::async,
+      countHits,
+      box,
+      std::cref(circles),
+      workTries,
+      seed + i));
+  }
+
+  hits_t total = {0, 0};
+  for (std::future< hits_t >& result: futures) {
+    const hits_t hits = result.get();
+    total.covered += hits.covered;
+    total.intersection += hits.intersection;
+  }
+
+  const double scale = ((box.maxX - box.minX) * (box.maxY - box.minY)) / static_cast< double >(tries);
+  const double covered = scale * static_cast< double >(total.covered);
+  const double intersection = scale * static_cast< double >(total.intersection);
+  return {covered, intersection};
+}
+
 
 int main()
 {
