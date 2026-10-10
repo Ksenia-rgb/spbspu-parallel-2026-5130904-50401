@@ -230,8 +230,23 @@ ulanova::areas_t ulanova::estimateAreas(const std::vector< circle_t>& circles,
   return {covered, intersection};
 }
 
-
-int main()
+int main(int argc, char* argv[])
 {
+  try {
+    const ulanova::options_t options = ulanova::parseOptions(argc, argv);
+    const std::vector< ulanova::circle_t >circles = ulanova::readCircles(std::cin);
+    const ulanova::areas_t areas = ulanova::estimateAreas(circles, options.threads, options.tries, options.seed);
+    std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
+    std::cout << areas.covered << ' ' << areas.intersection << '\n';
+    if (!std::cout) {
+      throw std::runtime_error("failed to write result");
+    }
+  } catch (const std::invalid_argument& error) {
+    std::cerr << "error: " << error.what() << '\n';
+    return 1;
+  } catch (const std::exception& error) {
+    std::cerr << "internal error: " << error.what() << '\n';
+    return 2;
+  }
   return 0;
 }
