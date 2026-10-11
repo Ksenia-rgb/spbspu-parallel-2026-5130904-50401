@@ -1,5 +1,5 @@
 #include <iostream>
 
 int main() {
-  fmt.Println("Hello Gopher")
+  std::cout << "petrov.kirill\n";
 }
