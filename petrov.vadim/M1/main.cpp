@@ -56,7 +56,8 @@ namespace petrov {
       shapes[0].getCenter().x + shapes[0].getR1(),
       shapes[0].getCenter().y + shapes[0].getR2(),
       shapes[0].getCenter().x - shapes[0].getR1(),
-      shapes[0].getCenter().y - shapes[0].getR2()};
+      shapes[0].getCenter().y - shapes[0].getR2()
+    };
 
     for (size_t i = 1; i < shapes.size(); ++i) {
       res.max_x = std::max(res.max_x, shapes[i].getCenter().x + shapes[i].getR1());
@@ -70,19 +71,15 @@ namespace petrov {
 
   void calculateAreas(
     int local_tries,
-    size_t local_seed,
+    unsigned int local_seed,
     UniBox box,
     const std::vector< Ellipse >& shapes,
     int* out_union_hits,
     int* out_intersection_hits)
   {
-    std::mt19937_64 rng(local_seed);
-    std::uniform_real_distribution< double > dist_x(
-      static_cast< double >(box.min_x),
-      static_cast< double >(box.max_x));
-    std::uniform_real_distribution< double > dist_y(
-      static_cast< double >(box.min_y),
-      static_cast< double >(box.max_y));
+    std::default_random_engine rng(local_seed);
+    std::uniform_real_distribution< double > dist_x(box.min_x, box.max_x);
+    std::uniform_real_distribution< double > dist_y(box.min_y, box.max_y);
 
     int union_hits = 0;
     int intersection_hits = 0;
@@ -186,8 +183,8 @@ int main(int argc, char const* argv[])
   std::vector< int > threadintersection_hits(actual_threads, 0);
 
   for (int i = 0; i < actual_threads; ++i) {
-    const int current_tries = base_tries + ((i < remainder_tries) ? 1 : 0);
-    const size_t current_seed = static_cast< size_t >(seed + i);
+    const int current_tries = base_tries + ((i == actual_threads - 1) ? remainder_tries : 0);
+    const unsigned int current_seed = static_cast< unsigned int >(seed + i);
 
     workers.emplace_back(
       petrov::calculateAreas,
@@ -196,7 +193,8 @@ int main(int argc, char const* argv[])
       box,
       std::cref(shapes),
       &threadunion_hits[i],
-      &threadintersection_hits[i]);
+      &threadintersection_hits[i]
+    );
   }
 
   int totalunion_hits = 0;
