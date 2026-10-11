@@ -1,10 +1,9 @@
 #include "monteCarlo.hpp"
-#include <iostream>
-#include <stdexcept>
-#include <vector>
+#include <exception>
 #include <iomanip>
+#include <iostream>
 #include <limits>
-#include <cstddef>
+#include <vector>
 
 int main(int argc, char* argv[])
 {

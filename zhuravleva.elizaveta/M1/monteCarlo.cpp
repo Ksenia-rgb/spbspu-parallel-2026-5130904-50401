@@ -23,7 +23,7 @@ zhuravleva::Bounds zhuravleva::getBounds(const std::vector< Circle >& circles)
 {
   const Circle& first = circles.front();
   const double first_b = first.second == 0 ? first.radius : first.second;
-  Bounds bounds{
+  Bounds bounds {
     static_cast< double >(first.x) - first.radius,
     static_cast< double >(first.x) + first.radius,
     static_cast< double >(first.y) - first_b,
@@ -62,9 +62,9 @@ std::vector< zhuravleva::Circle > zhuravleva::readCircles(std::istream& in)
       throw std::invalid_argument("Incomplete circle input");
     }
     if (radius <= 0 || second < 0)
-  {
-    throw std::invalid_argument("Invalid figure radius");
-  }
+    {
+      throw std::invalid_argument("Invalid figure radius");
+    }
     circles.push_back(Circle{radius, second, x, y});
   }
   return circles;
@@ -155,7 +155,7 @@ zhuravleva::Args zhuravleva::parseArgs(int argc, char* argv[])
 zhuravleva::Hits zhuravleva::calcParallMonte(const std::vector< zhuravleva::Circle >& circles, const zhuravleva::Bounds& bounds,
     std::size_t threads, std::size_t tries, std::size_t seed)
 {
-  std::vector< std::future < zhuravleva::Hits > > futures;
+  std::vector< std::future< zhuravleva::Hits > > futures;
   const std::size_t workers = std::min(threads, tries);
   const std::size_t base = tries / workers;
   const std::size_t leftover = tries % workers;
@@ -165,7 +165,7 @@ zhuravleva::Hits zhuravleva::calcParallMonte(const std::vector< zhuravleva::Circ
     futures.push_back(std::async(std::launch::async, zhuravleva::calcMonte, std::cref(circles), std::cref(bounds), count, seed + i));
   }
   zhuravleva::Hits total{0, 0};
-  for (std::future< zhuravleva::Hits >& future: futures)
+  for (std::future< zhuravleva::Hits >& future : futures)
   {
     const zhuravleva::Hits result = future.get();
     total.any += result.any;
