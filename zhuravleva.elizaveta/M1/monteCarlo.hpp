@@ -36,6 +36,8 @@ namespace zhuravleva
   Hits checkPoint(const std::vector< Circle >& circles, double x, double y);
   Hits calcMonte(const std::vector< Circle >& circles, const Bounds& bounds, std::size_t tries, std::size_t seed);
   Args parseArgs(int argc, char* argv[]);
+  Hits calcParallMonte(const std::vector< Circle >& circles, const Bounds& bounds,
+    std::size_t threads, std::size_t tries, std::size_t seed);
 }
 
 #endif

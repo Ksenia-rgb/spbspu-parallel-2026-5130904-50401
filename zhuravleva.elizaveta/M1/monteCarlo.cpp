@@ -7,6 +7,8 @@
 #include <string>
 #include <istream>
 #include <vector>
+#include <future>
+#include <functional>
 
 bool zhuravleva::isInside(const Circle& circle, double x, double y)
 {
@@ -141,4 +143,26 @@ zhuravleva::Args zhuravleva::parseArgs(int argc, char* argv[])
   }
 
   return Args{threads, tries, seed};
+}
+
+zhuravleva::Hits zhuravleva::calcParallMonte(const std::vector< zhuravleva::Circle >& circles, const zhuravleva::Bounds& bounds,
+    std::size_t threads, std::size_t tries, std::size_t seed)
+{
+  std::vector< std::future < zhuravleva::Hits > > futures;
+  const std::size_t workers = std::min(threads, tries);
+  const std::size_t base = tries / workers;
+  const std::size_t leftover = tries % workers;
+  for (std::size_t i = 0; i < workers; i++)
+  {
+    const std::size_t count = base + (i < leftover ? 1 : 0);
+    futures.push_back(std::async(std::launch::async, zhuravleva::calcMonte, std::cref(circles), std::cref(bounds), count, seed + i));
+  }
+  zhuravleva::Hits total{0, 0};
+  for (std::future< zhuravleva::Hits >& future: futures)
+  {
+    const zhuravleva::Hits result = future.get();
+    total.any += result.any;
+    total.all += result.all;
+  }
+  return total;
 }

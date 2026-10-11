@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     const double height = bounds.max_y - bounds.min_y;
     const double area = width * height;
 
-    const zhuravleva::Hits hits = zhuravleva::calcMonte(circles, bounds, args.tries, args.seed);
+    const zhuravleva::Hits hits = zhuravleva::calcParallMonte(circles, bounds, args.threads, args.tries, args.seed);
 
     const double area_any = area * static_cast< double >(hits.any) / args.tries;
     const double area_all = area * static_cast< double >(hits.all) / args.tries;
