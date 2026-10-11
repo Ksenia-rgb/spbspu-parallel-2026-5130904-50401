@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstddef>
+#include <future>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -65,6 +66,9 @@ int main(int argc, char** argv)
     std::cout << 0.0 << " " << 0.0 << "\n";
     return 0;
   }
+
+  const std::pair< double, double > result = area(shapes, threads, tries, seed);
+  std::cout << result.first << " " << result.second << "\n";
 }
 
 bool hvostov::isInside(double px, double py, const shape_t& s)
@@ -110,6 +114,45 @@ std::pair< size_t, size_t > hvostov::calc(const std::vector< shape_t >& shapes, 
       ++count_in_any;
   }
   return {count_in_any, count_in_all};
+}
+
+std::pair< double, double > hvostov::area(
+  const std::vector< shape_t >& shapes,
+  size_t threads,
+  size_t tries,
+  size_t seed)
+{
+  if (shapes.empty() || tries == 0)
+    return {0.0, 0.0};
+  if (threads == 0)
+    threads = 1;
+  if (threads > tries)
+    threads = tries;
+
+  const rect_t rect = getRect(shapes);
+  const double rectArea = (rect.maxX - rect.minX) * (rect.maxY - rect.minY);
+
+  const size_t batch = tries / threads;
+  const size_t remainder = tries % threads;
+
+  std::vector< std::future< std::pair< size_t, size_t > > > futures;
+  futures.reserve(threads);
+  for (size_t i = 0; i < threads; i++) {
+    const size_t n = batch + (i < remainder ? 1 : 0);
+    futures.push_back(std::async(std::launch::async, calc, std::cref(shapes), rect, n, seed + i));
+  }
+
+  size_t count_in_any = 0;
+  size_t count_in_all = 0;
+  for (auto& f : futures) {
+    const std::pair< size_t, size_t > r = f.get();
+    count_in_any += r.first;
+    count_in_all += r.second;
+  }
+
+  const double union_area = rectArea * static_cast< double >(count_in_any) / static_cast< double >(tries);
+  const double inter_area = rectArea * static_cast< double >(count_in_all) / static_cast< double >(tries);
+  return {union_area, inter_area};
 }
 
 std::vector< hvostov::shape_t > hvostov::inputShapes(std::istream& in)
