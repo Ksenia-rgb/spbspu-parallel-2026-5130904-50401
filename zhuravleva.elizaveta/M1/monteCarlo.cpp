@@ -23,15 +23,9 @@ zhuravleva::Bounds zhuravleva::getBounds(const std::vector< Circle >& circles)
 {
   const Circle& first = circles.front();
   const double first_b = first.second == 0 ? first.radius : first.second;
-  Bounds bounds
-  {
-    static_cast< double >(first.x) - first.radius,
-    static_cast< double >(first.x) + first.radius,
-    static_cast< double >(first.y) - first_b,
-    static_cast< double >(first.y) + first_b
-  };
-  for (std::size_t i = 1; i < circles.size(); i++)
-  {
+  Bounds bounds{static_cast< double >(first.x) - first.radius, static_cast< double >(first.x) + first.radius,
+      static_cast< double >(first.y) - first_b, static_cast< double >(first.y) + first_b};
+  for (std::size_t i = 1; i < circles.size(); i++) {
     const Circle& circle = circles[i];
     const double b = circle.second == 0 ? circle.radius : circle.second;
     bounds.min_x = std::min(bounds.min_x, static_cast< double >(circle.x) - circle.radius);
@@ -45,25 +39,20 @@ zhuravleva::Bounds zhuravleva::getBounds(const std::vector< Circle >& circles)
 std::vector< zhuravleva::Circle > zhuravleva::readCircles(std::istream& in)
 {
   std::vector< Circle > circles;
-  while (true)
-  {
+  while (true) {
     int radius = 0, second = 0;
     int x = 0, y = 0;
 
-    if (!(in >> radius))
-    {
-      if (in.eof())
-      {
+    if (!(in >> radius)) {
+      if (in.eof()) {
         break;
       }
       throw std::invalid_argument("Invalid circle input");
     }
-    if (!(in >> second >> x >> y))
-    {
+    if (!(in >> second >> x >> y)) {
       throw std::invalid_argument("Incomplete circle input");
     }
-    if (radius <= 0 || second < 0)
-    {
+    if (radius <= 0 || second < 0) {
       throw std::invalid_argument("Invalid figure radius");
     }
     circles.push_back(Circle{radius, second, x, y});
@@ -76,8 +65,7 @@ zhuravleva::Hits zhuravleva::checkPoint(const std::vector< Circle >& circles, do
   bool in_any = false;
   bool in_all = true;
 
-  for (const Circle& circle : circles)
-  {
+  for (const Circle& circle : circles) {
     const bool inside = isInside(circle, x, y);
     in_any = in_any || inside;
     in_all = in_all && inside;
@@ -95,8 +83,7 @@ zhuravleva::Hits zhuravleva::calcMonte(
 
   Hits total{0, 0};
 
-  for (std::size_t i = 0; i < tries; ++i)
-  {
+  for (std::size_t i = 0; i < tries; ++i) {
     const double x = dist_x(generator);
     const double y = dist_y(generator);
 
@@ -110,8 +97,7 @@ zhuravleva::Hits zhuravleva::calcMonte(
 
 zhuravleva::Args zhuravleva::parseArgs(int argc, char* argv[])
 {
-  if (argc != 3 && argc != 4)
-  {
+  if (argc != 3 && argc != 4) {
     throw std::invalid_argument("Usage: lab threads tries [seed]");
   }
 
@@ -121,15 +107,13 @@ zhuravleva::Args zhuravleva::parseArgs(int argc, char* argv[])
 
   const auto parse_number = [](const std::string& str) -> std::size_t
   {
-    if (str.empty() || str.find_first_not_of("0123456789") != std::string::npos)
-    {
+    if (str.empty() || str.find_first_not_of("0123456789") != std::string::npos) {
       throw std::invalid_argument("Invalid numeric argument");
     }
 
     const unsigned long long value = std::stoull(str);
 
-    if (value > std::numeric_limits< std::size_t >::max())
-    {
+    if (value > std::numeric_limits< std::size_t >::max()) {
       throw std::out_of_range("Numeric argument is too large");
     }
 
@@ -140,37 +124,31 @@ zhuravleva::Args zhuravleva::parseArgs(int argc, char* argv[])
   const std::size_t tries = parse_number(tries_arg);
   const std::size_t seed = parse_number(seed_arg);
 
-  if (tries == 0)
-  {
+  if (tries == 0) {
     throw std::invalid_argument("Tries must be positive");
   }
 
-  if (threads == 0)
-  {
+  if (threads == 0) {
     threads = 1;
   }
 
   return Args{threads, tries, seed};
 }
 
-zhuravleva::Hits zhuravleva::calcParallMonte(
-    const std::vector< Circle >& circles, const Bounds& bounds,
+zhuravleva::Hits zhuravleva::calcParallMonte(const std::vector< Circle >& circles, const Bounds& bounds,
     std::size_t threads, std::size_t tries, std::size_t seed)
 {
   std::vector< std::future< zhuravleva::Hits > > futures;
   const std::size_t workers = std::min(threads, tries);
   const std::size_t base = tries / workers;
   const std::size_t leftover = tries % workers;
-  for (std::size_t i = 0; i < workers; i++)
-  {
+  for (std::size_t i = 0; i < workers; i++) {
     const std::size_t count = base + (i < leftover ? 1 : 0);
-    futures.push_back(std::async(
-        std::launch::async, calcMonte,
-        std::cref(circles), std::cref(bounds), count, seed + i));
+    futures.push_back(
+        std::async(std::launch::async, calcMonte, std::cref(circles), std::cref(bounds), count, seed + i));
   }
   zhuravleva::Hits total{0, 0};
-  for (std::future< zhuravleva::Hits >& future : futures)
-  {
+  for (std::future< zhuravleva::Hits >& future : futures) {
     const zhuravleva::Hits result = future.get();
     total.any += result.any;
     total.all += result.all;
