@@ -144,7 +144,7 @@ int main(int argc, char const *argv[]) {
 
     shapes.push_back(petrov::Ellipse(r1, r2, x, y));
   }
-  
+
   if (!std::cin.eof()) {
     std::cerr << "Failed to parse figure\n";
     return 1;
