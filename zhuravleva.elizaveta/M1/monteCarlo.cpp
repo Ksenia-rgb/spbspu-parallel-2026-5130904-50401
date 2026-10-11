@@ -61,6 +61,10 @@ std::vector< zhuravleva::Circle > zhuravleva::readCircles(std::istream& in)
     {
       throw std::invalid_argument("Incomplete circle input");
     }
+    if (radius <= 0 || second < 0)
+  {
+    throw std::invalid_argument("Invalid figure radius");
+  }
     circles.push_back(Circle{radius, second, x, y});
   }
   return circles;
