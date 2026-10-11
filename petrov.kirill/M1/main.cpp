@@ -1,5 +1,5 @@
 #include <iostream>
 
-int main() {
-  std::cout << "petrov.kirill\n";
+int main(int argc, char** argv) {
+  std::cout << argc << ' ' << argv[0] << '\n';
 }
