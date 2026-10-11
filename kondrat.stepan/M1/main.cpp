@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <future>
 #include <iomanip>
+#include <exception>
+#include <limits>
 #include <functional>
 #include <random>
 
@@ -36,8 +38,10 @@ namespace kondrat
   long long parseArgument(const char * argument);
   Rectangle findRectangle(const std::vector< Ellipse > & ellipses);
   bool contains(const Ellipse & ellipse, double x, double y);
-  HitCounts countHits(long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
-  HitCounts runTask(long long taskCount, long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
+  HitCounts countHits(
+      long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
+  HitCounts runTask(long long taskCount, long long tries, long long seed, const std::vector< Ellipse > & ellipses,
+      const Rectangle & rectangle);
 }
 
 int main(int argc, char ** argv)
@@ -99,26 +103,29 @@ int main(int argc, char ** argv)
       return 1;
     }
 
-    if (threads == 0 || ellipses.empty())
+    if (ellipses.empty())
     {
       std::cout << "0 0\n";
       return 0;
     }
 
     const kondrat::Rectangle rectangle = kondrat::findRectangle(ellipses);
-    const kondrat::HitCounts counts = kondrat::runTask(threads, tries, seed, ellipses, rectangle);
+
+    const long long taskCount = threads == 0 ? 1 : threads;
+
+    const kondrat::HitCounts counts = kondrat::runTask(taskCount, tries, seed, ellipses, rectangle);
 
     const double width = rectangle.right - rectangle.left;
     const double height = rectangle.top - rectangle.bottom;
     const double rectangleArea = width * height;
 
-    const double unionArea = rectangleArea * (static_cast<double>(counts.unionHits) / tries);
-    const double intersectionArea = rectangleArea * (static_cast<double>(counts.intersectionHits) / tries);
+    const double unionArea = rectangleArea * (static_cast< double >(counts.unionHits) / tries);
+    const double intersectionArea = rectangleArea * (static_cast< double >(counts.intersectionHits) / tries);
 
-    std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
+    std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
     std::cout << unionArea << ' ' << intersectionArea << '\n';
   }
-  catch (std::exception & error)
+  catch (const std::exception & error)
   {
     std::cerr << error.what() << '\n';
     return 2;
@@ -146,13 +153,8 @@ kondrat::Rectangle kondrat::findRectangle(const std::vector< Ellipse > & ellipse
   const double firstX = first.x;
   const double firstY = first.y;
 
-  Rectangle rectangle =
-  {
-    firstX - first.horizontalRadius,
-    firstX + first.horizontalRadius,
-    firstY + first.verticalRadius,
-    firstY - first.verticalRadius
-  };
+  Rectangle rectangle = {firstX - first.horizontalRadius, firstX + first.horizontalRadius,
+      firstY + first.verticalRadius, firstY - first.verticalRadius};
 
   for (const Ellipse & ellipse : ellipses)
   {
@@ -176,7 +178,8 @@ bool kondrat::contains(const Ellipse & ellipse, double x, double y)
   return dx * dx + dy * dy <= 1.0;
 }
 
-kondrat::HitCounts kondrat::countHits(long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
+kondrat::HitCounts kondrat::countHits(
+    long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
 {
   std::default_random_engine generator(seed);
   std::uniform_real_distribution< double > xDistribution(rectangle.left, rectangle.right);
@@ -212,7 +215,8 @@ kondrat::HitCounts kondrat::countHits(long long tries, long long seed, const std
   return counts;
 }
 
-kondrat::HitCounts kondrat::runTask(long long taskCount, long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
+kondrat::HitCounts kondrat::runTask(long long taskCount, long long tries, long long seed,
+    const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
 {
   const long long baseTries = tries / taskCount;
   const long long remainder = tries % taskCount;
@@ -223,7 +227,8 @@ kondrat::HitCounts kondrat::runTask(long long taskCount, long long tries, long l
     const long long taskTries = baseTries + (i < remainder ? 1 : 0);
     const long long taskSeed = seed + i;
 
-    futures.push_back(std::async(std::launch::async, countHits, taskTries, taskSeed, std::cref(ellipses), std::cref(rectangle)));
+    futures.push_back(
+        std::async(std::launch::async, countHits, taskTries, taskSeed, std::cref(ellipses), std::cref(rectangle)));
   }
 
   HitCounts total = {0, 0};
