@@ -7,7 +7,8 @@
 #include <string>
 #include <vector>
 
-namespace madieva {
+namespace madieva
+{
 
   struct circle_t
   {
@@ -31,27 +32,34 @@ namespace madieva {
     double max_y = 0;
   };
 
-  bool parseParams(const int argc, const char ** argv, params_t & params)
+  bool parseParams(const int argc, const char * const * argv, params_t & params)
   {
-    if (argc != 3 && argc != 4) {
+    if (argc != 3 && argc != 4)
+    {
       std::cerr << "incorrect number of arguments\n";
       return false;
     }
-    try {
+    try
+    {
       params.threads = static_cast< size_t >(std::stoull(argv[1]));
       params.tries = static_cast< size_t >(std::stoull(argv[2]));
-      if (argc == 4) {
+      if (argc == 4)
+      {
         params.seed = static_cast< size_t >(std::stoull(argv[3]));
       }
-    } catch (const std::exception & e) {
+    }
+    catch (const std::exception & e)
+    {
       std::cerr << "cannot parse arguments: " << e.what() << "\n";
       return false;
     }
-    if (params.threads == 0) {
+    if (params.threads == 0)
+    {
       std::cerr << "inappropriate number of threads\n";
       return false;
     }
-    if (params.tries == 0) {
+    if (params.tries == 0)
+    {
       std::cerr << "incorrect number of tries\n";
       return false;
     }
@@ -65,14 +73,17 @@ namespace madieva {
     double cx = 0;
     double cy = 0;
 
-    while (std::cin >> r >> index >> cx >> cy) {
+    while (std::cin >> r >> index >> cx >> cy)
+    {
       circles.push_back({r, cx, cy});
     }
-    if (!std::cin.eof()) {
+    if (!std::cin.eof())
+    {
       std::cerr << "error reading figures\n";
       return false;
     }
-    if (circles.empty()) {
+    if (circles.empty())
+    {
       std::cerr << "no figures were provided\n";
       return false;
     }
@@ -90,21 +101,26 @@ namespace madieva {
     double max_x = 0;
     double min_y = 0;
     double max_y = 0;
-    for (size_t i = 1; i < circles.size(); ++i) {
+    for (size_t i = 1; i < circles.size(); ++i)
+    {
       min_x = circles[i].cx - circles[i].r;
       max_x = circles[i].cx + circles[i].r;
       min_y = circles[i].cy - circles[i].r;
       max_y = circles[i].cy + circles[i].r;
-      if (frame.min_x > min_x) {
+      if (frame.min_x > min_x)
+      {
         frame.min_x = min_x;
       }
-      if (frame.max_x < max_x) {
+      if (frame.max_x < max_x)
+      {
         frame.max_x = max_x;
       }
-      if (frame.min_y > min_y) {
+      if (frame.min_y > min_y)
+      {
         frame.min_y = min_y;
       }
-      if (frame.max_y < max_y) {
+      if (frame.max_y < max_y)
+      {
         frame.max_y = max_y;
       }
     }
@@ -141,25 +157,32 @@ namespace madieva {
     std::default_random_engine engine(static_cast< unsigned >(d->seed));
     std::uniform_real_distribution< double > dist_x(d->frame.min_x, d->frame.max_x);
     std::uniform_real_distribution< double > dist_y(d->frame.min_y, d->frame.max_y);
-    for (std::size_t i = 0; i < d->tries; ++i) {
+    for (std::size_t i = 0; i < d->tries; ++i)
+    {
       const double x = dist_x(engine);
       const double y = dist_y(engine);
 
       bool hit_some = false;
       bool hit_all = true;
 
-      for (size_t i = 0; i < d->circles->size(); ++i) {
-        if (isInside(x, y, (*d->circles)[i])) {
+      for (size_t i = 0; i < d->circles->size(); ++i)
+      {
+        if (isInside(x, y, (*d->circles)[i]))
+        {
           hit_some = true;
-        } else {
+        }
+        else
+        {
           hit_all = false;
         }
       }
 
-      if (hit_some) {
+      if (hit_some)
+      {
         d->count_some++;
       }
-      if (hit_all) {
+      if (hit_all)
+      {
         d->count_all++;
       }
     }
@@ -167,33 +190,39 @@ namespace madieva {
     return nullptr;
   }
 
-  bool computeAreas(const std::vector< circle_t > & circles, const params_t & params, const frame_t & frame, result_t & result)
+  bool computeAreas(
+      const std::vector< circle_t > & circles, const params_t & params, const frame_t & frame, result_t & result)
   {
     std::vector< pthread_t > threads(params.threads);
     std::vector< Data > data(params.threads);
     size_t testsPerThread = params.tries / params.threads;
     size_t remainder = params.tries % params.threads;
 
-    for (size_t i = 0; i < params.threads; ++i) {
+    for (size_t i = 0; i < params.threads; ++i)
+    {
       data[i].circles = &circles;
       data[i].frame = frame;
       data[i].tries = testsPerThread;
-      if (i == 0) {
+      if (i == 0)
+      {
         data[i].tries += remainder;
       }
       data[i].seed = params.seed + i;
       const int err = pthread_create(&threads[i], nullptr, computeThread, &data[i]);
-      if (err != 0) {
+      if (err != 0)
+      {
         std::cerr << "pthread_create failed: " << std::strerror(err) << "\n";
         return false;
       }
     }
     size_t total_all = 0;
     size_t total_some = 0;
-    for (size_t i = 0; i < params.threads; ++i) {
+    for (size_t i = 0; i < params.threads; ++i)
+    {
       void * ret = nullptr;
       const int err = pthread_join(threads[i], &ret);
-      if (err != 0) {
+      if (err != 0)
+      {
         std::cerr << "pthread_join failed: " << std::strerror(err) << "\n";
         return false;
       }
@@ -214,19 +243,22 @@ namespace madieva {
 int main(int argc, char ** argv)
 {
   madieva::params_t params;
-  if (!madieva::parseParams(argc, argv, params)){
+  if (!madieva::parseParams(argc, argv, params))
+  {
     return 1;
   }
 
   std::vector< madieva::circle_t > circles;
-  if (!madieva::readCircles(circles)) {
+  if (!madieva::readCircles(circles))
+  {
     return 1;
   }
 
   madieva::frame_t frame = madieva::computeFrame(circles);
 
   madieva::result_t result{};
-  if (!madieva::computeAreas(circles, params, frame, result)) {
+  if (!madieva::computeAreas(circles, params, frame, result))
+  {
     return 1;
   }
   std::cout << result.area_all << " " << result.area_some << "\n";
