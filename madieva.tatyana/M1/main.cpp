@@ -23,6 +23,14 @@ namespace madieva {
     std::size_t seed = 0;
   };
 
+  struct frame_t
+  {
+    double min_x = 0;
+    double max_x = 0;
+    double min_y = 0;
+    double max_y = 0;
+  };
+
   bool parseParams(int argc, char ** argv, params_t & params)
   {
     if (argc != 3 && argc != 4) {
@@ -71,6 +79,38 @@ namespace madieva {
     return true;
   }
 
+  frame_t computeFrame(const std::vector< circle_t > & circles)
+  {
+    frame_t frame;
+    frame.min_x = circles[0].cx - circles[0].r;
+    frame.max_x = circles[0].cx + circles[0].r;
+    frame.min_y = circles[0].cy - circles[0].r;
+    frame.max_y = circles[0].cy + circles[0].r;
+    double min_x = 0;
+    double max_x = 0;
+    double min_y = 0;
+    double max_y = 0;
+    for (size_t i = 1; i < circles.size(); ++i) {
+      min_x = circles[i].cx - circles[i].r;
+      max_x = circles[i].cx + circles[i].r;
+      min_y = circles[i].cy - circles[i].r;
+      max_y = circles[i].cy + circles[i].r;
+      if (frame.min_x > min_x) {
+        frame.min_x = min_x;
+      }
+      if (frame.max_x < max_x) {
+        frame.max_x = max_x;
+      }
+      if (frame.min_y > min_y) {
+        frame.min_y = min_y;
+      }
+      if (frame.max_y < max_y) {
+        frame.max_y = max_y;
+      }
+    }
+    return frame;
+  }
+
 }
 
 int main(int argc, char ** argv)
@@ -84,6 +124,8 @@ int main(int argc, char ** argv)
   if (!madieva::readCircles(circles)) {
     return 1;
   }
+
+  madieva::frame_t frame = madieva::computeFrame(circles);
 
   return 0;
 }
