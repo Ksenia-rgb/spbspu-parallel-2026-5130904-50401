@@ -11,94 +11,102 @@
 namespace petrov
 {
   struct p_t {
-    int x_;
-    int y_;
+    int x;
+    int y;
   };
 
   struct Ellipse {
     Ellipse(int r1, int r2, int x, int y):
-      center_{x, y},
-      radius1_(r1),
-      radius2_(r2 > 0 ? r2 : r1)
+      center{x, y},
+      radius1(r1),
+      radius2(r2 > 0 ? r2 : r1)
     {}
 
     int getR1() const {
-      return radius1_;
+      return radius1;
     }
 
     int getR2() const {
-      return radius2_;
+      return radius2;
     }
 
     p_t getCenter() const {
-      return center_;
+      return center;
     }
 
     private:
-      p_t center_;
-      int radius1_;
-      int radius2_;
+      p_t center;
+      int radius1;
+      int radius2;
   };
 
   struct UniBox {
-    int maxX, maxY, minX, minY;
+    int max_x, max_y, min_x, min_y;
   };
 
   UniBox calculateBoundingBox(const std::vector< Ellipse >& shapes) {
     UniBox res{
-      shapes[0].getCenter().x_ + shapes[0].getR1(),
-      shapes[0].getCenter().y_ + shapes[0].getR2(),
-      shapes[0].getCenter().x_ - shapes[0].getR1(),
-      shapes[0].getCenter().y_ - shapes[0].getR2()};
+      shapes[0].getCenter().x + shapes[0].getR1(),
+      shapes[0].getCenter().y + shapes[0].getR2(),
+      shapes[0].getCenter().x - shapes[0].getR1(),
+      shapes[0].getCenter().y - shapes[0].getR2()};
 
     for (size_t i = 1; i < shapes.size(); ++i) {
-      res.maxX = std::max(res.maxX, shapes[i].getCenter().x_ + shapes[i].getR1());
-      res.minX = std::min(res.minX, shapes[i].getCenter().x_ - shapes[i].getR1());
-      res.minY = std::min(res.minY, shapes[i].getCenter().y_ - shapes[i].getR2());
-      res.maxY = std::max(res.maxY, shapes[i].getCenter().y_ + shapes[i].getR2());
+      res.max_x = std::max(res.max_x, shapes[i].getCenter().x + shapes[i].getR1());
+      res.min_x = std::min(res.min_x, shapes[i].getCenter().x - shapes[i].getR1());
+      res.min_y = std::min(res.min_y, shapes[i].getCenter().y - shapes[i].getR2());
+      res.max_y = std::max(res.max_y, shapes[i].getCenter().y + shapes[i].getR2());
     }
 
     return res;
   }
 
   bool isInside(const Ellipse& shape, const p_t& point) {
-    const double dx = (point.x_ - shape.getCenter().x_) / static_cast< double >(shape.getR1());
-    const double dy = (point.y_ - shape.getCenter().y_) / static_cast< double >(shape.getR2());
+    const double dx = (point.x - shape.getCenter().x) / static_cast< double >(shape.getR1());
+    const double dy = (point.y - shape.getCenter().y) / static_cast< double >(shape.getR2());
 
     return ((dx * dx) + (dy * dy)) <= 1.0;
   }
 
-  void calculateAreas(int localTries, size_t localSeed, UniBox box,
-    const std::vector< Ellipse >& shapes, int* outUnionHits, int* outIntersectionHits)
+  void calculateAreas(int local_tries, size_t local_seed, UniBox box,
+    const std::vector< Ellipse >& shapes, int* out_union_hits, int* out_intersection_hits)
   {
-    std::mt19937 rng(localSeed);
-    std::uniform_int_distribution< int > distX(box.minX, box.maxX);
-    std::uniform_int_distribution< int > distY(box.minY, box.maxY);
+    std::mt19937_64 rng(local_seed);
+    std::uniform_real_distribution< double > dist_x(static_cast< double >(box.min_x),
+      static_cast< double >(box.max_x));
+    std::uniform_real_distribution< double > dist_y(static_cast< double >(box.min_y),
+      static_cast< double >(box.max_y));
 
-    int unionHits = 0;
-    int intersectionHits = 0;
-    const size_t shapesCount = shapes.size();
+    int union_hits = 0;
+    int intersection_hits = 0;
+    const size_t shapes_count = shapes.size();
 
-    for (int i = 0; i < localTries; ++i) {
-      const p_t pt{distX(rng), distY(rng)};
-      size_t hitCount = 0;
+    for (int i = 0; i < local_tries; ++i) {
+      const double px = dist_x(rng);
+      const double py = dist_y(rng);
+      size_t hit_count = 0;
 
-      for (size_t j = 0; j < shapesCount; ++j) {
-        if (isInside((shapes)[j], pt)) {
-          ++hitCount;
+      for (size_t j = 0; j < shapes_count; ++j) {
+        const double dx = (px - static_cast< double >(shapes[j].getCenter().x))
+          / static_cast< double >(shapes[j].getR1());
+        const double dy = (py - static_cast< double >(shapes[j].getCenter().y))
+          / static_cast< double >(shapes[j].getR2());
+
+        if (((dx * dx) + (dy * dy)) <= 1.0) {
+          ++hit_count;
         }
       }
 
-      if (hitCount > 0) {
-        ++unionHits;
+      if (hit_count > 0) {
+        ++union_hits;
       }
-      if (hitCount == shapesCount) {
-        ++intersectionHits;
+      if (hit_count == shapes_count) {
+        ++intersection_hits;
       }
     }
 
-    *outUnionHits = unionHits;
-    *outIntersectionHits = intersectionHits;
+    *out_union_hits = union_hits;
+    *out_intersection_hits = intersection_hits;
   }
 }
 
@@ -121,7 +129,7 @@ int main(int argc, char const *argv[]) {
       seed = 0;
     }
 
-    if (threads < 1 || tries < 1 || seed < 0) {
+    if (threads < 1 || tries <= 1 || seed < 0) {
       std::cerr << "Arguments invalid\n";
       return 1;
     }
@@ -156,47 +164,47 @@ int main(int argc, char const *argv[]) {
   }
 
   const petrov::UniBox box = petrov::calculateBoundingBox(shapes);
-  const double boxArea = static_cast< double >(box.maxX - box.minX)
-    * static_cast< double >(box.maxY - box.minY);
+  const double box_area = static_cast< double >(box.max_x - box.min_x)
+    * static_cast< double >(box.max_y - box.min_y);
 
-  const int actualThreads = std::min(threads, tries);
-  const int baseTries = tries / actualThreads;
-  const int remainderTries = tries % actualThreads;
+  const int actual_threads = (threads == 0) ? 1 : std::min(threads, tries);
+  const int base_tries = tries / actual_threads;
+  const int remainder_tries = tries % actual_threads;
 
   std::vector< std::thread > workers;
-  workers.reserve(actualThreads);
+  workers.reserve(actual_threads);
 
-  std::vector< int > threadUnionHits(actualThreads, 0);
-  std::vector< int > threadIntersectionHits(actualThreads, 0);
+  std::vector< int > threadunion_hits(actual_threads, 0);
+  std::vector< int > threadintersection_hits(actual_threads, 0);
 
-  for (int i = 0; i < actualThreads; ++i) {
-    const int currentTries = baseTries + ((i < remainderTries) ? 1 : 0);
-    const size_t currentSeed = static_cast< size_t >(seed + i);
+  for (int i = 0; i < actual_threads; ++i) {
+    const int current_tries = base_tries + ((i < remainder_tries) ? 1 : 0);
+    const size_t current_seed = static_cast< size_t >(seed + i);
 
     workers.emplace_back(
       petrov::calculateAreas,
-      currentTries,
-      currentSeed,
+      current_tries,
+      current_seed,
       box,
       std::cref(shapes),
-      &threadUnionHits[i],
-      &threadIntersectionHits[i]);
+      &threadunion_hits[i],
+      &threadintersection_hits[i]);
   }
 
-  int totalUnionHits = 0;
-  int totalIntersectionHits = 0;
+  int totalunion_hits = 0;
+  int totalintersection_hits = 0;
 
-  for (int i = 0; i < actualThreads; ++i) {
+  for (int i = 0; i < actual_threads; ++i) {
     workers[i].join();
-    totalUnionHits += threadUnionHits[i];
-    totalIntersectionHits += threadIntersectionHits[i];
+    totalunion_hits += threadunion_hits[i];
+    totalintersection_hits += threadintersection_hits[i];
   }
 
-  const double unionArea = boxArea * (static_cast< double >(totalUnionHits) / tries);
-  const double intersectionArea = boxArea * (static_cast< double >(totalIntersectionHits) / tries);
+  const double union_area = box_area * (static_cast< double >(totalunion_hits) / tries);
+  const double intersection_area = box_area * (static_cast< double >(totalintersection_hits) / tries);
 
   std::cout.precision(std::numeric_limits< double >::max_digits10);
-  std::cout << unionArea << ' ' << intersectionArea << '\n';
+  std::cout << union_area << ' ' << intersection_area << '\n';
 
   return 0;
 }
