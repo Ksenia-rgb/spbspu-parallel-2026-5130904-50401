@@ -22,3 +22,10 @@ namespace hvostov {
 
 int main(int argc, char** argv)
 {}
+
+bool hvostov::isInside(double px, double py, const shape_t& s)
+{
+  double dx = (px - s.centerx) / s.hor_radius;
+  double dy = (py - s.centery) / s.vert_radius;
+  return (dx * dx + dy * dy) <= 1.0;
+}
