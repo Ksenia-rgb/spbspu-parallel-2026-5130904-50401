@@ -15,8 +15,8 @@ namespace kondrat
 {
   struct Ellipse
   {
-    int horizontalRadius;
-    int verticalRadius;
+    int horizontal_radius;
+    int vertical_radius;
     int x;
     int y;
   };
@@ -31,8 +31,8 @@ namespace kondrat
 
   struct HitCounts
   {
-    long long unionHits;
-    long long intersectionHits;
+    long long union_hits;
+    long long intersection_hits;
   };
 
   long long parseArgument(const char * argument);
@@ -40,13 +40,20 @@ namespace kondrat
   bool contains(const Ellipse & ellipse, double x, double y);
   HitCounts countHits(
       long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
-  HitCounts runTask(long long taskCount, long long tries, long long seed, const std::vector< Ellipse > & ellipses,
+  HitCounts runTask(long long task_count, long long tries, long long seed, const std::vector< Ellipse > & ellipses,
       const Rectangle & rectangle);
 }
 
 int main(int argc, char ** argv)
 {
-  if (argc != 3 && argc != 4)
+  constexpr int min_args = 3;
+  constexpr int max_args = 4;
+  constexpr int threads_index = 1;
+  constexpr int tries_index = 2;
+  constexpr int seed_index = 3;
+  constexpr int internal_error = 2;
+
+  if (argc != min_args && argc != max_args)
   {
     std::cerr << "Usage: ./lab threads tries [seed]\n";
     return 1;
@@ -58,12 +65,12 @@ int main(int argc, char ** argv)
 
   try
   {
-    threads = kondrat::parseArgument(argv[1]);
-    tries = kondrat::parseArgument(argv[2]);
+    threads = kondrat::parseArgument(argv[threads_index]);
+    tries = kondrat::parseArgument(argv[tries_index]);
 
-    if (argc == 4)
+    if (argc == max_args)
     {
-      seed = kondrat::parseArgument(argv[3]);
+      seed = kondrat::parseArgument(argv[seed_index]);
     }
   }
   catch (const std::invalid_argument & error)
@@ -93,8 +100,8 @@ int main(int argc, char ** argv)
 
     while (std::cin >> a >> b >> cx >> cy)
     {
-      const int verticalRadius = b == 0 ? a : b;
-      ellipses.push_back({a, verticalRadius, cx, cy});
+      const int vertical_radius = b == 0 ? a : b;
+      ellipses.push_back({a, vertical_radius, cx, cy});
     }
 
     if (std::cin.bad() || !std::cin.eof())
@@ -111,24 +118,24 @@ int main(int argc, char ** argv)
 
     const kondrat::Rectangle rectangle = kondrat::findRectangle(ellipses);
 
-    const long long taskCount = threads == 0 ? 1 : threads;
+    const long long task_count = threads == 0 ? 1 : threads;
 
-    const kondrat::HitCounts counts = kondrat::runTask(taskCount, tries, seed, ellipses, rectangle);
+    const kondrat::HitCounts counts = kondrat::runTask(task_count, tries, seed, ellipses, rectangle);
 
     const double width = rectangle.right - rectangle.left;
     const double height = rectangle.top - rectangle.bottom;
-    const double rectangleArea = width * height;
+    const double rectangle_area = width * height;
 
-    const double unionArea = rectangleArea * (static_cast< double >(counts.unionHits) / tries);
-    const double intersectionArea = rectangleArea * (static_cast< double >(counts.intersectionHits) / tries);
+    const double union_area = rectangle_area * (static_cast< double >(counts.union_hits) / tries);
+    const double intersection_area = rectangle_area * (static_cast< double >(counts.intersection_hits) / tries);
 
     std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
-    std::cout << unionArea << ' ' << intersectionArea << '\n';
+    std::cout << union_area << ' ' << intersection_area << '\n';
   }
   catch (const std::exception & error)
   {
     std::cerr << error.what() << '\n';
-    return 2;
+    return internal_error;
   }
 
   return 0;
@@ -150,21 +157,21 @@ long long kondrat::parseArgument(const char * argument)
 kondrat::Rectangle kondrat::findRectangle(const std::vector< Ellipse > & ellipses)
 {
   const Ellipse first = ellipses.front();
-  const double firstX = first.x;
-  const double firstY = first.y;
+  const double first_x = first.x;
+  const double first_y = first.y;
 
-  Rectangle rectangle = {firstX - first.horizontalRadius, firstX + first.horizontalRadius,
-      firstY + first.verticalRadius, firstY - first.verticalRadius};
+  Rectangle rectangle = {first_x - first.horizontal_radius, first_x + first.horizontal_radius,
+      first_y + first.vertical_radius, first_y - first.vertical_radius};
 
   for (const Ellipse & ellipse : ellipses)
   {
     const double x = ellipse.x;
     const double y = ellipse.y;
 
-    rectangle.left = std::min(rectangle.left, x - ellipse.horizontalRadius);
-    rectangle.right = std::max(rectangle.right, x + ellipse.horizontalRadius);
-    rectangle.top = std::max(rectangle.top, y + ellipse.verticalRadius);
-    rectangle.bottom = std::min(rectangle.bottom, y - ellipse.verticalRadius);
+    rectangle.left = std::min(rectangle.left, x - ellipse.horizontal_radius);
+    rectangle.right = std::max(rectangle.right, x + ellipse.horizontal_radius);
+    rectangle.top = std::max(rectangle.top, y + ellipse.vertical_radius);
+    rectangle.bottom = std::min(rectangle.bottom, y - ellipse.vertical_radius);
   }
 
   return rectangle;
@@ -172,8 +179,8 @@ kondrat::Rectangle kondrat::findRectangle(const std::vector< Ellipse > & ellipse
 
 bool kondrat::contains(const Ellipse & ellipse, double x, double y)
 {
-  const double dx = (x - ellipse.x) / ellipse.horizontalRadius;
-  const double dy = (y - ellipse.y) / ellipse.verticalRadius;
+  const double dx = (x - ellipse.x) / ellipse.horizontal_radius;
+  const double dy = (y - ellipse.y) / ellipse.vertical_radius;
 
   return dx * dx + dy * dy <= 1.0;
 }
@@ -182,53 +189,53 @@ kondrat::HitCounts kondrat::countHits(
     long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
 {
   std::default_random_engine generator(seed);
-  std::uniform_real_distribution< double > xDistribution(rectangle.left, rectangle.right);
-  std::uniform_real_distribution< double > yDistribution(rectangle.bottom, rectangle.top);
+  std::uniform_real_distribution< double > x_distribution(rectangle.left, rectangle.right);
+  std::uniform_real_distribution< double > y_distribution(rectangle.bottom, rectangle.top);
 
   HitCounts counts = {0, 0};
 
   for (long long i = 0; i < tries; ++i)
   {
-    const double x = xDistribution(generator);
-    const double y = yDistribution(generator);
-    bool insideAny = false;
-    bool insideAll = true;
+    const double x = x_distribution(generator);
+    const double y = y_distribution(generator);
+    bool inside_any = false;
+    bool inside_all = true;
 
     for (const Ellipse & ellipse : ellipses)
     {
       const bool inside = contains(ellipse, x, y);
-      insideAny = insideAny || inside;
-      insideAll = insideAll && inside;
+      inside_any = inside_any || inside;
+      inside_all = inside_all && inside;
     }
 
-    if (insideAny)
+    if (inside_any)
     {
-      ++counts.unionHits;
+      ++counts.union_hits;
     }
 
-    if (insideAll)
+    if (inside_all)
     {
-      ++counts.intersectionHits;
+      ++counts.intersection_hits;
     }
   }
 
   return counts;
 }
 
-kondrat::HitCounts kondrat::runTask(long long taskCount, long long tries, long long seed,
+kondrat::HitCounts kondrat::runTask(long long task_count, long long tries, long long seed,
     const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
 {
-  const long long baseTries = tries / taskCount;
-  const long long remainder = tries % taskCount;
+  const long long base_tries = tries / task_count;
+  const long long remainder = tries % task_count;
   std::vector< std::future< HitCounts > > futures;
 
-  for (long long i = 0; i < taskCount; ++i)
+  for (long long i = 0; i < task_count; ++i)
   {
-    const long long taskTries = baseTries + (i < remainder ? 1 : 0);
-    const long long taskSeed = seed + i;
+    const long long task_tries = base_tries + (i < remainder ? 1 : 0);
+    const long long task_seed = seed + i;
 
     futures.push_back(
-        std::async(std::launch::async, countHits, taskTries, taskSeed, std::cref(ellipses), std::cref(rectangle)));
+        std::async(std::launch::async, countHits, task_tries, task_seed, std::cref(ellipses), std::cref(rectangle)));
   }
 
   HitCounts total = {0, 0};
@@ -236,8 +243,8 @@ kondrat::HitCounts kondrat::runTask(long long taskCount, long long tries, long l
   for (std::future< HitCounts > & future : futures)
   {
     const HitCounts counts = future.get();
-    total.unionHits += counts.unionHits;
-    total.intersectionHits += counts.intersectionHits;
+    total.union_hits += counts.union_hits;
+    total.intersection_hits += counts.intersection_hits;
   }
 
   return total;
