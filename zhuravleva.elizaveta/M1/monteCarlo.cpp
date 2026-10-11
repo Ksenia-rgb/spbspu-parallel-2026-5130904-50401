@@ -23,7 +23,8 @@ zhuravleva::Bounds zhuravleva::getBounds(const std::vector< Circle >& circles)
 {
   const Circle& first = circles.front();
   const double first_b = first.second == 0 ? first.radius : first.second;
-  Bounds bounds {
+  Bounds bounds
+  {
     static_cast< double >(first.x) - first.radius,
     static_cast< double >(first.x) + first.radius,
     static_cast< double >(first.y) - first_b,
@@ -152,7 +153,8 @@ zhuravleva::Args zhuravleva::parseArgs(int argc, char* argv[])
   return Args{threads, tries, seed};
 }
 
-zhuravleva::Hits zhuravleva::calcParallMonte(const std::vector< zhuravleva::Circle >& circles, const zhuravleva::Bounds& bounds,
+zhuravleva::Hits zhuravleva::calcParallMonte(
+    const std::vector< Circle >& circles, const Bounds& bounds,
     std::size_t threads, std::size_t tries, std::size_t seed)
 {
   std::vector< std::future< zhuravleva::Hits > > futures;
@@ -162,7 +164,9 @@ zhuravleva::Hits zhuravleva::calcParallMonte(const std::vector< zhuravleva::Circ
   for (std::size_t i = 0; i < workers; i++)
   {
     const std::size_t count = base + (i < leftover ? 1 : 0);
-    futures.push_back(std::async(std::launch::async, zhuravleva::calcMonte, std::cref(circles), std::cref(bounds), count, seed + i));
+    futures.push_back(std::async(
+        std::launch::async, calcMonte,
+        std::cref(circles), std::cref(bounds), count, seed + i));
   }
   zhuravleva::Hits total{0, 0};
   for (std::future< zhuravleva::Hits >& future : futures)
