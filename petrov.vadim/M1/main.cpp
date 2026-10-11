@@ -55,6 +55,13 @@ namespace petrov {
     int intersection_hits;
   };
 
+  struct calc_params_t {
+    int tries;
+    unsigned int seed;
+    UniBox box;
+    const std::vector< Ellipse >& shapes;
+  };
+
   UniBox calculateBoundingBox(const std::vector< Ellipse >& shapes)
   {
     const int init_max_x = shapes[0].getCenter().x + shapes[0].getR1();
@@ -73,33 +80,28 @@ namespace petrov {
     return res;
   }
 
-  void calculateAreas(
-    int tries,
-    unsigned int seed,
-    UniBox box,
-    const std::vector< Ellipse >& shapes,
-    hit_result_t* res)
+  void calculateAreas(const calc_params_t& params, hit_result_t* res)
   {
-    std::default_random_engine rng(seed);
-    std::uniform_real_distribution< double > dist_x(box.min_x, box.max_x);
-    std::uniform_real_distribution< double > dist_y(box.min_y, box.max_y);
+    std::default_random_engine rng(params.seed);
+    std::uniform_real_distribution< double > dist_x(params.box.min_x, params.box.max_x);
+    std::uniform_real_distribution< double > dist_y(params.box.min_y, params.box.max_y);
 
     int union_hits = 0;
     int intersection_hits = 0;
-    const size_t shapes_count = shapes.size();
+    const size_t shapes_count = params.shapes.size();
 
-    for (int i = 0; i < tries; ++i) {
+    for (int i = 0; i < params.tries; ++i) {
       const double px = dist_x(rng);
       const double py = dist_y(rng);
       size_t hit_count = 0;
 
       for (size_t j = 0; j < shapes_count; ++j) {
-        const double center_x = static_cast< double >(shapes[j].getCenter().x);
-        const double r1 = static_cast< double >(shapes[j].getR1());
+        const double center_x = static_cast< double >(params.shapes[j].getCenter().x);
+        const double r1 = static_cast< double >(params.shapes[j].getR1());
         const double dx = (px - center_x) / r1;
 
-        const double center_y = static_cast< double >(shapes[j].getCenter().y);
-        const double r2 = static_cast< double >(shapes[j].getR2());
+        const double center_y = static_cast< double >(params.shapes[j].getCenter().y);
+        const double r2 = static_cast< double >(params.shapes[j].getR2());
         const double dy = (py - center_y) / r2;
 
         if (((dx * dx) + (dy * dy)) <= 1.0) {
@@ -191,15 +193,9 @@ int main(int argc, char const* argv[])
   for (int i = 0; i < actual_threads; ++i) {
     const int cur_tries = base_tries + ((i == actual_threads - 1) ? remainder_tries : 0);
     const unsigned int cur_seed = static_cast< unsigned int >(seed + i);
+    const petrov::calc_params_t params{cur_tries, cur_seed, box, shapes};
 
-    workers.emplace_back(
-      petrov::calculateAreas,
-      cur_tries,
-      cur_seed,
-      box,
-      std::cref(shapes),
-      &results[i]
-    );
+    workers.emplace_back(petrov::calculateAreas, params, &results[i]);
   }
 
   int totalunion_hits = 0;
