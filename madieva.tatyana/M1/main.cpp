@@ -1,8 +1,8 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <cmath>
 #include <iostream>
+#include <pthread.h>
 #include <random>
 #include <string>
 #include <vector>
@@ -31,7 +31,7 @@ namespace madieva {
     double max_y = 0;
   };
 
-  bool parseParams(int argc, char ** argv, params_t & params)
+  bool parseParams(const int argc, const char ** argv, params_t & params)
   {
     if (argc != 3 && argc != 4) {
       std::cerr << "incorrect number of arguments\n";
@@ -111,6 +111,104 @@ namespace madieva {
     return frame;
   }
 
+  bool isInside(const double x, const double y, const circle_t & circle)
+  {
+    double a = circle.cx - x;
+    double b = circle.cy - y;
+    return (a * a + b * b) <= (circle.r * circle.r);
+  }
+
+  struct result_t
+  {
+    double area_all = 0;
+    double area_some = 0;
+  };
+
+  struct Data
+  {
+    const std::vector< circle_t > * circles = nullptr;
+    frame_t frame;
+    std::size_t tries = 0;
+    std::size_t seed = 0;
+
+    std::size_t count_all = 0;
+    std::size_t count_some = 0;
+  };
+
+  void * computeThread(void * data)
+  {
+    Data * d = static_cast< Data * >(data);
+    std::default_random_engine engine(static_cast< unsigned >(d->seed));
+    std::uniform_real_distribution< double > dist_x(d->frame.min_x, d->frame.max_x);
+    std::uniform_real_distribution< double > dist_y(d->frame.min_y, d->frame.max_y);
+    for (std::size_t i = 0; i < d->tries; ++i) {
+      const double x = dist_x(engine);
+      const double y = dist_y(engine);
+
+      bool hit_some = false;
+      bool hit_all = true;
+
+      for (size_t i = 0; i < d->circles->size(); ++i) {
+        if (isInside(x, y, (*d->circles)[i])) {
+          hit_some = true;
+        } else {
+          hit_all = false;
+        }
+      }
+
+      if (hit_some) {
+        d->count_some++;
+      }
+      if (hit_all) {
+        d->count_all++;
+      }
+    }
+
+    return nullptr;
+  }
+
+  bool computeAreas(const std::vector< circle_t > & circles, const params_t & params, const frame_t & frame, result_t & result)
+  {
+    std::vector< pthread_t > threads(params.threads);
+    std::vector< Data > data(params.threads);
+    size_t testsPerThread = params.tries / params.threads;
+    size_t remainder = params.tries % params.threads;
+
+    for (size_t i = 0; i < params.threads; ++i) {
+      data[i].circles = &circles;
+      data[i].frame = frame;
+      data[i].tries = testsPerThread;
+      if (i == 0) {
+        data[i].tries += remainder;
+      }
+      data[i].seed = params.seed + i;
+      const int err = pthread_create(&threads[i], nullptr, computeThread, &data[i]);
+      if (err != 0) {
+        std::cerr << "pthread_create failed: " << std::strerror(err) << "\n";
+        return false;
+      }
+    }
+    size_t total_all = 0;
+    size_t total_some = 0;
+    for (size_t i = 0; i < params.threads; ++i) {
+      void * ret = nullptr;
+      const int err = pthread_join(threads[i], &ret);
+      if (err != 0) {
+        std::cerr << "pthread_join failed: " << std::strerror(err) << "\n";
+        return false;
+      }
+      total_all += data[i].count_all;
+      total_some += data[i].count_some;
+    }
+
+    const double frame_area = (frame.max_x - frame.min_x) * (frame.max_y - frame.min_y);
+    const double scale = frame_area / static_cast< double >(params.tries);
+
+    result.area_all = scale * static_cast< double >(total_all);
+    result.area_some = scale * static_cast< double >(total_some);
+    return true;
+  }
+
 }
 
 int main(int argc, char ** argv)
@@ -127,5 +225,10 @@ int main(int argc, char ** argv)
 
   madieva::frame_t frame = madieva::computeFrame(circles);
 
+  madieva::result_t result{};
+  if (!madieva::computeAreas(circles, params, frame, result)) {
+    return 1;
+  }
+  std::cout << result.area_all << " " << result.area_some << "\n";
   return 0;
 }
