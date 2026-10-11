@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <iostream>
 #include <limits>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -23,7 +24,33 @@ namespace hvostov {
 }
 
 int main(int argc, char** argv)
-{}
+{
+  if (argc != 3 && argc != 4) {
+    std::cerr << "Invalid amount of arguments\n";
+    return 1;
+  }
+
+  long long threads = 0, tries = 0, seed = 0;
+  try {
+    threads = std::stoll(argv[1]);
+    tries = std::stoll(argv[2]);
+    if (argc == 4)
+      seed = std::stoll(argv[3]);
+  } catch (...) {
+    std::cerr << "Wrong input\n";
+    return 1;
+  }
+  if (tries <= 0) {
+    std::cerr << "tries must be positive\n";
+    return 1;
+  }
+  if (threads < 0 || seed < 0) {
+    std::cerr << "threads and seed must not be negative\n";
+    return 1;
+  }
+  if (threads == 0)
+    threads = 1;
+}
 
 bool hvostov::isInside(double px, double py, const shape_t& s)
 {
