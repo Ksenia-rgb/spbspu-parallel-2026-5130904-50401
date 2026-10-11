@@ -14,26 +14,29 @@ bool zhuravleva::isInside(const Circle& circle, double x, double y)
 {
   const double dx = x - circle.x;
   const double dy = y - circle.y;
-  const double rad = circle.radius;
-  return dx * dx + dy * dy <= rad * rad;
+  const double rada = circle.radius;
+  const double radb = circle.second == 0 ? rada : circle.second;
+  return dx * dx / (rada * rada) + dy * dy / (radb * radb) <= 1.0;
 }
 
 zhuravleva::Bounds zhuravleva::getBounds(const std::vector< Circle >& circles)
 {
   const Circle& first = circles.front();
+  const double first_b = first.second == 0 ? first.radius : first.second;
   Bounds bounds{
     static_cast< double >(first.x) - first.radius,
     static_cast< double >(first.x) + first.radius,
-    static_cast< double >(first.y) - first.radius,
-    static_cast< double >(first.y) + first.radius
+    static_cast< double >(first.y) - first_b,
+    static_cast< double >(first.y) + first_b
   };
   for (std::size_t i = 1; i < circles.size(); i++)
   {
     const Circle& circle = circles[i];
+    const double b = circle.second == 0 ? circle.radius : circle.second;
     bounds.min_x = std::min(bounds.min_x, static_cast< double >(circle.x) - circle.radius);
     bounds.max_x = std::max(bounds.max_x, static_cast< double >(circle.x) + circle.radius);
-    bounds.min_y = std::min(bounds.min_y, static_cast< double >(circle.y) - circle.radius);
-    bounds.max_y = std::max(bounds.max_y, static_cast< double >(circle.y) + circle.radius);
+    bounds.min_y = std::min(bounds.min_y, static_cast< double >(circle.y) - b);
+    bounds.max_y = std::max(bounds.max_y, static_cast< double >(circle.y) + b);
   }
   return bounds;
 }
@@ -43,7 +46,7 @@ std::vector< zhuravleva::Circle > zhuravleva::readCircles(std::istream& in)
   std::vector< Circle > circles;
   while (true)
   {
-    int radius = 0, ignored = 0;
+    int radius = 0, second = 0;
     int x = 0, y = 0;
 
     if (!(in >> radius))
@@ -54,11 +57,11 @@ std::vector< zhuravleva::Circle > zhuravleva::readCircles(std::istream& in)
       }
       throw std::invalid_argument("Invalid circle input");
     }
-    if (!(in >> ignored >> x >> y))
+    if (!(in >> second >> x >> y))
     {
       throw std::invalid_argument("Incomplete circle input");
     }
-    circles.push_back(Circle{radius, x, y});
+    circles.push_back(Circle{radius, second, x, y});
   }
   return circles;
 }

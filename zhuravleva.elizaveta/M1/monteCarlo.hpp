@@ -9,7 +9,7 @@ namespace zhuravleva
 {
   struct Circle
   {
-    int radius, x, y;
+    int radius, second, x, y;
   };
 
   struct Bounds
