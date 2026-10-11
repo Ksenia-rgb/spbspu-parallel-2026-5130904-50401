@@ -3,6 +3,10 @@
 #include <cstddef>
 #include <stdexcept>
 #include <string>
+#include <algorithm>
+#include <future>
+#include <functional>
+#include <random>
 
 namespace kondrat
 {
@@ -22,9 +26,16 @@ namespace kondrat
     double bottom;
   };
 
+  struct HitCounts
+  {
+    long long unionHits;
+    long long intersectionHits;
+  };
+
   long long parseArgument(const char * argument);
   Rectangle findRectangle(const std::vector< Ellipse > & ellipses);
   bool contains(const Ellipse & ellipse, double x, double y);
+  HitCounts countHits(long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
 }
 
 int main(int argc, char ** argv)
@@ -114,7 +125,7 @@ kondrat::Rectangle kondrat::findRectangle(const std::vector< Ellipse > & ellipse
   {
     firstX - first.horizontalRadius,
     firstX + first.horizontalRadius,
-    firstY - first.verticalRadius,
+    firstY + first.verticalRadius,
     firstY - first.verticalRadius
   };
 
@@ -138,4 +149,40 @@ bool kondrat::contains(const Ellipse & ellipse, double x, double y)
   const double dy = (y - ellipse.y) / ellipse.verticalRadius;
 
   return dx * dx + dy * dy <= 1.0;
+}
+
+kondrat::HitCounts kondrat::countHits(long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
+{
+  std::default_random_engine generator(seed);
+  std::uniform_real_distribution< double > xDistribution(rectangle.left, rectangle.right);
+  std::uniform_real_distribution< double > yDistribution(rectangle.bottom, rectangle.top);
+
+  HitCounts counts = {0, 0};
+
+  for (long long i = 0; i < tries; ++i)
+  {
+    const double x = xDistribution(generator);
+    const double y = yDistribution(generator);
+    bool insideAny = false;
+    bool insideAll = true;
+
+    for (const Ellipse & ellipse : ellipses)
+    {
+      const bool inside = contains(ellipse, x, y);
+      insideAny = insideAny || inside;
+      insideAll = insideAll && inside;
+    }
+
+    if (insideAny)
+    {
+      ++counts.unionHits;
+    }
+
+    if (insideAll)
+    {
+      ++counts.intersectionHits;
+    }
+  }
+
+  return counts;
 }
