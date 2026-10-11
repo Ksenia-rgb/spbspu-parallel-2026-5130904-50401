@@ -50,6 +50,11 @@ namespace petrov {
     int min_y;
   };
 
+  struct hit_result_t {
+    int union_hits;
+    int intersection_hits;
+  };
+
   UniBox calculateBoundingBox(const std::vector< Ellipse >& shapes)
   {
     const int init_max_x = shapes[0].getCenter().x + shapes[0].getR1();
@@ -68,10 +73,14 @@ namespace petrov {
     return res;
   }
 
-  void calculateAreas(int local_tries, unsigned int local_seed, UniBox box,
-    const std::vector< Ellipse >& shapes, int* out_union_hits, int* out_intersection_hits)
+  void calculateAreas(
+    int tries,
+    unsigned int seed,
+    UniBox box,
+    const std::vector< Ellipse >& shapes,
+    hit_result_t* res)
   {
-    std::default_random_engine rng(local_seed);
+    std::default_random_engine rng(seed);
     std::uniform_real_distribution< double > dist_x(box.min_x, box.max_x);
     std::uniform_real_distribution< double > dist_y(box.min_y, box.max_y);
 
@@ -79,16 +88,19 @@ namespace petrov {
     int intersection_hits = 0;
     const size_t shapes_count = shapes.size();
 
-    for (int i = 0; i < local_tries; ++i) {
+    for (int i = 0; i < tries; ++i) {
       const double px = dist_x(rng);
       const double py = dist_y(rng);
       size_t hit_count = 0;
 
       for (size_t j = 0; j < shapes_count; ++j) {
-        const double dx = (px - static_cast< double >(shapes[j].getCenter().x))
-          / static_cast< double >(shapes[j].getR1());
-        const double dy = (py - static_cast< double >(shapes[j].getCenter().y))
-          / static_cast< double >(shapes[j].getR2());
+        const double center_x = static_cast< double >(shapes[j].getCenter().x);
+        const double r1 = static_cast< double >(shapes[j].getR1());
+        const double dx = (px - center_x) / r1;
+
+        const double center_y = static_cast< double >(shapes[j].getCenter().y);
+        const double r2 = static_cast< double >(shapes[j].getR2());
+        const double dy = (py - center_y) / r2;
 
         if (((dx * dx) + (dy * dy)) <= 1.0) {
           ++hit_count;
@@ -103,8 +115,8 @@ namespace petrov {
       }
     }
 
-    *out_union_hits = union_hits;
-    *out_intersection_hits = intersection_hits;
+    res->union_hits = union_hits;
+    res->intersection_hits = intersection_hits;
   }
 }
 
@@ -174,15 +186,20 @@ int main(int argc, char const* argv[])
   std::vector< std::thread > workers;
   workers.reserve(actual_threads);
 
-  std::vector< int > threadunion_hits(actual_threads, 0);
-  std::vector< int > threadintersection_hits(actual_threads, 0);
+  std::vector< petrov::hit_result_t > results(actual_threads, {0, 0});
 
   for (int i = 0; i < actual_threads; ++i) {
-    const int current_tries = base_tries + ((i == actual_threads - 1) ? remainder_tries : 0);
-    const unsigned int current_seed = static_cast< unsigned int >(seed + i);
+    const int cur_tries = base_tries + ((i == actual_threads - 1) ? remainder_tries : 0);
+    const unsigned int cur_seed = static_cast< unsigned int >(seed + i);
 
-    workers.emplace_back(petrov::calculateAreas, current_tries, current_seed, box,
-      std::cref(shapes), &threadunion_hits[i], &threadintersection_hits[i]);
+    workers.emplace_back(
+      petrov::calculateAreas,
+      cur_tries,
+      cur_seed,
+      box,
+      std::cref(shapes),
+      &results[i]
+    );
   }
 
   int totalunion_hits = 0;
@@ -190,8 +207,8 @@ int main(int argc, char const* argv[])
 
   for (int i = 0; i < actual_threads; ++i) {
     workers[i].join();
-    totalunion_hits += threadunion_hits[i];
-    totalintersection_hits += threadintersection_hits[i];
+    totalunion_hits += results[i].union_hits;
+    totalintersection_hits += results[i].intersection_hits;
   }
 
   const double union_area = box_area * (static_cast< double >(totalunion_hits) / tries);
