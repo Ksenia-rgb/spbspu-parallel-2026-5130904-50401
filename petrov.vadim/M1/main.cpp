@@ -68,8 +68,8 @@ namespace petrov
     return ((dx * dx) + (dy * dy)) <= 1.0;
   }
 
-  void calculateAreas(int localTries, unsigned long localSeed, UniBox box,
-    const std::vector< Ellipse >* shapes, int* outUnionHits, int* outIntersectionHits)
+  void calculateAreas(int localTries, size_t localSeed, UniBox box,
+    const std::vector< Ellipse >& shapes, int* outUnionHits, int* outIntersectionHits)
   {
     std::mt19937 rng(localSeed);
     std::uniform_int_distribution< int > distX(box.minX, box.maxX);
@@ -77,14 +77,14 @@ namespace petrov
 
     int unionHits = 0;
     int intersectionHits = 0;
-    const size_t shapesCount = shapes->size();
+    const size_t shapesCount = shapes.size();
 
     for (int i = 0; i < localTries; ++i) {
       const p_t pt{distX(rng), distY(rng)};
       size_t hitCount = 0;
 
       for (size_t j = 0; j < shapesCount; ++j) {
-        if (isInside((*shapes)[j], pt)) {
+        if (isInside((shapes)[j], pt)) {
           ++hitCount;
         }
       }
@@ -135,7 +135,8 @@ int main(int argc, char const *argv[]) {
   int r1 = 0;
   int r2 = 0;
   int x = 0;
-  int y = 0;  while (std::cin >> r1 >> r2 >> x >> y) {
+  int y = 0;
+  while (std::cin >> r1 >> r2 >> x >> y) {
     if (r1 <= 0 || r2 < 0) {
       std::cerr << "Radius invalid\n";
       return 1;
@@ -153,6 +154,49 @@ int main(int argc, char const *argv[]) {
     std::cerr << "No figures provided\n";
     return 1;
   }
+
+  const petrov::UniBox box = petrov::calculateBoundingBox(shapes);
+  const double boxArea = static_cast< double >(box.maxX - box.minX)
+    * static_cast< double >(box.maxY - box.minY);
+
+  const int actualThreads = std::min(threads, tries);
+  const int baseTries = tries / actualThreads;
+  const int remainderTries = tries % actualThreads;
+
+  std::vector< std::thread > workers;
+  workers.reserve(actualThreads);
+
+  std::vector< int > threadUnionHits(actualThreads, 0);
+  std::vector< int > threadIntersectionHits(actualThreads, 0);
+
+  for (int i = 0; i < actualThreads; ++i) {
+    const int currentTries = baseTries + ((i < remainderTries) ? 1 : 0);
+    const size_t currentSeed = static_cast< size_t >(seed + i);
+
+    workers.emplace_back(
+      petrov::calculateAreas,
+      currentTries,
+      currentSeed,
+      box,
+      std::cref(shapes),
+      &threadUnionHits[i],
+      &threadIntersectionHits[i]);
+  }
+
+  int totalUnionHits = 0;
+  int totalIntersectionHits = 0;
+
+  for (int i = 0; i < actualThreads; ++i) {
+    workers[i].join();
+    totalUnionHits += threadUnionHits[i];
+    totalIntersectionHits += threadIntersectionHits[i];
+  }
+
+  const double unionArea = boxArea * (static_cast< double >(totalUnionHits) / tries);
+  const double intersectionArea = boxArea * (static_cast< double >(totalIntersectionHits) / tries);
+
+  std::cout.precision(std::numeric_limits< double >::max_digits10);
+  std::cout << unionArea << ' ' << intersectionArea << '\n';
 
   return 0;
 }
