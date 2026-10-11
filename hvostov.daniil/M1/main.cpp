@@ -2,6 +2,8 @@
 #include <cstddef>
 #include <iostream>
 #include <limits>
+#include <random>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -50,6 +52,19 @@ int main(int argc, char** argv)
   }
   if (threads == 0)
     threads = 1;
+
+  std::vector< hvostov::shape_t > shapes;
+  try {
+    shapes = hvostov::inputShapes(std::cin);
+  } catch (const std::runtime_error& e) {
+    std::cerr << e.what() << "\n";
+    return 1;
+  }
+
+  if (shapes.empty()) {
+    std::cout << 0.0 << " " << 0.0 << "\n";
+    return 0;
+  }
 }
 
 bool hvostov::isInside(double px, double py, const shape_t& s)
@@ -75,4 +90,47 @@ hvostov::rect_t hvostov::getRect(const std::vector< shape_t >& shapes)
     rect.maxY = std::max(rect.maxY, s.centery + s.vert_radius);
   }
   return rect;
+}
+
+std::pair< size_t, size_t > hvostov::calc(const std::vector< shape_t >& shapes, rect_t rect, size_t tries, size_t seed)
+{
+  std::default_random_engine gen(seed);
+  std::uniform_real_distribution< double > dx(rect.minX, rect.maxX);
+  std::uniform_real_distribution< double > dy(rect.minY, rect.maxY);
+
+  size_t count_in_any = 0;
+  size_t count_in_all = 0;
+  for (size_t i = 0; i < tries; i++) {
+    const double px = dx(gen);
+    const double py = dy(gen);
+    const size_t n = countInsides(px, py, shapes);
+    if (n == shapes.size())
+      ++count_in_all;
+    if (n != 0)
+      ++count_in_any;
+  }
+  return {count_in_any, count_in_all};
+}
+
+std::vector< hvostov::shape_t > hvostov::inputShapes(std::istream& in)
+{
+  std::vector< shape_t > shapes;
+  double hor_radius = 0, vert_radius = 0, centerx = 0, centery = 0;
+
+  while (in >> hor_radius) {
+    if (!(in >> vert_radius >> centerx >> centery)) {
+      throw std::runtime_error("Cannot parse shape");
+    }
+    if (hor_radius <= 0 || vert_radius < 0) {
+      throw std::runtime_error("Invalid shape parameters");
+    }
+    const double rx = hor_radius;
+    const double ry = (vert_radius == 0) ? rx : vert_radius;
+    shapes.push_back({rx, ry, centerx, centery});
+  }
+
+  if (!in.eof()) {
+    throw std::runtime_error("Cannot parse shape");
+  }
+  return shapes;
 }
