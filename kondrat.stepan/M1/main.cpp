@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <future>
+#include <iomanip>
 #include <functional>
 #include <random>
 
@@ -36,6 +37,7 @@ namespace kondrat
   Rectangle findRectangle(const std::vector< Ellipse > & ellipses);
   bool contains(const Ellipse & ellipse, double x, double y);
   HitCounts countHits(long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
+  HitCounts runTask(long long taskCount, long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle);
 }
 
 int main(int argc, char ** argv)
@@ -77,29 +79,52 @@ int main(int argc, char ** argv)
     return 1;
   }
 
-  std::vector< kondrat::Ellipse > ellipses;
-  int a = 0;
-  int b = 0;
-  int cx = 0;
-  int cy = 0;
-
-  while (std::cin >> a >> b >> cx >> cy)
+  try
   {
-    const int verticalRadius = b == 0 ? a : b;
-    ellipses.push_back({a, verticalRadius, cx, cy});
+    std::vector< kondrat::Ellipse > ellipses;
+    int a = 0;
+    int b = 0;
+    int cx = 0;
+    int cy = 0;
+
+    while (std::cin >> a >> b >> cx >> cy)
+    {
+      const int verticalRadius = b == 0 ? a : b;
+      ellipses.push_back({a, verticalRadius, cx, cy});
+    }
+
+    if (std::cin.bad() || !std::cin.eof())
+    {
+      std::cerr << "Failed to parse figure\n";
+      return 1;
+    }
+
+    if (threads == 0 || ellipses.empty())
+    {
+      std::cout << "0 0\n";
+      return 0;
+    }
+
+    const kondrat::Rectangle rectangle = kondrat::findRectangle(ellipses);
+    const kondrat::HitCounts counts = kondrat::runTask(threads, tries, seed, ellipses, rectangle);
+
+    const double width = rectangle.right - rectangle.left;
+    const double height = rectangle.top - rectangle.bottom;
+    const double rectangleArea = width * height;
+
+    const double unionArea = rectangleArea * (static_cast<double>(counts.unionHits) / tries);
+    const double intersectionArea = rectangleArea * (static_cast<double>(counts.intersectionHits) / tries);
+
+    std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
+    std::cout << unionArea << ' ' << intersectionArea << '\n';
+  }
+  catch (std::exception & error)
+  {
+    std::cerr << error.what() << '\n';
+    return 2;
   }
 
-  if (std::cin.bad() || !std::cin.eof())
-  {
-    std::cerr << "Failed to parse figure\n";
-    return 1;
-  }
-
-  if (ellipses.empty())
-  {
-    std::cout << "0 0\n";
-    return 0;
-  }
+  return 0;
 }
 
 long long kondrat::parseArgument(const char * argument)
@@ -185,4 +210,30 @@ kondrat::HitCounts kondrat::countHits(long long tries, long long seed, const std
   }
 
   return counts;
+}
+
+kondrat::HitCounts kondrat::runTask(long long taskCount, long long tries, long long seed, const std::vector< Ellipse > & ellipses, const Rectangle & rectangle)
+{
+  const long long baseTries = tries / taskCount;
+  const long long remainder = tries % taskCount;
+  std::vector< std::future< HitCounts > > futures;
+
+  for (long long i = 0; i < taskCount; ++i)
+  {
+    const long long taskTries = baseTries + (i < remainder ? 1 : 0);
+    const long long taskSeed = seed + i;
+
+    futures.push_back(std::async(std::launch::async, countHits, taskTries, taskSeed, std::cref(ellipses), std::cref(rectangle)));
+  }
+
+  HitCounts total = {0, 0};
+
+  for (std::future< HitCounts > & future : futures)
+  {
+    const HitCounts counts = future.get();
+    total.unionHits += counts.unionHits;
+    total.intersectionHits += counts.intersectionHits;
+  }
+
+  return total;
 }
