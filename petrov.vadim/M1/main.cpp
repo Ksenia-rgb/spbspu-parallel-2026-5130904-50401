@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
-#include <functional>
 #include <iostream>
 #include <limits>
 #include <random>
