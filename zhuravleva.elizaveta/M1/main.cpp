@@ -7,11 +7,13 @@
 
 int main(int argc, char* argv[])
 {
-  try {
+  try
+  {
     const zhuravleva::Args args = zhuravleva::parseArgs(argc, argv);
 
     const std::vector< zhuravleva::Circle > circles = zhuravleva::readCircles(std::cin);
-    if (circles.empty()) {
+    if (circles.empty())
+    {
       std::cout << "0 0\n";
       return 0;
     }
@@ -28,7 +30,9 @@ int main(int argc, char* argv[])
 
     std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
     std::cout << area_any << ' ' << area_all << '\n';
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e)
+  {
     std::cerr << e.what() << '\n';
     return 1;
   }
