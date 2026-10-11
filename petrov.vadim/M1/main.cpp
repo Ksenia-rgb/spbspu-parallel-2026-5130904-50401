@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -8,8 +9,7 @@
 #include <thread>
 #include <vector>
 
-namespace petrov
-{
+namespace petrov {
   struct p_t {
     int x;
     int y;
@@ -17,34 +17,41 @@ namespace petrov
 
   struct Ellipse {
     Ellipse(int r1, int r2, int x, int y):
-      center{x, y},
-      radius1(r1),
-      radius2(r2 > 0 ? r2 : r1)
+      center_{x, y},
+      radius1_(r1),
+      radius2_(r2 > 0 ? r2 : r1)
     {}
 
-    int getR1() const {
-      return radius1;
+    int getR1() const
+    {
+      return radius1_;
     }
 
-    int getR2() const {
-      return radius2;
+    int getR2() const
+    {
+      return radius2_;
     }
 
-    p_t getCenter() const {
-      return center;
+    p_t getCenter() const
+    {
+      return center_;
     }
 
-    private:
-      p_t center;
-      int radius1;
-      int radius2;
+  private:
+    p_t center_;
+    int radius1_;
+    int radius2_;
   };
 
   struct UniBox {
-    int max_x, max_y, min_x, min_y;
+    int max_x;
+    int max_y;
+    int min_x;
+    int min_y;
   };
 
-  UniBox calculateBoundingBox(const std::vector< Ellipse >& shapes) {
+  UniBox calculateBoundingBox(const std::vector< Ellipse >& shapes)
+  {
     UniBox res{
       shapes[0].getCenter().x + shapes[0].getR1(),
       shapes[0].getCenter().y + shapes[0].getR2(),
@@ -61,20 +68,20 @@ namespace petrov
     return res;
   }
 
-  bool isInside(const Ellipse& shape, const p_t& point) {
-    const double dx = (point.x - shape.getCenter().x) / static_cast< double >(shape.getR1());
-    const double dy = (point.y - shape.getCenter().y) / static_cast< double >(shape.getR2());
-
-    return ((dx * dx) + (dy * dy)) <= 1.0;
-  }
-
-  void calculateAreas(int local_tries, size_t local_seed, UniBox box,
-    const std::vector< Ellipse >& shapes, int* out_union_hits, int* out_intersection_hits)
+  void calculateAreas(
+    int local_tries,
+    size_t local_seed,
+    UniBox box,
+    const std::vector< Ellipse >& shapes,
+    int* out_union_hits,
+    int* out_intersection_hits)
   {
     std::mt19937_64 rng(local_seed);
-    std::uniform_real_distribution< double > dist_x(static_cast< double >(box.min_x),
+    std::uniform_real_distribution< double > dist_x(
+      static_cast< double >(box.min_x),
       static_cast< double >(box.max_x));
-    std::uniform_real_distribution< double > dist_y(static_cast< double >(box.min_y),
+    std::uniform_real_distribution< double > dist_y(
+      static_cast< double >(box.min_y),
       static_cast< double >(box.max_y));
 
     int union_hits = 0;
@@ -110,7 +117,8 @@ namespace petrov
   }
 }
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char const* argv[])
+{
   if (argc < 3 || argc > 4) {
     std::cerr << "invalid arguments count\n";
     return 1;
@@ -129,12 +137,12 @@ int main(int argc, char const *argv[]) {
       seed = 0;
     }
 
-    if (threads < 1 || tries <= 1 || seed < 0) {
+    if (threads < 0 || tries <= 0 || seed < 0) {
       std::cerr << "Arguments invalid\n";
       return 1;
     }
-  } catch(...) {
-    std::cerr << "Invalid arguments" << '\n';
+  } catch (...) {
+    std::cerr << "Invalid arguments\n";
     return 1;
   }
 
