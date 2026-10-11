@@ -52,12 +52,11 @@ namespace petrov {
 
   UniBox calculateBoundingBox(const std::vector< Ellipse >& shapes)
   {
-    UniBox res{
-      shapes[0].getCenter().x + shapes[0].getR1(),
-      shapes[0].getCenter().y + shapes[0].getR2(),
-      shapes[0].getCenter().x - shapes[0].getR1(),
-      shapes[0].getCenter().y - shapes[0].getR2()
-    };
+    const int init_max_x = shapes[0].getCenter().x + shapes[0].getR1();
+    const int init_max_y = shapes[0].getCenter().y + shapes[0].getR2();
+    const int init_min_x = shapes[0].getCenter().x - shapes[0].getR1();
+    const int init_min_y = shapes[0].getCenter().y - shapes[0].getR2();
+    UniBox res{init_max_x, init_max_y, init_min_x, init_min_y};
 
     for (size_t i = 1; i < shapes.size(); ++i) {
       res.max_x = std::max(res.max_x, shapes[i].getCenter().x + shapes[i].getR1());
@@ -69,13 +68,8 @@ namespace petrov {
     return res;
   }
 
-  void calculateAreas(
-    int local_tries,
-    unsigned int local_seed,
-    UniBox box,
-    const std::vector< Ellipse >& shapes,
-    int* out_union_hits,
-    int* out_intersection_hits)
+  void calculateAreas(int local_tries, unsigned int local_seed, UniBox box,
+    const std::vector< Ellipse >& shapes, int* out_union_hits, int* out_intersection_hits)
   {
     std::default_random_engine rng(local_seed);
     std::uniform_real_distribution< double > dist_x(box.min_x, box.max_x);
@@ -169,8 +163,9 @@ int main(int argc, char const* argv[])
   }
 
   const petrov::UniBox box = petrov::calculateBoundingBox(shapes);
-  const double box_area = static_cast< double >(box.max_x - box.min_x)
-    * static_cast< double >(box.max_y - box.min_y);
+  const double delta_x = static_cast< double >(box.max_x - box.min_x);
+  const double delta_y = static_cast< double >(box.max_y - box.min_y);
+  const double box_area = delta_x * delta_y;
 
   const int actual_threads = (threads == 0) ? 1 : std::min(threads, tries);
   const int base_tries = tries / actual_threads;
@@ -186,15 +181,8 @@ int main(int argc, char const* argv[])
     const int current_tries = base_tries + ((i == actual_threads - 1) ? remainder_tries : 0);
     const unsigned int current_seed = static_cast< unsigned int >(seed + i);
 
-    workers.emplace_back(
-      petrov::calculateAreas,
-      current_tries,
-      current_seed,
-      box,
-      std::cref(shapes),
-      &threadunion_hits[i],
-      &threadintersection_hits[i]
-    );
+    workers.emplace_back(petrov::calculateAreas, current_tries, current_seed, box,
+      std::cref(shapes), &threadunion_hits[i], &threadintersection_hits[i]);
   }
 
   int totalunion_hits = 0;
