@@ -41,19 +41,22 @@ namespace madieva
     }
     try
     {
-      if (argv[1][0] == '-') {
+      if (argv[1][0] == '-')
+      {
         std::cerr << "threads must be non-negative\n";
         return false;
       }
       params.threads = static_cast< size_t >(std::stoull(argv[1]));
-      if (argv[2][0] == '-') {
+      if (argv[2][0] == '-')
+      {
         std::cerr << "tries must be non-negative\n";
         return false;
       }
       params.tries = static_cast< size_t >(std::stoull(argv[2]));
       if (argc == 4)
       {
-        if (argv[3][0] == '-') {
+        if (argv[3][0] == '-')
+        {
           std::cerr << "seed must be non-negative\n";
           return false;
         }
@@ -63,11 +66,6 @@ namespace madieva
     catch (const std::exception & e)
     {
       std::cerr << "cannot parse arguments: " << e.what() << "\n";
-      return false;
-    }
-    if (params.threads == 0)
-    {
-      std::cerr << "inappropriate number of threads\n";
       return false;
     }
     if (params.tries == 0)
@@ -205,55 +203,70 @@ namespace madieva
   bool computeAreas(
       const std::vector< circle_t > & circles, const params_t & params, const frame_t & frame, result_t & result)
   {
-    std::vector< pthread_t > threads;
-    std::vector< Data > data;
-    try
-    {
-      threads.resize(params.threads);
-      data.resize(params.threads);
-    }
-    catch (const std::bad_alloc & e)
-    {
-      std::cerr << "cannot allocate memory for threads: " << e.what() << "\n";
-      return false;
-    }
-    size_t tests_per_thread = params.tries / params.threads;
-    size_t remainder = params.tries % params.threads;
-
-    for (size_t i = 0; i < params.threads; ++i)
-    {
-      data[i].circles = &circles;
-      data[i].frame = frame;
-      data[i].tries = tests_per_thread;
-      if (i == 0)
-      {
-        data[i].tries += remainder;
-      }
-      data[i].seed = params.seed + i;
-      const int err = pthread_create(&threads[i], nullptr, computeThread, &data[i]);
-      if (err != 0)
-      {
-        std::cerr << "pthread_create failed: " << std::strerror(err) << "\n";
-        for (std::size_t j = 0; j < i; ++j)
-        {
-          pthread_join(threads[j], nullptr);
-        }
-        return false;
-      }
-    }
     size_t total_all = 0;
     size_t total_some = 0;
-    for (size_t i = 0; i < params.threads; ++i)
+
+    if (params.threads == 0)
     {
-      void * ret = nullptr;
-      const int err = pthread_join(threads[i], &ret);
-      if (err != 0)
+      Data data;
+      data.circles = &circles;
+      data.frame = frame;
+      data.tries = params.tries;
+      data.seed = params.seed;
+      computeThread(&data);
+      total_all = data.count_all;
+      total_some = data.count_some;
+    }
+    else
+    {
+      std::vector< pthread_t > threads;
+      std::vector< Data > data;
+      try
       {
-        std::cerr << "pthread_join failed: " << std::strerror(err) << "\n";
+        threads.resize(params.threads);
+        data.resize(params.threads);
+      }
+      catch (const std::bad_alloc & e)
+      {
+        std::cerr << "cannot allocate memory for threads: " << e.what() << "\n";
         return false;
       }
-      total_all += data[i].count_all;
-      total_some += data[i].count_some;
+      size_t tests_per_thread = params.tries / params.threads;
+      size_t remainder = params.tries % params.threads;
+
+      for (size_t i = 0; i < params.threads; ++i)
+      {
+        data[i].circles = &circles;
+        data[i].frame = frame;
+        data[i].tries = tests_per_thread;
+        if (i == 0)
+        {
+          data[i].tries += remainder;
+        }
+        data[i].seed = params.seed + i;
+        const int err = pthread_create(&threads[i], nullptr, computeThread, &data[i]);
+        if (err != 0)
+        {
+          std::cerr << "pthread_create failed: " << std::strerror(err) << "\n";
+          for (std::size_t j = 0; j < i; ++j)
+          {
+            pthread_join(threads[j], nullptr);
+          }
+          return false;
+        }
+      }
+      for (size_t i = 0; i < params.threads; ++i)
+      {
+        void * ret = nullptr;
+        const int err = pthread_join(threads[i], &ret);
+        if (err != 0)
+        {
+          std::cerr << "pthread_join failed: " << std::strerror(err) << "\n";
+          return false;
+        }
+        total_all += data[i].count_all;
+        total_some += data[i].count_some;
+      }
     }
 
     const double frame_area = (frame.max_x - frame.min_x) * (frame.max_y - frame.min_y);
@@ -263,7 +276,6 @@ namespace madieva
     result.area_some = scale * static_cast< double >(total_some);
     return true;
   }
-
 }
 
 int main(int argc, char ** argv)
