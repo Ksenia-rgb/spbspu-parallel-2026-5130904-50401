@@ -1,10 +1,10 @@
+#include <pthread.h>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <iostream>
 #include <new>
-#include <pthread.h>
 #include <random>
 #include <string>
 #include <vector>
@@ -156,8 +156,8 @@ namespace madieva
 
   bool isInside(const double x, const double y, const figure_t & figure)
   {
-    double dx = figure.cx - x;
-    double dy = figure.cy - y;
+    const double dx = figure.cx - x;
+    const double dy = figure.cy - y;
     if (figure.kind == figure_kind_t::circle)
     {
       return (dx * dx + dy * dy) <= (figure.a * figure.a);
@@ -186,7 +186,7 @@ namespace madieva
 
   void * computeThread(void * data)
   {
-    Data * d = static_cast< Data * >(data);
+    Data * const d = static_cast< Data * >(data);
     std::default_random_engine engine(d->seed);
     std::uniform_real_distribution< double > dist_x(d->frame.min_x, d->frame.max_x);
     std::uniform_real_distribution< double > dist_y(d->frame.min_y, d->frame.max_y);
@@ -254,8 +254,8 @@ namespace madieva
         std::cerr << "cannot allocate memory for threads: " << e.what() << "\n";
         return false;
       }
-      size_t tests_per_thread = params.tries / params.threads;
-      size_t remainder = params.tries % params.threads;
+      const size_t tests_per_thread = params.tries / params.threads;
+      const size_t remainder = params.tries % params.threads;
 
       for (size_t i = 0; i < params.threads; ++i)
       {
@@ -313,7 +313,7 @@ int main(int argc, char ** argv)
   {
     return 1;
   }
-  madieva::frame_t frame = madieva::computeFrame(figures);
+  const madieva::frame_t frame = madieva::computeFrame(figures);
   madieva::result_t result{};
   if (!madieva::computeAreas(figures, params, frame, result))
   {
