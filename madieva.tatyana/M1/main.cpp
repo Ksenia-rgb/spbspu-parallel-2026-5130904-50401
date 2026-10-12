@@ -41,10 +41,22 @@ namespace madieva
     }
     try
     {
+      if (argv[1][0] == '-') {
+        std::cerr << "threads must be non-negative\n";
+        return false;
+      }
       params.threads = static_cast< size_t >(std::stoull(argv[1]));
+      if (argv[2][0] == '-') {
+        std::cerr << "tries must be non-negative\n";
+        return false;
+      }
       params.tries = static_cast< size_t >(std::stoull(argv[2]));
       if (argc == 4)
       {
+        if (argv[3][0] == '-') {
+          std::cerr << "seed must be non-negative\n";
+          return false;
+        }
         params.seed = static_cast< size_t >(std::stoull(argv[3]));
       }
     }
@@ -154,10 +166,10 @@ namespace madieva
   void * computeThread(void * data)
   {
     Data * d = static_cast< Data * >(data);
-    std::default_random_engine engine(static_cast< unsigned >(d->seed));
+    std::default_random_engine engine(d->seed);
     std::uniform_real_distribution< double > dist_x(d->frame.min_x, d->frame.max_x);
     std::uniform_real_distribution< double > dist_y(d->frame.min_y, d->frame.max_y);
-    for (std::size_t i = 0; i < d->tries; ++i)
+    for (size_t i = 0; i < d->tries; ++i)
     {
       const double x = dist_x(engine);
       const double y = dist_y(engine);
@@ -165,9 +177,9 @@ namespace madieva
       bool hit_some = false;
       bool hit_all = true;
 
-      for (size_t i = 0; i < d->circles->size(); ++i)
+      for (size_t j = 0; j < d->circles->size(); ++j)
       {
-        if (isInside(x, y, (*d->circles)[i]))
+        if (isInside(x, y, (*d->circles)[j]))
         {
           hit_some = true;
         }
@@ -193,16 +205,26 @@ namespace madieva
   bool computeAreas(
       const std::vector< circle_t > & circles, const params_t & params, const frame_t & frame, result_t & result)
   {
-    std::vector< pthread_t > threads(params.threads);
-    std::vector< Data > data(params.threads);
-    size_t testsPerThread = params.tries / params.threads;
+    std::vector< pthread_t > threads;
+    std::vector< Data > data;
+    try
+    {
+      threads.resize(params.threads);
+      data.resize(params.threads);
+    }
+    catch (const std::bad_alloc & e)
+    {
+      std::cerr << "cannot allocate memory for threads: " << e.what() << "\n";
+      return false;
+    }
+    size_t tests_per_thread = params.tries / params.threads;
     size_t remainder = params.tries % params.threads;
 
     for (size_t i = 0; i < params.threads; ++i)
     {
       data[i].circles = &circles;
       data[i].frame = frame;
-      data[i].tries = testsPerThread;
+      data[i].tries = tests_per_thread;
       if (i == 0)
       {
         data[i].tries += remainder;
@@ -212,6 +234,10 @@ namespace madieva
       if (err != 0)
       {
         std::cerr << "pthread_create failed: " << std::strerror(err) << "\n";
+        for (std::size_t j = 0; j < i; ++j)
+        {
+          pthread_join(threads[j], nullptr);
+        }
         return false;
       }
     }
@@ -247,20 +273,17 @@ int main(int argc, char ** argv)
   {
     return 1;
   }
-
   std::vector< madieva::circle_t > circles;
   if (!madieva::readCircles(circles))
   {
     return 1;
   }
-
   madieva::frame_t frame = madieva::computeFrame(circles);
-
   madieva::result_t result{};
   if (!madieva::computeAreas(circles, params, frame, result))
   {
     return 1;
   }
-  std::cout << result.area_all << " " << result.area_some << "\n";
+  std::cout << result.area_some << " " << result.area_all << "\n";
   return 0;
 }
