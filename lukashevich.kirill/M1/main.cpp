@@ -8,6 +8,7 @@
 #include <vector>
 #include <tuple>
 #include <utility>
+#include <string>
 
 namespace lukashevich
 {
@@ -29,11 +30,6 @@ bool lukashevich::isInside(const std::tuple< double, double, double >& s, const 
   const double sy = std::get< 2 >(s);
   return r * r >= (x - sx) * (x - sx) + (y - sy) * (y - sy);
 }
-
-double min_x = std::numeric_limits< double >::max();
-double min_y = std::numeric_limits< double >::max();
-double max_x = std::numeric_limits< double >::min();
-double max_y = std::numeric_limits< double >::min();
 
 std::pair< size_t, size_t > lukashevich::calc(const std::vector< std::tuple< double, double, double > > & data,
     std::size_t tests, std::size_t seed, double min_x, double min_y,
@@ -86,7 +82,7 @@ std::pair< double, double > lukashevich::area(const std::vector< std::tuple< dou
   for (size_t i = 0; i < tries % threads; ++i)
   {
     results_in_threads[i]
-        = std::async(std::launch::async, calc, data, tries / threads + 1, start_seed + i, min_x, min_y, max_x, max_y);
+        = std::async(std::launch::async, lukashevich::calc, data, tries / threads + 1, start_seed + i, min_x, min_y, max_x, max_y);
   }
   for (size_t i = tries % threads; i < threads; ++i)
   {
@@ -117,4 +113,131 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if (argv[1][0] == '-')
+  {
+    std::cerr << "Invalid threads argument\n";
+    return 1;
+  }
+
+  std::size_t threads = 0;
+  std::size_t position = 0;
+
+  try
+  {
+    threads = std::stoull(argv[1], &position);
+  }
+  catch (...)
+  {
+    std::cerr << "Invalid threads argument\n";
+    return 1;
+  }
+
+  if (argv[1][position] != '\0')
+  {
+    std::cerr << "Invalid threads argument\n";
+    return 1;
+  }
+
+  if (argv[2][0] == '-')
+  {
+    std::cerr << "Invalid tries argument\n";
+    return 1;
+  }
+
+  std::size_t tries = 0;
+  try
+  {
+    tries = std::stoull(argv[2], &position);
+  }
+  catch (...)
+  {
+    std::cerr << "Invalid tries argument\n";
+    return 1;
+  }
+
+  if ((argv[2][position] != '\0') || (tries == 0))
+  {
+    std::cerr << "Invalid tries argument\n";
+    return 1;
+  }
+
+  std::size_t seed = 0;
+  if (argc == 4)
+  {
+    if (argv[3][0] == '-')
+    {
+      std::cerr << "Invalid seed argument\n";
+      return 1;
+    }
+
+    try
+    {
+      seed = std::stoull(argv[3], &position);
+    }
+    catch (...)
+    {
+      std::cerr << "Invalid seed argument\n";
+      return 1;
+    }
+
+    if (argv[3][position] != '\0')
+    {
+      std::cerr << "Invalid seed argument\n";
+      return 1;
+    }
+  }
+
+  if (threads == 0)
+  {
+    threads = 1;
+  }
+
+  std::vector< std::tuple< double, double, double > > data;
+  double min_x = std::numeric_limits< double >::max();
+  double min_y = std::numeric_limits< double >::max();
+  double max_x = std::numeric_limits< double >::lowest();
+  double max_y = std::numeric_limits< double >::lowest();
+
+  long long radius = 0;
+  long long ignored = 0;
+  long long center_x = 0;
+  long long center_y = 0;
+
+  while (std::cin >> radius)
+  {
+    if (!(std::cin >> ignored >> center_x >> center_y) || (radius <= 0))
+    {
+      std::cerr << "Invalid figure\n";
+      return 1;
+    }
+
+    const double r = static_cast< double >(radius);
+    const double x = static_cast< double >(center_x);
+    const double y = static_cast< double >(center_y);
+
+    data.emplace_back(r, x, y);
+    min_x = std::min(min_x, x - r);
+    min_y = std::min(min_y, y - r);
+    max_x = std::max(max_x, x + r);
+    max_y = std::max(max_y, y + r);
+  }
+
+  if (!std::cin.eof())
+  {
+    std::cerr << "Invalid input data\n";
+    return 1;
+  }
+
+  if (data.empty())
+  {
+    std::cout << "0 0\n";
+    return 0;
+  }
+
+  const std::pair< double, double > result =
+      lukashevich::area(data, threads, tries, seed, min_x, min_y, max_x, max_y);
+
+  std::cout << std::setprecision(std::numeric_limits< double >::max_digits10)
+            << result.first << ' ' << result.second << '\n';
+  return 0;
 }
