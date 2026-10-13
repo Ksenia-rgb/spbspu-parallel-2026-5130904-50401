@@ -1,12 +1,11 @@
-#include <pthread.h>
 #include <cstddef>
-#include <cstdlib>
-#include <cstring>
 #include <exception>
 #include <iostream>
 #include <new>
 #include <random>
 #include <string>
+#include <system_error>
+#include <thread>
 #include <vector>
 
 namespace madieva
@@ -29,9 +28,9 @@ namespace madieva
 
   struct params_t
   {
-    std::size_t threads = 0;
-    std::size_t tries = 0;
-    std::size_t seed = 0;
+    size_t threads = 0;
+    size_t tries = 0;
+    size_t seed = 0;
   };
 
   struct frame_t
@@ -86,7 +85,7 @@ namespace madieva
     return true;
   }
 
-  bool readFigures(std::vector< figure_t > & figure)
+  bool readFigures(std::vector< figure_t > & figures)
   {
     double a = 0;
     double b = 0;
@@ -97,11 +96,11 @@ namespace madieva
     {
       if (b == 0)
       {
-        figure.push_back({figure_kind_t::circle, a, a, cx, cy});
+        figures.push_back({figure_kind_t::circle, a, a, cx, cy});
       }
       else
       {
-        figure.push_back({figure_kind_t::ellipse, a, b, cx, cy});
+        figures.push_back({figure_kind_t::ellipse, a, b, cx, cy});
       }
     }
     if (!std::cin.eof())
@@ -109,7 +108,7 @@ namespace madieva
       std::cerr << "error reading figures\n";
       return false;
     }
-    if (figure.empty())
+    if (figures.empty())
     {
       std::cerr << "no figures were provided\n";
       return false;
@@ -177,16 +176,15 @@ namespace madieva
   {
     const std::vector< figure_t > * figures = nullptr;
     frame_t frame;
-    std::size_t tries = 0;
-    std::size_t seed = 0;
+    size_t tries = 0;
+    size_t seed = 0;
 
-    std::size_t count_all = 0;
-    std::size_t count_some = 0;
+    size_t count_all = 0;
+    size_t count_some = 0;
   };
 
-  void * computeThread(void * data)
+  void computeThread(Data * d)
   {
-    Data * const d = static_cast< Data * >(data);
     std::default_random_engine engine(d->seed);
     std::uniform_real_distribution< double > dist_x(d->frame.min_x, d->frame.max_x);
     std::uniform_real_distribution< double > dist_y(d->frame.min_y, d->frame.max_y);
@@ -219,8 +217,6 @@ namespace madieva
         d->count_all++;
       }
     }
-
-    return nullptr;
   }
 
   bool computeAreas(
@@ -242,11 +238,11 @@ namespace madieva
     }
     else
     {
-      std::vector< pthread_t > threads;
+      std::vector< std::thread > threads;
       std::vector< Data > data;
       try
       {
-        threads.resize(params.threads);
+        threads.reserve(params.threads);
         data.resize(params.threads);
       }
       catch (const std::bad_alloc & e)
@@ -257,36 +253,36 @@ namespace madieva
       const size_t tests_per_thread = params.tries / params.threads;
       const size_t remainder = params.tries % params.threads;
 
-      for (size_t i = 0; i < params.threads; ++i)
+      try
       {
-        data[i].figures = &figures;
-        data[i].frame = frame;
-        data[i].tries = tests_per_thread;
-        if (i == 0)
+        for (size_t i = 0; i < params.threads; ++i)
         {
-          data[i].tries += remainder;
-        }
-        data[i].seed = params.seed + i;
-        const int err = pthread_create(&threads[i], nullptr, computeThread, &data[i]);
-        if (err != 0)
-        {
-          std::cerr << "pthread_create failed: " << std::strerror(err) << "\n";
-          for (std::size_t j = 0; j < i; ++j)
+          data[i].figures = &figures;
+          data[i].frame = frame;
+          data[i].tries = tests_per_thread;
+          if (i == 0)
           {
-            pthread_join(threads[j], nullptr);
+            data[i].tries += remainder;
           }
-          return false;
+          data[i].seed = params.seed + i;
+          threads.emplace_back(computeThread, &data[i]);
         }
+      }
+      catch (const std::system_error & e)
+      {
+        std::cerr << "cannot create thread: " << e.what() << "\n";
+        for (size_t i = 0; i < threads.size(); ++i)
+        {
+          if (threads[i].joinable())
+          {
+            threads[i].join();
+          }
+        }
+        return false;
       }
       for (size_t i = 0; i < params.threads; ++i)
       {
-        void * ret = nullptr;
-        const int err = pthread_join(threads[i], &ret);
-        if (err != 0)
-        {
-          std::cerr << "pthread_join failed: " << std::strerror(err) << "\n";
-          return false;
-        }
+        threads[i].join();
         total_all += data[i].count_all;
         total_some += data[i].count_some;
       }
