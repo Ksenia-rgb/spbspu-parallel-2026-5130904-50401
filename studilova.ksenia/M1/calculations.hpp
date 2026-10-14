@@ -27,6 +27,9 @@ namespace studilova
 
   std::pair< size_t, size_t > countHits(const std::vector< Circle >& circles,
       const Rectangle& rectangle, size_t tries, size_t seed);
+
+  std::pair< double, double > calculateAreas(const std::vector< Circle >& circles,
+      size_t threadCount, size_t tries, size_t seed);
 }
 
 #endif

@@ -2,6 +2,10 @@
 
 #include <algorithm>
 #include <random>
+#include <functional>
+#include <future>
+#include <stdexcept>
+#include <utility>
 
 bool studilova::containsPoint(const Circle& circle, double x, double y)
 {
@@ -83,4 +87,61 @@ std::pair< size_t, size_t > studilova::countHits(const std::vector< Circle >& ci
   }
 
   return {unionHits, intersectionHits};
+}
+
+std::pair< double, double > studilova::calculateAreas(const std::vector< Circle >& circles,
+    size_t threadCount, size_t tries, size_t seed)
+{
+  if (tries == 0)
+  {
+    throw std::invalid_argument("Number of tries must be positive");
+  }
+
+  if (circles.empty())
+  {
+    return {0, 0};
+  }
+
+  if (threadCount == 0)
+  {
+    threadCount = 1;
+  }
+
+  Rectangle rectangle = findRectangle(circles);
+  size_t partSize = tries / threadCount;
+  size_t remainder = tries % threadCount;
+
+  using Hits = std::pair< std::size_t, std::size_t >;
+  std::vector< std::future< Hits > > futures;
+  futures.reserve(threadCount);
+
+  for (size_t i = 0; i < threadCount; ++i)
+  {
+    size_t extra = (i < remainder) ? 1 : 0;
+    size_t localTries = partSize + extra;
+    size_t localSeed = seed + i;
+
+    auto future = std::async(std::launch::async, countHits,
+        std::cref(circles), std::cref(rectangle), localTries, localSeed);
+    futures.push_back(std::move(future));
+  }
+
+  size_t unionHits = 0;
+  size_t intersectionHits = 0;
+
+  for (std::future< Hits >& future : futures)
+  {
+    Hits hits = future.get();
+    unionHits += hits.first;
+    intersectionHits += hits.second;
+  }
+
+  double width = rectangle.maxX - rectangle.minX;
+  double height = rectangle.maxY - rectangle.minY;
+  double rectangleArea = width * height;
+
+  double unionPart = static_cast< double >(unionHits) / static_cast< double >(tries);
+  double intersectionPart = static_cast< double >(intersectionHits) / static_cast< double >(tries);
+
+  return {rectangleArea * unionPart, rectangleArea * intersectionPart};
 }
