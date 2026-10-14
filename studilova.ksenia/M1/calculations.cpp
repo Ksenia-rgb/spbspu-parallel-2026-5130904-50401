@@ -8,11 +8,13 @@
 #include <utility>
 #include <limits>
 #include <string>
+#include <cstddef>
+#include <vector>
 
 bool studilova::containsPoint(const Circle& circle, double x, double y)
 {
-  double dx = x - circle.x;
-  double dy = y - circle.y;
+  const double dx = x - circle.x;
+  const double dy = y - circle.y;
 
   return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
 }
@@ -25,25 +27,25 @@ studilova::Rectangle studilova::findRectangle(const std::vector< Circle >& circl
   }
 
   const Circle& first = circles.front();
-  double minX = first.x - first.radius;
-  double minY = first.y - first.radius;
-  double maxX = first.x + first.radius;
-  double maxY = first.y + first.radius;
-  Rectangle rectangle = {minX, minY, maxX, maxY};
+  const double min_x = first.x - first.radius;
+  const double min_y = first.y - first.radius;
+  const double max_x = first.x + first.radius;
+  const double max_y = first.y + first.radius;
+  Rectangle rectangle = {min_x, min_y, max_x, max_y};
 
   for (const Circle& circle : circles)
   {
-    rectangle.minX = std::min(rectangle.minX, circle.x - circle.radius);
-    rectangle.minY = std::min(rectangle.minY, circle.y - circle.radius);
-    rectangle.maxX = std::max(rectangle.maxX, circle.x + circle.radius);
-    rectangle.maxY = std::max(rectangle.maxY, circle.y + circle.radius);
+    rectangle.min_x = std::min(rectangle.min_x, circle.x - circle.radius);
+    rectangle.min_y = std::min(rectangle.min_y, circle.y - circle.radius);
+    rectangle.max_x = std::max(rectangle.max_x, circle.x + circle.radius);
+    rectangle.max_y = std::max(rectangle.max_y, circle.y + circle.radius);
   }
 
   return rectangle;
 }
 
-std::pair< size_t, size_t > studilova::countHits(const std::vector< Circle >& circles,
-    const Rectangle& rectangle, size_t tries, size_t seed)
+std::pair< size_t, size_t > studilova::countHits(
+    const std::vector< Circle >& circles, const Rectangle& rectangle, size_t tries, size_t seed)
 {
   if (circles.empty())
   {
@@ -51,48 +53,48 @@ std::pair< size_t, size_t > studilova::countHits(const std::vector< Circle >& ci
   }
 
   std::default_random_engine engine(seed);
-  std::uniform_real_distribution< double > distributionX(rectangle.minX, rectangle.maxX);
-  std::uniform_real_distribution< double > distributionY(rectangle.minY, rectangle.maxY);
+  std::uniform_real_distribution< double > distribution_x(rectangle.min_x, rectangle.max_x);
+  std::uniform_real_distribution< double > distribution_y(rectangle.min_y, rectangle.max_y);
 
-  size_t unionHits = 0;
-  size_t intersectionHits = 0;
+  size_t union_hits = 0;
+  size_t intersection_hits = 0;
 
   for (size_t i = 0; i < tries; ++i)
   {
-    double x = distributionX(engine);
-    double y = distributionY(engine);
+    const double x = distribution_x(engine);
+    const double y = distribution_y(engine);
 
-    bool inAny = false;
-    bool inAll = true;
+    bool in_any = false;
+    bool in_all = true;
 
     for (const Circle& circle : circles)
     {
       if (containsPoint(circle, x, y))
       {
-        inAny = true;
+        in_any = true;
       }
       else
       {
-        inAll = false;
+        in_all = false;
       }
     }
 
-    if (inAny)
+    if (in_any)
     {
-      ++unionHits;
+      ++union_hits;
     }
 
-    if (inAll)
+    if (in_all)
     {
-      ++intersectionHits;
+      ++intersection_hits;
     }
   }
 
-  return {unionHits, intersectionHits};
+  return {union_hits, intersection_hits};
 }
 
-std::pair< double, double > studilova::calculateAreas(const std::vector< Circle >& circles,
-    size_t threadCount, size_t tries, size_t seed)
+std::pair< double, double > studilova::calculateAreas(
+    const std::vector< Circle >& circles, size_t thread_count, size_t tries, size_t seed)
 {
   if (tries == 0)
   {
@@ -104,55 +106,55 @@ std::pair< double, double > studilova::calculateAreas(const std::vector< Circle 
     return {0, 0};
   }
 
-  if (threadCount == 0)
+  if (thread_count == 0)
   {
-    threadCount = 1;
+    thread_count = 1;
   }
 
-  Rectangle rectangle = findRectangle(circles);
-  size_t partSize = tries / threadCount;
-  size_t remainder = tries % threadCount;
+  const Rectangle rectangle = findRectangle(circles);
+  const size_t part_size = tries / thread_count;
+  const size_t remainder = tries % thread_count;
 
   using Hits = std::pair< std::size_t, std::size_t >;
   std::vector< std::future< Hits > > futures;
-  futures.reserve(threadCount);
+  futures.reserve(thread_count);
 
-  for (size_t i = 0; i < threadCount; ++i)
+  for (size_t i = 0; i < thread_count; ++i)
   {
-    size_t extra = (i < remainder) ? 1 : 0;
-    size_t localTries = partSize + extra;
-    size_t localSeed = seed + i;
+    const size_t extra = (i < remainder) ? 1 : 0;
+    const size_t local_tries = part_size + extra;
+    const size_t local_seed = seed + i;
 
-    auto future = std::async(std::launch::async, countHits,
-        std::cref(circles), std::cref(rectangle), localTries, localSeed);
+    auto future
+        = std::async(std::launch::async, countHits, std::cref(circles), std::cref(rectangle), local_tries, local_seed);
     futures.push_back(std::move(future));
   }
 
-  size_t unionHits = 0;
-  size_t intersectionHits = 0;
+  size_t union_hits = 0;
+  size_t intersection_hits = 0;
 
   for (std::future< Hits >& future : futures)
   {
-    Hits hits = future.get();
-    unionHits += hits.first;
-    intersectionHits += hits.second;
+    const Hits hits = future.get();
+    union_hits += hits.first;
+    intersection_hits += hits.second;
   }
 
-  double width = rectangle.maxX - rectangle.minX;
-  double height = rectangle.maxY - rectangle.minY;
-  double rectangleArea = width * height;
+  const double width = rectangle.max_x - rectangle.min_x;
+  const double height = rectangle.max_y - rectangle.min_y;
+  const double rectangle_area = width * height;
 
-  double unionPart = static_cast< double >(unionHits) / static_cast< double >(tries);
-  double intersectionPart = static_cast< double >(intersectionHits) / static_cast< double >(tries);
+  const double union_part = static_cast< double >(union_hits) / static_cast< double >(tries);
+  const double intersection_part = static_cast< double >(intersection_hits) / static_cast< double >(tries);
 
-  return {rectangleArea * unionPart, rectangleArea * intersectionPart};
+  return {rectangle_area * union_part, rectangle_area * intersection_part};
 }
 
 size_t studilova::parseArgument(const char* text)
 {
   const std::string argument = text;
   size_t pos = 0;
-  long long value = std::stoll(argument, &pos);
+  const long long value = std::stoll(argument, &pos);
 
   if (pos != argument.size())
   {
