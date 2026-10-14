@@ -1,17 +1,19 @@
 #include <iostream>
+#include <vector>
 
 namespace donkeev {
   struct Point {
-    double x;
-    double y;
+    int x;
+    int y;
   };
 
   struct Circle {
-    double radius;
+    int radius;
     Point center;
   };
 
   bool contains(const Circle&, const Point&);
+  bool read_circles(std::vector<Circle>&);
 }
 
 int main(int argc, char **argv)
@@ -44,4 +46,25 @@ bool donkeev::contains(const Circle& c, const Point& p) {
   double dx = p.x - c.center.x;
   double dy = p.y - c.center.y;
   return dx * dx + dy * dy <= c.radius * c.radius;
+}
+
+bool donkeev::read_circles(std::vector<Circle>& out) {
+  while (true) {
+    int r, ignore, x, y;
+    if (std::cin >> r >> ignore >> x >> y) {
+        out.push_back({r, {x, y}});
+    } else if (std::cin.eof()) {
+        break;
+    } else {
+        std::cerr << "Invalid circle parametrs\n";
+        return false;
+    }
+  }
+  
+  if (out.empty()) {
+      std::cerr << "No circles\n";
+      return false;
+  }
+
+  return true;
 }
