@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <random>
 
 namespace donkeev {
   struct Point {
@@ -16,9 +17,16 @@ namespace donkeev {
     double min_x, max_x, min_y, max_y;
   };
 
+  struct Result {
+    long long in_union = 0;
+    long long in_intersection = 0;
+  };
+
   bool contains(const Circle&, const Point&);
   bool read_circles(std::vector<Circle>&);
   Bounds compute_bounds(const std::vector<Circle>& circles);
+  Result worker(int id, long long my_tries, const std::vector<Circle>& circles,
+      const Bounds& b, unsigned seed);
 }
 
 int main(int argc, char **argv)
@@ -95,4 +103,34 @@ donkeev::Bounds donkeev::compute_bounds(const std::vector<Circle>& circles) {
     max_y = std::max(max_y, cy + r);
   }
   return {min_x, max_x, min_y, max_y};
+}
+
+donkeev::Result donkeev::worker(int id, long long my_tries, const std::vector<Circle>& circles,
+    const Bounds& b, unsigned seed)
+{
+  std::default_random_engine gen(seed);
+  
+  std::uniform_real_distribution<double> dist_x(b.min_x, b.max_x);
+  std::uniform_real_distribution<double> dist_y(b.min_y, b.max_y);
+  
+  Result res;
+  for (long long i = 0; i < my_tries; ++i) {
+    double x = dist_x(gen);
+    double y = dist_y(gen);
+    
+    bool in_any = false;
+    bool in_all = true;
+    for (const auto& c : circles) {
+      double dx = x - double(c.center.x);
+      double dy = y - double(c.center.y);
+      double r  = double(c.radius);
+      bool inside = (dx*dx + dy*dy) <= (r*r);
+      in_any = in_any || inside;
+      in_all = in_all && inside;
+    }
+    
+    if (in_any) res.in_union++;
+    if (in_all) res.in_intersection++;
+  }
+  return res;
 }
