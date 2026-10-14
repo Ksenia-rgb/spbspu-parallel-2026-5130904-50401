@@ -77,6 +77,23 @@ int main(int argc, char **argv)
   }
 
   for (auto& t : pool) t.join();
+
+  long long total_union = 0;
+  long long total_intersection = 0;
+  for (const auto& r : results) {
+    total_union += r.in_union;
+    total_intersection += r.in_intersection;
+  }
+  
+  double rect_area = (bounds.max_x - bounds.min_x) * (bounds.max_y - bounds.min_y);
+  
+  double area_union = rect_area * double(total_union) / double(tries);
+  double area_intersection = rect_area * double(total_intersection) / double(tries);
+  
+  std::cout << std::setprecision(std::numeric_limits<double>::max_digits10)
+      << area_union << " " << area_intersection << "\n";
+  
+  return 0;
 }
 
 bool donkeev::contains(const Circle& c, const Point& p)
