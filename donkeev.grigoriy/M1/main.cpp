@@ -9,8 +9,8 @@
 
 namespace donkeev {
   struct Point {
-    int x;
-    int y;
+    double x;
+    double y;
   };
 
   struct Circle {
@@ -31,7 +31,7 @@ namespace donkeev {
   bool read_circles(std::vector<Circle>&);
   Bounds compute_bounds(const std::vector<Circle>& circles);
   Result worker(int id, long long my_tries, const std::vector<Circle>& circles,
-      const Bounds& b, unsigned seed);
+      const Bounds& b, long long seed);
 }
 
 int main(int argc, char **argv)
@@ -71,8 +71,7 @@ int main(int argc, char **argv)
   for (long long i = 0; i < threads; ++i) {
     long long my_tries = base + (i < rem ? 1 : 0);
     pool.emplace_back([&, i, my_tries] {
-      results[i] = worker(int(i), my_tries, circles, bounds,
-      unsigned(seed));
+      results[i] = worker(int(i), my_tries, circles, bounds, seed);
     });
   }
 
@@ -106,7 +105,8 @@ bool donkeev::contains(const Circle& c, const Point& p)
 bool donkeev::read_circles(std::vector<Circle>& out)
 {
   while (true) {
-    int r, ignore, x, y;
+    int r, ignore;
+    double x, y;
     if (std::cin >> r >> ignore >> x >> y) {
         out.push_back({r, {x, y}});
     } else if (std::cin.eof()) {
@@ -144,9 +144,9 @@ donkeev::Bounds donkeev::compute_bounds(const std::vector<Circle>& circles) {
 }
 
 donkeev::Result donkeev::worker(int id, long long my_tries, const std::vector<Circle>& circles,
-    const Bounds& b, unsigned seed)
+    const Bounds& b, long long seed)
 {
-  std::default_random_engine gen(seed);
+  std::default_random_engine gen(seed + unsigned(id));
 
   std::uniform_real_distribution<double> dist_x(b.min_x, b.max_x);
   std::uniform_real_distribution<double> dist_y(b.min_y, b.max_y);
