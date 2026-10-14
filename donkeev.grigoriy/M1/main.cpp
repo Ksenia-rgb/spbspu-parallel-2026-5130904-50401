@@ -1,6 +1,11 @@
 #include <iostream>
 #include <vector>
+#include <thread>
 #include <random>
+#include <algorithm>
+#include <iomanip>
+#include <limits>
+#include <exception>
 
 namespace donkeev {
   struct Point {
@@ -56,6 +61,22 @@ int main(int argc, char **argv)
   if (!donkeev::read_circles(circles)) return 1;
     
   donkeev::Bounds bounds = donkeev::compute_bounds(circles);
+
+  std::vector<std::thread> pool;
+  std::vector<donkeev::Result> results(threads);
+
+  long long base = tries / threads;
+  long long rem  = tries % threads;
+
+  for (long long i = 0; i < threads; ++i) {
+    long long my_tries = base + (i < rem ? 1 : 0);
+    pool.emplace_back([&, i, my_tries] {
+      results[i] = worker(int(i), my_tries, circles, bounds,
+      unsigned(seed));
+    });
+  }
+
+  for (auto& t : pool) t.join();
 }
 
 bool donkeev::contains(const Circle& c, const Point& p)
@@ -121,10 +142,7 @@ donkeev::Result donkeev::worker(int id, long long my_tries, const std::vector<Ci
     bool in_any = false;
     bool in_all = true;
     for (const auto& c : circles) {
-      double dx = x - double(c.center.x);
-      double dy = y - double(c.center.y);
-      double r  = double(c.radius);
-      bool inside = (dx*dx + dy*dy) <= (r*r);
+      bool inside = contains(c, {x, y});
       in_any = in_any || inside;
       in_all = in_all && inside;
     }
