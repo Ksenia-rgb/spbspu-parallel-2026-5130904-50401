@@ -2,6 +2,8 @@
 #define CALCULATIONS_HPP
 
 #include <vector>
+#include <utility>
+#include <cstddef>
 
 namespace studilova
 {
@@ -21,8 +23,10 @@ namespace studilova
   };
 
   bool containsPoint(const Circle& circle, double x, double y);
-
   Rectangle findRectangle(const std::vector< Circle >& circles);
+
+  std::pair< size_t, size_t > countHits(const std::vector< Circle >& circles,
+      const Rectangle& rectangle, size_t tries, size_t seed);
 }
 
 #endif

@@ -1,6 +1,7 @@
 #include "calculations.hpp"
 
 #include <algorithm>
+#include <random>
 
 bool studilova::containsPoint(const Circle& circle, double x, double y)
 {
@@ -33,4 +34,53 @@ studilova::Rectangle studilova::findRectangle(const std::vector< Circle >& circl
   }
 
   return rectangle;
+}
+
+std::pair< size_t, size_t > studilova::countHits(const std::vector< Circle >& circles,
+    const Rectangle& rectangle, size_t tries, size_t seed)
+{
+  if (circles.empty())
+  {
+    return {0, 0};
+  }
+
+  std::default_random_engine engine(seed);
+  std::uniform_real_distribution< double > distributionX(rectangle.minX, rectangle.maxX);
+  std::uniform_real_distribution< double > distributionY(rectangle.minY, rectangle.maxY);
+
+  size_t unionHits = 0;
+  size_t intersectionHits = 0;
+
+  for (size_t i = 0; i < tries; ++i)
+  {
+    double x = distributionX(engine);
+    double y = distributionY(engine);
+
+    bool inAny = false;
+    bool inAll = true;
+
+    for (const Circle& circle : circles)
+    {
+      if (containsPoint(circle, x, y))
+      {
+        inAny = true;
+      }
+      else
+      {
+        inAll = false;
+      }
+    }
+
+    if (inAny)
+    {
+      ++unionHits;
+    }
+
+    if (inAll)
+    {
+      ++intersectionHits;
+    }
+  }
+
+  return {unionHits, intersectionHits};
 }
