@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
   std::vector<donkeev::Circle> circles;
   if (!donkeev::read_circles(circles)) return 1;
-    
+
   donkeev::Bounds bounds = donkeev::compute_bounds(circles);
 
   std::vector<std::thread> pool;
@@ -84,15 +84,15 @@ int main(int argc, char **argv)
     total_union += r.in_union;
     total_intersection += r.in_intersection;
   }
-  
+
   double rect_area = (bounds.max_x - bounds.min_x) * (bounds.max_y - bounds.min_y);
-  
+
   double area_union = rect_area * double(total_union) / double(tries);
   double area_intersection = rect_area * double(total_intersection) / double(tries);
-  
+
   std::cout << std::setprecision(std::numeric_limits<double>::max_digits10)
       << area_union << " " << area_intersection << "\n";
-  
+
   return 0;
 }
 
@@ -130,7 +130,7 @@ donkeev::Bounds donkeev::compute_bounds(const std::vector<Circle>& circles) {
   double max_x = double(circles[0].center.x) + double(circles[0].radius);
   double min_y = double(circles[0].center.y) - double(circles[0].radius);
   double max_y = double(circles[0].center.y) + double(circles[0].radius);
-  
+
   for (const auto& c : circles) {
     double cx = double(c.center.x);
     double cy = double(c.center.y);
@@ -147,15 +147,15 @@ donkeev::Result donkeev::worker(int id, long long my_tries, const std::vector<Ci
     const Bounds& b, unsigned seed)
 {
   std::default_random_engine gen(seed);
-  
+
   std::uniform_real_distribution<double> dist_x(b.min_x, b.max_x);
   std::uniform_real_distribution<double> dist_y(b.min_y, b.max_y);
-  
+
   Result res;
   for (long long i = 0; i < my_tries; ++i) {
     double x = dist_x(gen);
     double y = dist_y(gen);
-    
+
     bool in_any = false;
     bool in_all = true;
     for (const auto& c : circles) {
@@ -163,7 +163,7 @@ donkeev::Result donkeev::worker(int id, long long my_tries, const std::vector<Ci
       in_any = in_any || inside;
       in_all = in_all && inside;
     }
-    
+
     if (in_any) res.in_union++;
     if (in_all) res.in_intersection++;
   }
