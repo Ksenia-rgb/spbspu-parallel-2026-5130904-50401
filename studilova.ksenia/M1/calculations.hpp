@@ -30,6 +30,8 @@ namespace studilova
 
   std::pair< double, double > calculateAreas(const std::vector< Circle >& circles,
       size_t threadCount, size_t tries, size_t seed);
+
+  size_t parseArgument(const char* text);
 }
 
 #endif

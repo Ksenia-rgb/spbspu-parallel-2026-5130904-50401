@@ -6,6 +6,8 @@
 #include <future>
 #include <stdexcept>
 #include <utility>
+#include <limits>
+#include <string>
 
 bool studilova::containsPoint(const Circle& circle, double x, double y)
 {
@@ -144,4 +146,28 @@ std::pair< double, double > studilova::calculateAreas(const std::vector< Circle 
   double intersectionPart = static_cast< double >(intersectionHits) / static_cast< double >(tries);
 
   return {rectangleArea * unionPart, rectangleArea * intersectionPart};
+}
+
+size_t studilova::parseArgument(const char* text)
+{
+  const std::string argument = text;
+  size_t pos = 0;
+  long long value = std::stoll(argument, &pos);
+
+  if (pos != argument.size())
+  {
+    throw std::invalid_argument("Invalid characters in argument");
+  }
+
+  if (value < 0)
+  {
+    throw std::invalid_argument("Argument can not be negative");
+  }
+
+  if (static_cast< unsigned long long >(value) > std::numeric_limits< size_t >::max())
+  {
+    throw std::out_of_range("Argument is too large");
+  }
+
+  return static_cast< size_t >(value);
 }
