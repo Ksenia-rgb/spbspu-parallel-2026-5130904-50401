@@ -1,5 +1,19 @@
 #include <iostream>
 
+namespace donkeev {
+  struct Point {
+    double x;
+    double y;
+  };
+
+  struct Circle {
+    double radius;
+    Point center;
+  };
+
+  bool contains(const Circle&, const Point&);
+}
+
 int main(int argc, char **argv)
 {
   if (argc < 3 || argc > 4) {
@@ -23,5 +37,11 @@ int main(int argc, char **argv)
   }
   threads = threads > 0 ? threads : 1;
 
-  
+
+}
+
+bool donkeev::contains(const Circle& c, const Point& p) {
+  double dx = p.x - c.center.x;
+  double dy = p.y - c.center.y;
+  return dx * dx + dy * dy <= c.radius * c.radius;
 }
