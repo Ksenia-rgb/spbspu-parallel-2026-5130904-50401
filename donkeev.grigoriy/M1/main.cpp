@@ -33,10 +33,12 @@ namespace donkeev
     long long in_intersection = 0;
   };
 
+  using Circles = std::vector< Circle >;
+
   bool contains(const Circle&, const Point&);
   bool readCircles(std::vector< Circle >&);
   Bounds computeBounds(const std::vector< Circle >& circles);
-  Result worker(int id, long long my_tries, const std::vector< Circle >& circles, const Bounds& b, long long seed);
+  Result worker(int id, long long my_tries, const Circles& circles, const Bounds& b, long long seed);
 }
 
 int main(int argc, char** argv)
@@ -175,8 +177,7 @@ donkeev::Bounds donkeev::computeBounds(const std::vector< Circle >& circles)
   return {min_x, max_x, min_y, max_y};
 }
 
-donkeev::Result donkeev::worker(int id, long long my_tries,
-    const std::vector< Circle >& circles, const Bounds& b, long long seed)
+donkeev::Result donkeev::worker(int id, long long my_tries, const Circles& circles, const Bounds& b, long long seed)
 {
   std::default_random_engine gen(seed + unsigned(id));
 
