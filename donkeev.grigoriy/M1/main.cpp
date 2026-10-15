@@ -16,9 +16,10 @@ namespace donkeev
     double y;
   };
 
-  struct Circle
+  struct Shape
   {
-    double radius;
+    double a;
+    double b;
     Point center;
   };
 
@@ -33,11 +34,11 @@ namespace donkeev
     long long in_intersection = 0;
   };
 
-  using Circles = std::vector< Circle >;
+  using Circles = std::vector< Shape >;
 
-  bool contains(const Circle&, const Point&);
-  bool readCircles(std::vector< Circle >&);
-  Bounds computeBounds(const std::vector< Circle >& circles);
+  bool contains(const Shape&, const Point&);
+  bool readShapes(std::vector< Shape >&);
+  Bounds computeBounds(const std::vector< Shape >& circles);
   Result worker(int id, long long my_tries, const Circles& circles, const Bounds& b, long long seed);
 }
 
@@ -70,13 +71,13 @@ int main(int argc, char** argv)
   }
   threads = threads > 0 ? threads : 1;
 
-  std::vector< donkeev::Circle > circles;
-  if (!donkeev::readCircles(circles))
+  std::vector< donkeev::Shape > shapes;
+  if (!donkeev::readShapes(shapes))
   {
     return 1;
   }
 
-  donkeev::Bounds bounds = donkeev::computeBounds(circles);
+  donkeev::Bounds bounds = donkeev::computeBounds(shapes);
 
   std::vector< std::thread > pool;
   std::vector< donkeev::Result > results(threads);
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
     pool.emplace_back(
         [&, i, my_tries]
         {
-          results[i] = worker(static_cast< int >(i), my_tries, circles, bounds, seed);
+          results[i] = worker(static_cast< int >(i), my_tries, shapes, bounds, seed);
         });
   }
 
@@ -118,24 +119,31 @@ int main(int argc, char** argv)
   return 0;
 }
 
-bool donkeev::contains(const Circle& c, const Point& p)
+bool donkeev::contains(const Shape& s, const Point& p)
 {
-  const double dx = p.x - c.center.x;
-  const double dy = p.y - c.center.y;
-  return dx * dx + dy * dy <= c.radius * c.radius;
+  const double dx = (p.x - s.center.x) / s.a;
+  const double dy = (p.y - s.center.y) / s.b;
+  return dx * dx + dy * dy <= 1.0;
 }
 
-bool donkeev::readCircles(std::vector< Circle >& out)
+bool donkeev::readShapes(std::vector< Shape >& out)
 {
   while (true)
   {
     double x = 0.0;
     double y = 0.0;
-    double r = 0.0;
-    double ignore = 0.0;
-    if (std::cin >> r >> ignore >> x >> y)
+    double first = 0.0;
+    double second = 0.0;
+    if (std::cin >> first >> second >> x >> y)
     {
-      out.push_back({r, {x, y}});
+      if (second == 0.0)
+      {
+        out.push_back({first, first, {x, y}});
+      }
+      else
+      {
+        out.push_back({first, second, {x, y}});
+      }
     }
     else if (std::cin.eof())
     {
@@ -157,22 +165,21 @@ bool donkeev::readCircles(std::vector< Circle >& out)
   return true;
 }
 
-donkeev::Bounds donkeev::computeBounds(const std::vector< Circle >& circles)
+donkeev::Bounds donkeev::computeBounds(const std::vector< Shape >& shapes)
 {
-  double min_x = circles[0].center.x - circles[0].radius;
-  double max_x = circles[0].center.x + circles[0].radius;
-  double min_y = circles[0].center.y - circles[0].radius;
-  double max_y = circles[0].center.y + circles[0].radius;
+  double min_x = shapes[0].center.x - shapes[0].a;
+  double max_x = shapes[0].center.x + shapes[0].a;
+  double min_y = shapes[0].center.y - shapes[0].b;
+  double max_y = shapes[0].center.y + shapes[0].b;
 
-  for (const auto& c : circles)
+  for (const auto& s : shapes)
   {
-    const double cx = double(c.center.x);
-    const double cy = double(c.center.y);
-    const double r = double(c.radius);
-    min_x = std::min(min_x, cx - r);
-    max_x = std::max(max_x, cx + r);
-    min_y = std::min(min_y, cy - r);
-    max_y = std::max(max_y, cy + r);
+    const double cx = double(s.center.x);
+    const double cy = double(s.center.y);
+    min_x = std::min(min_x, cx - s.a);
+    max_x = std::max(max_x, cx + s.a);
+    min_y = std::min(min_y, cy - s.b);
+    max_y = std::max(max_y, cy + s.b);
   }
   return {min_x, max_x, min_y, max_y};
 }
