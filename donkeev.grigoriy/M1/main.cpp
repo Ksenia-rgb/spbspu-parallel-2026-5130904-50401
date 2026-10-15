@@ -110,8 +110,8 @@ int main(int argc, char** argv)
   const double area_union = rect_area * double(total_union) / double(tries);
   const double area_intersection = rect_area * double(total_intersection) / double(tries);
 
-  std::cout << std::setprecision(std::numeric_limits< double >::max_digits10)
-            << area_union << " " << area_intersection << '\n';
+  std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
+  std::cout << area_union << " " << area_intersection << '\n';
 
   return 0;
 }
@@ -176,8 +176,7 @@ donkeev::Bounds donkeev::computeBounds(const std::vector< Circle >& circles)
 }
 
 donkeev::Result donkeev::worker(int id, long long my_tries,
-    const std::vector< Circle >& circles,
-    const Bounds& b, long long seed)
+    const std::vector< Circle >& circles, const Bounds& b, long long seed)
 {
   std::default_random_engine gen(seed + unsigned(id));
 
