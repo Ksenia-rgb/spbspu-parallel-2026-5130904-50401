@@ -64,12 +64,17 @@ namespace levkin {
 
   AnyAllResult gotIn(CirclesWithRanges const &cv, double x, double y)
   {
-    AnyAllResult result{0, 1};
+    bool hitAny = false;
+    bool hitAll = true;
     for (Circle const &c : cv.circles) {
       bool hit = gotIn(c, x, y);
-      result.any = result.any || hit;
-      result.all = result.all && hit;
+      hitAny = hitAny || hit;
+      hitAll = hitAll && hit;
     }
+
+    AnyAllResult result;
+    result.any = hitAny ? 1 : 0;
+    result.all = hitAll ? 1 : 0;
     return result;
   }
 

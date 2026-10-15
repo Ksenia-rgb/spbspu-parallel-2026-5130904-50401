@@ -4,6 +4,7 @@
 #include <array>
 #include <istream>
 #include <vector>
+
 namespace levkin {
   using BorderRange = std::array< int, 2 >;
 
