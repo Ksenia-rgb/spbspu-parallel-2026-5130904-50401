@@ -65,3 +65,37 @@ namespace petrov {
     return hits;
   }
 }
+
+petrov::areas_t petrov::estimateAreas(const std::vector< circle_t > &circles, size_t threads,
+    size_t tries, size_t seed)
+{
+  if (circles.empty()) {
+    return areas_t{0.0, 0.0};
+  }
+
+  const size_t firstHelper = 1;
+  const size_t parts = std::max(threads, firstHelper);
+  const size_t share = tries / parts;
+  const box_t box = getBoundingBox(circles);
+
+  std::vector< std::future< hits_t > > pending;
+  pending.reserve(parts);
+  for (size_t i = firstHelper; i < parts; ++i) {
+    auto task = std::async(std::launch::async, castPoints,
+        std::cref(circles), std::cref(box), share, seed + i);
+    pending.push_back(std::move(task));
+  }
+
+  hits_t total = castPoints(circles, box, share + (tries % parts), seed);
+  for (std::future< hits_t > &result: pending) {
+    const hits_t part = result.get();
+    total.cover += part.cover;
+    total.comm += part.comm;
+  }
+
+  const double boxArea = (box.right - box.left) * (box.top - box.bottom);
+  const double count = static_cast< double >(tries);
+  const double cover = boxArea * static_cast< double >(total.cover) / count;
+  const double comm = boxArea * static_cast< double >(total.comm) / count;
+  return areas_t{cover, comm};
+}
