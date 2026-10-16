@@ -16,7 +16,7 @@ namespace petrov {
   };
 
   areas_t estimateAreas(const std::vector< circle_t > &circles, size_t threads, size_t tries,
-      size_t seed);
+    size_t seed);
 }
 
 #endif
