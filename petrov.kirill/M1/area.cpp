@@ -1,4 +1,5 @@
 #include "area.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <future>
@@ -6,7 +7,7 @@
 #include <random>
 #include <vector>
 
-namespace petrov {
+namespace {
   using circles_t = std::vector< petrov::circle_t >;
 
   struct box_t {
@@ -17,8 +18,8 @@ namespace petrov {
   };
 
   struct hits_t {
-    size_t cover;
-    size_t comm;
+    std::size_t cover;
+    std::size_t comm;
   };
 
   bool isInside(const petrov::circle_t &circle, double x, double y)
@@ -41,20 +42,20 @@ namespace petrov {
     return box;
   }
 
-  hits_t castPoints(const circles_t &circles, const box_t &box, size_t tries, size_t seed)
+  hits_t castPoints(const circles_t &circles, const box_t &box, std::size_t tries, std::size_t seed)
   {
     std::mt19937_64 generator(seed);
     std::uniform_real_distribution< double > xDist(box.left, box.right);
     std::uniform_real_distribution< double > yDist(box.bottom, box.top);
     hits_t hits = {0, 0};
-    for (size_t i = 0; i < tries; ++i) {
+    for (std::size_t i = 0; i < tries; ++i) {
       const double x = xDist(generator);
       const double y = yDist(generator);
       auto isHit = [x, y](const petrov::circle_t &circle)
       {
         return isInside(circle, x, y);
       };
-      const auto inside = static_cast< size_t >(std::count_if(circles.cbegin(), circles.cend(), isHit));
+      const auto inside = static_cast< std::size_t >(std::count_if(circles.cbegin(), circles.cend(), isHit));
       if (inside != 0) {
         ++hits.cover;
       }
@@ -66,21 +67,21 @@ namespace petrov {
   }
 }
 
-petrov::areas_t petrov::estimateAreas(const std::vector< circle_t > &circles, size_t threads,
-    size_t tries, size_t seed)
+petrov::areas_t petrov::estimateAreas(const std::vector< circle_t > &circles, std::size_t threads,
+  std::size_t tries, std::size_t seed)
 {
   if (circles.empty()) {
     return areas_t{0.0, 0.0};
   }
 
-  const size_t firstHelper = 1;
-  const size_t parts = std::max(threads, firstHelper);
-  const size_t share = tries / parts;
+  const std::size_t firstHelper = 1;
+  const std::size_t parts = std::max(threads, firstHelper);
+  const std::size_t share = tries / parts;
   const box_t box = getBoundingBox(circles);
 
   std::vector< std::future< hits_t > > pending;
   pending.reserve(parts);
-  for (size_t i = firstHelper; i < parts; ++i) {
+  for (std::size_t i = firstHelper; i < parts; ++i) {
     auto task = std::async(std::launch::async, castPoints,
         std::cref(circles), std::cref(box), share, seed + i);
     pending.push_back(std::move(task));
