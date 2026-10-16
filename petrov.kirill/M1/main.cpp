@@ -1,32 +1,34 @@
+#include <cstddef>
 #include <exception>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <vector>
+
 #include "area.hpp"
 #include "input.hpp"
 
 int main(int argc, char **argv)
 {
-  const int shortForm = 3;
-  const int fullForm = 4;
-  if ((argc != shortForm) && (argc != fullForm)) {
+  const int short_form = 3;
+  const int full_form = 4;
+  if ((argc != short_form) && (argc != full_form)) {
     std::cerr << "Usage: lab threads tries [seed]\n";
     return 1;
   }
 
-  const int threadsPos = 1;
-  const int triesPos = 2;
-  const int seedPos = 3;
-  size_t threads = 0;
-  size_t tries = 0;
-  size_t seed = 0;
+  const int threads_pos = 1;
+  const int tries_pos = 2;
+  const int seed_pos = 3;
+  std::size_t threads = 0;
+  std::size_t tries = 0;
+  std::size_t seed = 0;
   try {
-    threads = petrov::parseCount(argv[threadsPos]);
-    tries = petrov::parseCount(argv[triesPos]);
-    if (argc == fullForm) {
-      seed = petrov::parseCount(argv[seedPos]);
+    threads = petrov::parseCount(argv[threads_pos]);
+    tries = petrov::parseCount(argv[tries_pos]);
+    if (argc == full_form) {
+      seed = petrov::parseCount(argv[seed_pos]);
     }
   } catch (const std::exception &e) {
     std::cerr << "Bad argument: " << e.what() << '\n';
@@ -51,7 +53,7 @@ int main(int argc, char **argv)
   try {
     const petrov::areas_t areas = petrov::estimateAreas(circles, threads, tries, seed);
     std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
-    std::cout << areas.cover << ' ' << areas.comm << '\n';
+    std::cout << areas.covered << ' ' << areas.common << '\n';
   } catch (const std::exception &e) {
     std::cerr << "Calculation failed: " << e.what() << '\n';
     return 2;

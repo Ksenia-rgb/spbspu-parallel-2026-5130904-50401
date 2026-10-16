@@ -1,10 +1,15 @@
 #include "input.hpp"
+
 #include <cctype>
+#include <cstddef>
 #include <istream>
 #include <limits>
+#include <stdexcept>
 #include <vector>
 
-size_t petrov::parseCount(const char *text)
+#include "area.hpp"
+
+std::size_t petrov::parseCount(const char *text)
 {
   if (*text == '-') {
     throw std::invalid_argument("Negative values are not allowed");
@@ -13,14 +18,14 @@ size_t petrov::parseCount(const char *text)
     throw std::invalid_argument("Empty argument");
   }
 
-  const size_t base = 10;
-  const size_t limit = std::numeric_limits< size_t >::max();
-  size_t result = 0;
+  const std::size_t base = 10;
+  const std::size_t limit = std::numeric_limits< std::size_t >::max();
+  std::size_t result = 0;
   for (const char *it = text; *it != '\0'; ++it) {
     if (!std::isdigit(static_cast< unsigned char >(*it))) {
       throw std::invalid_argument("Argument is not a number");
     }
-    const size_t digit = static_cast< size_t >(*it - '0');
+    const std::size_t digit = static_cast< std::size_t >(*it - '0');
     if (result > ((limit - digit) / base)) {
       throw std::overflow_error("Argument is too big");
     }
