@@ -21,11 +21,15 @@ namespace levkin {
                 close(out); out = -1;
             }
         }
+        Pipes& operator=(const Pipes&) = delete;
+        Pipes& operator=(Pipes&&) = delete;
+        Pipes(const Pipes&) = delete;
+        Pipes(Pipes&&) = delete;
     };
     struct SharedMemory {
         int fd = 0;
         void* ptr = nullptr;
-        const char * name;
+        std::string name;
         size_t allocSize = 4096;
         size_t lstIndex = 0;
 
@@ -34,8 +38,8 @@ namespace levkin {
                 munmap(ptr, allocSize);
             }
         }
-        SharedMemory(const char* nameParam) : name(nameParam) {
-            fd = shm_open(name, O_CREAT  | O_RDWR,  0666);
+        SharedMemory(std::string nameParam) : name(nameParam) {
+            fd = shm_open(name.c_str(), O_CREAT  | O_RDWR,  0666);
             if (fd == -1) {
                 throw std::bad_alloc();
             }
@@ -47,6 +51,10 @@ namespace levkin {
                 throw std::bad_alloc();
             } // todo
         }
+        SharedMemory& operator=(const SharedMemory&) = delete;
+        SharedMemory& operator=(SharedMemory&&) = delete;
+        SharedMemory(const SharedMemory&) = delete;
+        SharedMemory(SharedMemory&&) = delete;
     };
     struct Process {
         Pipes pipes;
