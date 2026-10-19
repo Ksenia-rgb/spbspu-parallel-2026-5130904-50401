@@ -6,7 +6,7 @@ struct DB {
   std::vector< int > processes;
 } db;
 
-void cmd_move(DB * , std::istream &is, std::ostream& os)
+void cmd_circle(DB * , std::istream &is, std::ostream& os)
 {
     std::string dummy;
     is >> dummy;
@@ -26,8 +26,8 @@ int main()
   const std::array< IO::cmd_t, 2 > cmds = {{{&cmd_move, "move"}, {&cmd_rename, "rename"}}};
   
   IO io(std::cin, std::cout, db, cmds);
-
-  io.run("move");
+  const char*  cmdd = "move"
+  io.run(cmdd);
 
   std::cout << "levkin.dima\n" << sizeof(io);
 }
