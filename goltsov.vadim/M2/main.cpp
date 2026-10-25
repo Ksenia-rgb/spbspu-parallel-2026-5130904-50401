@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <limits>
 #include "shared_circles.hpp"
 
 const char* const SHMN = "shm-temp";
@@ -51,8 +52,8 @@ namespace goltsov
   {
     std::string shape_name;
     std::cin >> shape_name;
-    Circle circle = shared_circles.get_data()[name_idx_map.at(shape_name)];
-    std::cout << circle << "\n";
+    Circle* circle = shared_circles.get_data() + name_idx_map.at(shape_name);
+    std::cout << *circle << "\n";
   }
 
   void showset(goltsov::SharedCircles& shared_circles)
@@ -66,6 +67,33 @@ namespace goltsov
     }
   }
 
+  void frame(goltsov::SharedCircles& shared_circles)
+  {
+    std::string shape_name;
+    std::cin >> shape_name;
+    Circle* circle = shared_circles.get_data() + name_idx_map.at(shape_name);
+    std::cout << "(" << circle->x - circle->r << " " << circle->y - circle->r << ") (" << circle->x + circle->r << " " << circle->y + circle->r << ")" << "\n";
+  }
+
+  void frameset(goltsov::SharedCircles& shared_circles)
+  {
+    std::string set_name;
+    std::cin >> set_name;
+    std::vector< std::string > set = sets.at(set_name);
+    long long min_x = std::numeric_limits< long long >::max();
+    long long max_x = std::numeric_limits< long long >::min();
+    long long min_y = std::numeric_limits< long long >::max();
+    long long max_y = std::numeric_limits< long long >::min();
+    for (size_t i = 0; i < set.size(); ++i)
+    {
+      Circle* circle = shared_circles.get_data() + name_idx_map.at(set[i]);
+      min_x = std::min< long long >(min_x, circle->x - circle->r);
+      max_x = std::max< long long >(max_x, circle->x + circle->r);
+      min_y = std::min< long long >(min_y, circle->y - circle->r);
+      max_y = std::max< long long >(max_y, circle->y + circle->r);
+    }
+    std::cout << "(" << min_x << " " << min_y << ") (" << max_x << " " << max_y << ")" << "\n";
+  }
 }
 
 int main()
