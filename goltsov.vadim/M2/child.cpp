@@ -78,7 +78,11 @@ int main(int argc, char** argv)
     min_y = std::min< double >(min_y, circle->y - circle->r);
     max_y = std::max< double >(max_y, circle->y + circle->r);
   }
+  auto t0 = std::chrono::steady_clock::now();
   double res = goltsov::area(data, threads, tries, seed, min_x, min_y, max_x, max_y);
+  auto t1 = std::chrono::steady_clock::now();
+  size_t ms = std::chrono::duration_cast< std::chrono::milliseconds >(t1 - t0).count();
+  goltsov::send(err, wr, (char*)&ms, sizeof(ms));
   goltsov::send(err, wr, (char*)&res, sizeof(res));
 }
 
