@@ -23,8 +23,8 @@ namespace goltsov
   struct Process
   {
     std::string name;
-    int wr; //в родителе пишем сюда
-    int rd; //в родителе читаем отчюда
+    int wr;
+    int rd;
     size_t seed;
     pid_t pid;
   };
@@ -34,21 +34,31 @@ namespace goltsov
   std::map< std::string, Process > processes;
   std::map< std::string, Process > statuses;
 
-  size_t send(int& err, int wr, const char* b, size_t k) {
+  size_t send(int& err, int wr, const char* b, size_t k)
+  {
     size_t r = 0;
-    while (r < k) {
+    while (r < k)
+    {
       err = write(wr, b + r, k - r);
-      if (err < 0) break;
+      if (err < 0)
+      {
+        break;
+      }
       r += err;
     }
     return r;
   }
 
-  size_t recv(int& err, int rd, char* b, size_t k) {
+  size_t recv(int& err, int rd, char* b, size_t k)
+  {
     size_t r = 0;
-    while (r < k) {
+    while (r < k)
+    {
       err = read(rd, b + r, k - r);
-      if (err <= 0) break;
+      if (err <= 0)
+      {
+        break;
+      }
       r += err;
     }
     return r;
@@ -123,7 +133,8 @@ namespace goltsov
       throw std::runtime_error("<INVALID COMMAND>");
     }
     Circle* circle = shared_circles.get_data() + name_idx_map.at(shape_name);
-    std::cout << "(" << circle->x - circle->r << " " << circle->y - circle->r << ") (" << circle->x + circle->r << " " << circle->y + circle->r << ")" << "\n";
+    std::cout << "(" << circle->x - circle->r << " " << circle->y - circle->r << ") (" << circle->x + circle->r << " "
+              << circle->y + circle->r << ")" << "\n";
   }
 
   void frameset(goltsov::SharedCircles& shared_circles)
@@ -224,7 +235,7 @@ namespace goltsov
       recv(err, process.rd, (char*)&ms, sizeof(ms));
       double res;
       recv(err, process.rd, (char*)&res, sizeof(res));
-      printf("%s %zu %.3f\n",process.name, ms, res);
+      printf("%s %zu %.3f\n", process.name, ms, res);
     }
     else
     {
@@ -250,7 +261,7 @@ namespace goltsov
       recv(err, process.rd, (char*)&ms, sizeof(ms));
       double res;
       recv(err, process.rd, (char*)&res, sizeof(res));
-      printf("%s %zu %.3f\n",process.name, ms, res);
+      printf("%s %zu %.3f\n", process.name, ms, res);
     }
     else
     {
@@ -262,5 +273,33 @@ namespace goltsov
 int main()
 {
   goltsov::SharedCircles shared_circles = goltsov::SharedCircles(goltsov::SHMN, 10);
+  std::map< std::string, void (*)(goltsov::SharedCircles&) > commands;
+  commands.insert({"circle", &goltsov::circle});
+  commands.insert({"set", &goltsov::set});
+  commands.insert({"show", &goltsov::show});
+  commands.insert({"showset", &goltsov::showset});
+  commands.insert({"frame", &goltsov::frame});
+  commands.insert({"frameset", &goltsov::frameset});
+  commands.insert({"spawn", &goltsov::spawn});
+  commands.insert({"area-on", &goltsov::areas_on});
+  commands.insert({"status", &goltsov::status});
+  commands.insert({"wait", &goltsov::wait});
 
+  while (!std::cin.eof())
+  {
+    std::string command;
+    std::cin >> command;
+    if (!std::cin)
+    {
+      std::cerr << "<INVALID>\n";
+    }
+    if (!commands.count(command))
+    {
+      std::cerr << "<UNKNOWN COMMAND>\n";
+    }
+    else
+    {
+      commands.at(command)(shared_circles);
+    }
+  }
 }

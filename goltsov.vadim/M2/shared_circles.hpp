@@ -20,7 +20,7 @@ namespace goltsov
       os << circle.r << " (" << circle.x << " " << circle.y << ")";
     }
   };
-  
+
   class SharedCircles
   {
   public:
@@ -48,17 +48,17 @@ namespace goltsov
         throw std::runtime_error("Map failed");
       }
     }
-  
+
     SharedCircles(const SharedCircles&) = delete;
     SharedCircles& operator=(const SharedCircles&) = delete;
-  
+
     ~SharedCircles()
     {
       munmap(data_, size_);
       close(shfd_);
       shm_unlink(name_.c_str());
     }
-  
+
     std::pair< Circle*, bool > new_circle(double r, double x, double y)
     {
       bool is_update_size = false;
@@ -84,7 +84,7 @@ namespace goltsov
       ++count_circles_;
       return std::pair< Circle*, bool >{c, is_update_size};
     }
-  
+
     size_t get_size()
     {
       return size_;
