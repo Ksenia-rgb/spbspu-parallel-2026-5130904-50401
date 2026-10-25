@@ -11,9 +11,9 @@ namespace goltsov
 {
   struct Circle
   {
-    size_t r;
-    long long x;
-    long long y;
+    double r;
+    double x;
+    double y;
 
     friend std::ostream& operator<<(std::ostream& os, const Circle& circle)
     {
@@ -24,15 +24,15 @@ namespace goltsov
   class SharedCircles
   {
   public:
-    SharedCircles(const char* name)
+    SharedCircles(const char* name, const size_t& max_count)
     {
       name_ = name;
+      max_count_ = max_count;
       shfd_ = shm_open(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
       if (shfd_ < 0)
       {
         throw std::runtime_error("shm_open failed");
       }
-      max_count_ = 10;
       size_ = sizeof(Circle) * max_count_;
       if (ftruncate(shfd_, size_) < 0)
       {
@@ -59,7 +59,7 @@ namespace goltsov
       shm_unlink(name_.c_str());
     }
   
-    std::pair< Circle*, bool > new_circle(size_t r, long long x, long long y)
+    std::pair< Circle*, bool > new_circle(double r, double x, double y)
     {
       bool is_update_size = false;
       if (count_circles_ == max_count_)

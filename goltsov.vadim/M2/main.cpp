@@ -10,10 +10,10 @@
 #include <limits>
 #include "shared_circles.hpp"
 
-const char* const SHMN = "shm-temp";
-
 namespace goltsov
 {
+  const char* const SHMN = "shm-temp";
+
   std::map< std::string, size_t > name_idx_map;
   std::map< std::string, std::vector< std::string > > sets;
 
@@ -23,11 +23,31 @@ namespace goltsov
     size_t idx;
   };
 
+  size_t send(int& err, int wr, const char* b, size_t k) {
+    size_t r = 0;
+    while (r < k) {
+      err = write(wr, b + r, k - r);
+      if (err < 0) break;
+      r += err;
+    }
+    return r;
+  }
+
+  size_t recv(int& err, int rd, char* b, size_t k) {
+    size_t r = 0;
+    while (r < k) {
+      err = read(rd, b + r, k - r);
+      if (err <= 0) break;
+      r += err;
+    }
+    return r;
+  }
+
   void circle(goltsov::SharedCircles& shared_circles)
   {
     std::string name;
-    size_t r;
-    long long x, y;
+    double r;
+    double x, y;
     std::cin >> name >> r >> x >> y;
     shared_circles.new_circle(r, x, y);
     name_idx_map.insert({name, shared_circles.get_count_circles()});
@@ -80,17 +100,17 @@ namespace goltsov
     std::string set_name;
     std::cin >> set_name;
     std::vector< std::string > set = sets.at(set_name);
-    long long min_x = std::numeric_limits< long long >::max();
-    long long max_x = std::numeric_limits< long long >::min();
-    long long min_y = std::numeric_limits< long long >::max();
-    long long max_y = std::numeric_limits< long long >::min();
+    double min_x = std::numeric_limits< double >::max();
+    double max_x = std::numeric_limits< double >::min();
+    double min_y = std::numeric_limits< double >::max();
+    double max_y = std::numeric_limits< double >::min();
     for (size_t i = 0; i < set.size(); ++i)
     {
       Circle* circle = shared_circles.get_data() + name_idx_map.at(set[i]);
-      min_x = std::min< long long >(min_x, circle->x - circle->r);
-      max_x = std::max< long long >(max_x, circle->x + circle->r);
-      min_y = std::min< long long >(min_y, circle->y - circle->r);
-      max_y = std::max< long long >(max_y, circle->y + circle->r);
+      min_x = std::min< double >(min_x, circle->x - circle->r);
+      max_x = std::max< double >(max_x, circle->x + circle->r);
+      min_y = std::min< double >(min_y, circle->y - circle->r);
+      max_y = std::max< double >(max_y, circle->y + circle->r);
     }
     std::cout << "(" << min_x << " " << min_y << ") (" << max_x << " " << max_y << ")" << "\n";
   }
@@ -98,6 +118,6 @@ namespace goltsov
 
 int main()
 {
-  goltsov::SharedCircles shared_circles = goltsov::SharedCircles(SHMN);
+  goltsov::SharedCircles shared_circles = goltsov::SharedCircles(goltsov::SHMN, 10);
 
 }

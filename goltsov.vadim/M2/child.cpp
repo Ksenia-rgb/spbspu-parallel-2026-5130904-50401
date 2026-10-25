@@ -6,35 +6,91 @@
 #include <utility>
 #include <cstddef>
 #include <string>
-#include <limits>
 #include <algorithm>
 #include <stdexcept>
+#include "shared_circles.hpp"
 
 namespace goltsov
 {
-  bool isInside(const std::tuple< double, double, double >& s, const double& x, const double& y);
+  const char* const SHMN = "shm-temp";
 
-  std::pair< size_t, size_t > calc(const std::vector< std::tuple< double, double, double > >& data, const size_t& tests,
+  size_t send(int& err, int wr, const char* b, size_t k) {
+    size_t r = 0;
+    while (r < k) {
+      err = write(wr, b + r, k - r);
+      if (err < 0) break;
+      r += err;
+    }
+    return r;
+  }
+
+  size_t recv(int& err, int rd, char* b, size_t k) {
+    size_t r = 0;
+    while (r < k) {
+      err = read(rd, b + r, k - r);
+      if (err <= 0) break;
+      r += err;
+    }
+    return r;
+  }
+
+  bool isInside(Circle* s, const double& x, const double& y);
+
+  size_t calc(const std::vector< Circle* >& data, const size_t& tests,
       const size_t& seed, const double& min_x, const double& min_y, const double& max_x, const double& max_y);
 
-  std::pair< double, double > areas(const std::vector< std::tuple< double, double, double > >& data,
+  double area(const std::vector< Circle* >& data,
       const size_t& threads, const size_t& tries, const size_t& start_seed, const double& min_x, const double& min_y,
       const double& max_x, const double& max_y);
 }
 
 int main(int argc, char** argv)
 {
+  int rd = std::stoi(argv[1]);
+  int wr = std::stoi(argv[2]);
+  size_t seed = std::stoi(argv[3]);
+  int err = 0;
+  size_t max_count;
+  goltsov::recv(err, rd, (char*)&max_count, sizeof(max_count));
+
+  goltsov::SharedCircles shared_circles = goltsov::SharedCircles(goltsov::SHMN, max_count);
+
+  size_t threads;
+  goltsov::recv(err, rd, (char*)&threads, sizeof(threads));
+  size_t tries;
+  goltsov::recv(err, rd, (char*)&tries, sizeof(tries));
+  size_t count_circles;
+  goltsov::recv(err, rd, (char*)&count_circles, sizeof(count_circles));
+
+  double min_x = std::numeric_limits< double >::max();
+  double max_x = std::numeric_limits< double >::min();
+  double min_y = std::numeric_limits< double >::max();
+  double max_y = std::numeric_limits< double >::min();
+  std::vector< goltsov::Circle* > data;
+  for (size_t i = 0; i < count_circles; ++i)
+  {
+    size_t idxi;
+    goltsov::recv(err, rd, (char*)&idxi, sizeof(idxi));
+    goltsov::Circle* circle = shared_circles.get_data() + idxi;
+    data.push_back(circle);
+    min_x = std::min< double >(min_x, circle->x - circle->r);
+    max_x = std::max< double >(max_x, circle->x + circle->r);
+    min_y = std::min< double >(min_y, circle->y - circle->r);
+    max_y = std::max< double >(max_y, circle->y + circle->r);
+  }
+  double res = goltsov::area(data, threads, tries, seed, min_x, min_y, max_x, max_y);
+  goltsov::send(err, wr, (char*)&res, sizeof(res));
 }
 
-bool goltsov::isInside(const std::tuple< double, double, double >& s, const double& x, const double& y)
+bool goltsov::isInside(Circle* s, const double& x, const double& y)
 {
-  const double r = std::get< 0 >(s);
-  const double sx = std::get< 1 >(s);
-  const double sy = std::get< 2 >(s);
+  const double r = s->r;
+  const double sx = s->x;
+  const double sy = s->y;
   return r * r >= (x - sx) * (x - sx) + (y - sy) * (y - sy);
 }
 
-std::pair< size_t, size_t > goltsov::calc(const std::vector< std::tuple< double, double, double > >& data,
+size_t goltsov::calc(const std::vector< Circle* >& data,
     const size_t& tests, const size_t& seed, const double& min_x, const double& min_y, const double& max_x,
     const double& max_y)
 {
@@ -50,37 +106,22 @@ std::pair< size_t, size_t > goltsov::calc(const std::vector< std::tuple< double,
     const double x = dist_x(engine);
     const double y = dist_y(engine);
     bool is_inside = false;
-    bool is_inside_in_all = true;
 
     for (size_t j = 0; j < data.size(); ++j)
     {
-      if (isInside(data[j], x, y))
-      {
-        is_inside = true;
-      }
-      else
-      {
-        is_inside_in_all = false;
-      }
+      count_inside++;
+      break;
     }
 
-    if (is_inside)
-    {
-      count_inside++;
-    }
-    if (is_inside_in_all)
-    {
-      count_inside_in_all++;
-    }
   }
-  return std::pair< size_t, size_t >(count_inside, count_inside_in_all);
+  return count_inside;
 }
 
-std::pair< double, double > goltsov::areas(const std::vector< std::tuple< double, double, double > >& data,
+double goltsov::area(const std::vector< Circle* >& data,
     const size_t& threads, const size_t& tries, const size_t& start_seed, const double& min_x, const double& min_y,
     const double& max_x, const double& max_y)
 {
-  std::vector< std::future< std::pair< size_t, size_t > > > results_in_threads(threads);
+  std::vector< std::future< size_t > > results_in_threads(threads);
 
   for (size_t i = 0; i < tries % threads; ++i)
   {
@@ -98,12 +139,8 @@ std::pair< double, double > goltsov::areas(const std::vector< std::tuple< double
 
   for (size_t i = 0; i < threads; ++i)
   {
-    const std::pair< size_t, size_t > result_i = results_in_threads[i].get();
-    count_inside += result_i.first;
-    count_inside_in_all += result_i.second;
+    count_inside += results_in_threads[i].get();
   }
 
-  return std::pair< double, double >(
-      (max_x - min_x) * (max_y - min_y) * (static_cast< double >(count_inside) / static_cast< double >(tries)),
-      (max_x - min_x) * (max_y - min_y) * (static_cast< double >(count_inside_in_all) / static_cast< double >(tries)));
+  return (max_x - min_x) * (max_y - min_y) * (static_cast< double >(count_inside) / static_cast< double >(tries));
 }
