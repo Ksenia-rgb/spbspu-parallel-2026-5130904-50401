@@ -10,7 +10,7 @@
 int main()
 {
   std::signal(SIGPIPE, SIG_IGN);
-  goltsov::SharedCircles shared_circles = goltsov::SharedCircles(goltsov::SHMN, 10);
+  goltsov::SharedCircles shared_circles(goltsov::SHMN, 10);
   std::map< std::string, void (*)(goltsov::SharedCircles&) > commands;
   commands.insert({"circle", &goltsov::circle});
   commands.insert({"set", &goltsov::set});

@@ -96,7 +96,7 @@ void goltsov::circle(SharedCircles& shared_circles)
   name_idx_map.insert({name, idx});
 }
 
-void goltsov::set(SharedCircles& shared_circles)
+void goltsov::set(SharedCircles&)
 {
   std::string name;
   long long set_size;
@@ -183,7 +183,7 @@ void goltsov::frameset(SharedCircles& shared_circles)
   std::cout << "(" << min_x << " " << min_y << ") (" << max_x << " " << max_y << ")" << "\n";
 }
 
-void goltsov::spawn(SharedCircles& shared_circles)
+void goltsov::spawn(SharedCircles&)
 {
   std::string process_name;
   long long seed;
@@ -262,7 +262,7 @@ void goltsov::areas_on(SharedCircles& shared_circles)
   calculations.insert({calc_name, Calculation{process_name, false, 0, 0.0}});
 }
 
-void goltsov::status(SharedCircles& shared_circles)
+void goltsov::status(SharedCircles&)
 {
   std::string calc_name;
   std::cin >> calc_name;
@@ -286,7 +286,7 @@ void goltsov::status(SharedCircles& shared_circles)
   }
 }
 
-void goltsov::wait(SharedCircles& shared_circles)
+void goltsov::wait(SharedCircles&)
 {
   std::string calc_name;
   std::cin >> calc_name;

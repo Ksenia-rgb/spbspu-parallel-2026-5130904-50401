@@ -32,7 +32,7 @@ goltsov::SharedCircles::SharedCircles(const char* name, const size_t& max_count)
     shm_unlink(name);
     throw std::runtime_error("ftruncate failed");
   }
-  data_ = (Circle*)mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0);
+  data_ = static_cast< Circle* >(mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0));
   if (data_ == MAP_FAILED)
   {
     close(shfd_);
@@ -57,7 +57,7 @@ goltsov::SharedCircles::SharedCircles(const char* name, const size_t& count, Att
     throw std::runtime_error("shm_open failed");
   }
   size_ = sizeof(Circle) * max_count_;
-  data_ = (Circle*)mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0);
+  data_ = static_cast< Circle* >(mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0));
   if (data_ == MAP_FAILED)
   {
     close(shfd_);
@@ -87,7 +87,7 @@ std::pair< goltsov::Circle*, bool > goltsov::SharedCircles::new_circle(double r,
       throw std::runtime_error("ftruncate failed");
     }
     munmap(data_, size_);
-    data_ = (Circle*)mmap(NULL, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0);
+    data_ = static_cast< Circle* >(mmap(NULL, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0));
     if (data_ == MAP_FAILED)
     {
       throw std::runtime_error("Map failed");
