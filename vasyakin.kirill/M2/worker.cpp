@@ -112,7 +112,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
   std::vector< pthread_t > pths(threads);
   std::vector< Thread > th(threads);
 
-  int count_th = 0;
+  size_t count_th = 0;
 
   size_t count_in_one_circle = 0;
   size_t count_in_all_circles = 0;

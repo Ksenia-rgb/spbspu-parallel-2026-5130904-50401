@@ -9,6 +9,7 @@
 
 int main(int argc, char** argv)
 {
+  (void)argc;
   const char* cmd_fd_env = std::getenv("CMD_RD");
   if (cmd_fd_env != nullptr)
   {
