@@ -279,3 +279,116 @@ void vasyakin::cmd_spawn(std::istream& in, std::ostream&, vasyakin::State& state
     state.processes.insert({name, info});
   }
 }
+
+void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& state)
+{
+  std::string process_name, calc_name, set_name;
+  size_t threads = 0, tries = 0;
+
+  if (!(in >> process_name >> calc_name >> set_name >> threads >> tries))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (process_name.empty() || !std::isalpha(static_cast< unsigned char >(process_name[0])))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (calc_name.empty() || !std::isalpha(static_cast< unsigned char >(calc_name[0])))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (set_name.empty() || !std::isalpha(static_cast< unsigned char >(set_name[0])))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (state.calculations.count(calc_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  auto proc_it = state.processes.find(process_name);
+  if (proc_it == state.processes.end())
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (!proc_it->second.alive)
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  auto set_it = state.sets.find(set_name);
+  if (set_it == state.sets.end())
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (threads == 0 || tries == 0)
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  const vasyakin::ShapeSet& set = set_it->second;
+
+  std::vector< circle_t > circles;
+  circles.reserve(set.shape_names.size());
+
+  for (size_t i = 0; i < set.shape_names.size(); ++i)
+  {
+    circles.push_back(state.circles.at(set.shape_names[i]));
+  }
+
+  vasyakin::CommandHeader header;
+
+  header.type = CommandType::CALCULATION;
+  std::memset(header.calc_name, 0, MAX_NAME_LEN);
+  std::strncpy(header.calc_name, calc_name.c_str(), MAX_NAME_LEN - 1);
+  header.shape_count = circles.size();
+  header.threads = threads;
+  header.tries = tries;
+
+  int err = 0;
+  int wr_fd = proc_it->second.wr_fd;
+
+  size_t sent = vasyakin::send(err, wr_fd, reinterpret_cast< char* >(&header), sizeof(header));
+
+  if (sent != sizeof(header))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  size_t i = 0;
+  while (i < circles.size())
+  {
+    vasyakin::ShapeBatch batch;
+    size_t batch_count = std::min(BATCH_SIZE, circles.size() - i);
+    batch.count = batch_count;
+
+    for (size_t j = 0; j < batch_count; ++j)
+    {
+      batch.shapes[j] = circles[i + j];
+    }
+
+    sent = vasyakin::send(err, wr_fd, reinterpret_cast< char* >(&batch), sizeof(batch));
+    if (sent != sizeof(batch))
+    {
+      throw std::invalid_argument("invalid command");
+    }
+
+    i += batch_count;
+  }
+
+  vasyakin::Calculation calculation;
+
+  calculation.status = CalcStatus::IN_PROGRESS;
+  calculation.process_name = process_name;
+  calculation.area = 0.0;
+  calculation.intersection_area = 0.0;
+  calculation.time_ms = 0;
+
+  state.calculations.insert({calc_name, calculation});
+}
