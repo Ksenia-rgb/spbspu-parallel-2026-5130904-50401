@@ -51,7 +51,7 @@ namespace sedov {
   void cmdWait(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out);
   void cmdStatus(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out);
 
-  bool tryReadResponse(CommandContext & ctx, int fd, std::ostream & out);
+  bool tryReadResponse(CommandContext & ctx, int fd);
   void printCalcResult(const Calc & calc, std::ostream & out);
 }
 
