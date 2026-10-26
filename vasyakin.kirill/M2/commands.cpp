@@ -472,7 +472,7 @@ void vasyakin::cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& s
     }
   }
 
-  out << "<IN PROGRESS>" << '\n';
+  out << calc.process_name << " <IN PROGRESS>" << '\n';
 }
 
 void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& state)
