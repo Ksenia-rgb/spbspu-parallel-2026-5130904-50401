@@ -392,3 +392,70 @@ void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& stat
 
   state.calculations.insert({calc_name, calculation});
 }
+
+void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& state)
+{
+  std::string calc_name;
+  if (!(in >> calc_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (!state.calculations.count(calc_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  auto calc_it = state.calculations.find(calc_name);
+  vasyakin::Calculation& calc = calc_it->second;
+
+  if (calc.status == vasyakin::CalcStatus::COMPLETED)
+  {
+    out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+    return;
+  }
+  
+  auto proc_it = state.processes.find(calc.process_name);
+  if (proc_it == state.processes.end())
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  struct pollfd pfd;
+  pfd.fd = proc_it->second.rd_fd;
+  pfd.events = POLLIN;
+
+  int ret = poll(&pfd, 1, 0);
+  if (ret < 0)
+  {
+    throw std::runtime_error(std::string("poll error: ") + std::strerror(errno));
+  }
+
+  if (ret > 0 && (pfd.revents & POLLIN))
+  {
+    vasyakin::Result result;
+    int err = 0;
+
+    size_t rec = vasyakin::recv(err, proc_it->second.rd_fd, reinterpret_cast< char* >(&result), sizeof(result));
+    if (err != 0)
+    {
+      throw std::runtime_error("IPC error: " + std::string(std::strerror(err)));
+    }
+
+    if (rec == sizeof(result))
+    {
+      if (std::string(result.calc_name) == calc_name)
+      {
+        calc.area = result.area;
+        calc.intersection_area = result.intersection_area;
+        calc.time_ms = result.time_ms;
+        calc.status = vasyakin::CalcStatus::COMPLETED;
+
+        out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+        return;
+      }
+    }
+  }
+
+  out << "<IN PROGRESS>" << '\n';
+}
