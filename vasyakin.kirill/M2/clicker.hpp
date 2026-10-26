@@ -9,16 +9,16 @@ namespace vasyakin
   {
   public:
     Clicker():
-      start_(std::chrono::high_resolution_clock::now())
+      start_(std::chrono::steady_clock::now())
     {}
 
     double millisec() const
     {
       using std::chrono::duration_cast;
-      using std::chrono::high_resolution_clock;
+      using std::chrono::steady_clock;
       using std::chrono::milliseconds;
 
-      auto t = high_resolution_clock::now();
+      auto t = steady_clock::now();
       return duration_cast< milliseconds >(t - start_).count();
     }
 
