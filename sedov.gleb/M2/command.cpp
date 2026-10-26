@@ -90,3 +90,49 @@ void sedov::cmdShow(const std::vector< std::string > & words, CommandContext & c
   const Shape & s = it->second;
   out << s.r << " (" << s.x << " " << s.y << ")\n";
 }
+
+void sedov::cmdSet(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() < 3) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  long long n;
+  if (!parseLongLong(words[2], n) || n <= 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (words.size() != 3 + static_cast< size_t >(n)) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  for (size_t i = 0; i < static_cast< size_t >(n); ++i) {
+    if (ctx.shapes.count(words[3 + i]) == 0) {
+      out << "<INVALID COMMAND>\n";
+      return;
+    }
+  }
+  if (ctx.sets.count(words[1]) > 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  std::vector< std::string > v(words.begin() + 3, words.begin() + 3 + n);
+  ctx.sets.emplace(words[1], std::move(v));
+}
+
+void sedov::cmdShowset(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 2) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  auto it = ctx.sets.find(words[1]);
+  if (it == ctx.sets.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  for (const auto & name : it->second) {
+    const Shape & s = ctx.shapes.at(name);
+    out << s.r << " (" << s.x << " " << s.y << ")\n";
+  }
+}
