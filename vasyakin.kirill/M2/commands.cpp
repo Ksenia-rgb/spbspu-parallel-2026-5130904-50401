@@ -84,3 +84,42 @@ void vasyakin::cmd_set(std::istream& in, std::ostream&, vasyakin::State& state)
 
   state.sets.insert({set_name, ss});
 }
+
+void vasyakin::cmd_show(std::istream& in, std::ostream& out, vasyakin::State& state)
+{
+  std::string shape_name;
+
+  if (!(in >> shape_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (!state.circles.count(shape_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  const circle_t& circle = state.circles[shape_name];
+  out << circle.r << " (" << circle.x << " " << circle.y << ")" << '\n';
+}
+
+void vasyakin::cmd_showset(std::istream& in, std::ostream& out, vasyakin::State& state)
+{
+  std::string set_name;
+
+  if (!(in >> set_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (!state.sets.count(set_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  for (size_t i = 0; i < state.sets[set_name].shape_names.size(); ++i)
+  {
+    const circle_t& circle = state.circles.at(state.sets[set_name].shape_names[i]);
+    out << circle.r << " (" << circle.x << " " << circle.y << ")" << '\n';
+  }
+}
