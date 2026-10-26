@@ -181,3 +181,101 @@ void vasyakin::cmd_frameset(std::istream& in, std::ostream& out, vasyakin::State
 
   out << "(" << left.first << " " << left.second << ")" << " (" << right.first << " " << right.second << ")" << '\n';
 }
+
+void vasyakin::cmd_spawn(std::istream& in, std::ostream&, vasyakin::State& state)
+{
+  std::string name;
+  size_t seed = 0;
+  if (!(in >> name >> seed))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (name.empty() || !std::isalpha(static_cast< unsigned char >(name[0])))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (state.processes.count(name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  int cmd_pipe[2] = {};
+  int res_pipe[2] = {};
+
+  int err = pipe(cmd_pipe);
+  if (err == -1)
+  {
+    throw std::system_error(errno, std::generic_category(), "Failed to create pipe");
+  }
+
+  err = pipe(res_pipe);
+  if (err == -1)
+  {
+    close(cmd_pipe[0]);
+    close(cmd_pipe[1]);
+    throw std::system_error(errno, std::generic_category(), "Failed to create pipe");
+  }
+
+  int cmd_rd = cmd_pipe[0];
+  int cmd_wr = cmd_pipe[1];
+
+  int res_rd = res_pipe[0];
+  int res_wr = res_pipe[1];
+
+  pid_t pid = fork();
+  if (pid < 0)
+  {
+    close(cmd_rd);
+    close(cmd_wr);
+
+    close(res_rd);
+    close(res_wr);
+
+    throw std::system_error(errno, std::generic_category(), "Fork failed");
+  }
+  else if (pid == 0)
+  {
+    for (const auto& entry : state.processes)
+    {
+      close(entry.second.rd_fd);
+      close(entry.second.wr_fd);
+    }
+
+    close(cmd_wr);
+    close(res_rd);
+
+    if (setenv("CMD_RD", std::to_string(cmd_rd).c_str(), 1) != 0)
+    {
+      _exit(1);
+    }
+
+    if (setenv("RES_WR", std::to_string(res_wr).c_str(), 1) != 0)
+    {
+      _exit(1);
+    }
+
+    if (setenv("SEED", std::to_string(seed).c_str(), 1) != 0)
+    {
+      _exit(1);
+    }
+
+    execl(state.exe_path.c_str(), state.exe_path.c_str(), NULL);
+    _exit(1);
+  }
+  else
+  {
+    close(cmd_rd);
+    close(res_wr);
+
+    ProcessInfo info;
+    info.pid = pid;
+    info.rd_fd = res_rd;
+    info.wr_fd = cmd_wr;
+    info.alive = true;
+    info.seed = static_cast< unsigned int >(seed);
+
+    state.processes.insert({name, info});
+  }
+}
