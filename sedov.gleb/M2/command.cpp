@@ -171,3 +171,52 @@ void sedov::cmdFrameset(const std::vector< std::string > & words, CommandContext
   const Box box = boundingBox(shapes);
   out << "(" << box.x_min << " " << box.y_min << ") (" << box.x_max << " " << box.y_max << ")\n";
 }
+
+void sedov::cmdSpawn(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 3) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (ctx.processes.count(words[1]) > 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  long long seed;
+  if (!parseLongLong(words[2], seed) || seed < 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  int in_pipe[2] = {-1, -1};
+  int out_pipe[2] = {-1, -1};
+  if (pipe(in_pipe) != 0 || pipe(out_pipe) != 0) {
+    out << "<INVALID COMMAND>\n";
+    if (in_pipe[0] != -1) {
+      close(in_pipe[0]);
+      close(in_pipe[1]);
+    }
+    if (out_pipe[0] != -1) {
+      close(out_pipe[0]);
+      close(out_pipe[1]);
+    }
+    return;
+  }
+  pid_t pid = fork();
+  if (pid < 0) {
+    out << "<INVALID COMMAND>\n";
+    close(in_pipe[0]);
+    close(in_pipe[1]);
+    close(out_pipe[0]);
+    close(out_pipe[1]);
+    return;
+  }
+  if (!pid) {
+    close(in_pipe[1]);
+    close(out_pipe[0]);
+    childLoop(in_pipe[0], out_pipe[1], static_cast< size_t >(seed));
+    _exit(0);
+  }
+  close(in_pipe[0]);
+  close(out_pipe[1]);
+  ctx.processes.emplace(words[1], Process{pid, in_pipe[1], out_pipe[0], true});
+}
