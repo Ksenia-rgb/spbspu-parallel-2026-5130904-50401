@@ -1,104 +1,43 @@
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <new>
-#include <stdexcept>
+#ifndef SHARED_CIRCLES_HPP
+#define SHARED_CIRCLES_HPP
+
+#include <cstddef>
+#include <ostream>
 #include <string>
 #include <utility>
 
 namespace goltsov
 {
+  const char* const SHMN = "/shm-temp";
+
   struct Circle
   {
     double r;
     double x;
     double y;
-
-    friend std::ostream& operator<<(std::ostream& os, const Circle& circle)
-    {
-      os << circle.r << " (" << circle.x << " " << circle.y << ")";
-    }
   };
+
+  std::ostream& operator<<(std::ostream& os, const Circle& circle);
 
   class SharedCircles
   {
   public:
-    SharedCircles(const char* name, const size_t& max_count)
-    {
-      name_ = name;
-      max_count_ = max_count;
-      shfd_ = shm_open(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-      if (shfd_ < 0)
-      {
-        throw std::runtime_error("shm_open failed");
-      }
-      size_ = sizeof(Circle) * max_count_;
-      if (ftruncate(shfd_, size_) < 0)
-      {
-        close(shfd_);
-        shm_unlink(name);
-        throw std::runtime_error("ftruncate failed");
-      }
-      data_ = (Circle*)mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0);
-      if (data_ == MAP_FAILED)
-      {
-        close(shfd_);
-        shm_unlink(name);
-        throw std::runtime_error("Map failed");
-      }
-    }
+    struct Attach
+    {};
+
+    SharedCircles(const char* name, const size_t& max_count);
+    SharedCircles(const char* name, const size_t& count, Attach);
 
     SharedCircles(const SharedCircles&) = delete;
     SharedCircles& operator=(const SharedCircles&) = delete;
 
-    ~SharedCircles()
-    {
-      munmap(data_, size_);
-      close(shfd_);
-      shm_unlink(name_.c_str());
-    }
+    ~SharedCircles();
 
-    std::pair< Circle*, bool > new_circle(double r, double x, double y)
-    {
-      bool is_update_size = false;
-      if (count_circles_ == max_count_)
-      {
-        size_t new_max = max_count_ * 2;
-        size_t new_size = new_max * sizeof(Circle);
-        if (ftruncate(shfd_, new_size) < 0)
-        {
-          throw std::runtime_error("ftruncate failed");
-        }
-        munmap(data_, size_);
-        data_ = (Circle*)mmap(NULL, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, shfd_, 0);
-        if (data_ == MAP_FAILED)
-        {
-          throw std::runtime_error("Map failed");
-        }
-        size_ = new_size;
-        max_count_ = new_max;
-        is_update_size = true;
-      }
-      Circle* c = new (data_ + count_circles_) Circle{r, x, y};
-      ++count_circles_;
-      return std::pair< Circle*, bool >{c, is_update_size};
-    }
+    std::pair< Circle*, bool > new_circle(double r, double x, double y);
 
-    size_t get_size()
-    {
-      return size_;
-    }
-
-    Circle* get_data()
-    {
-      return data_;
-    }
-
-    size_t get_count_circles()
-    {
-      return count_circles_;
-    }
+    size_t get_size();
+    Circle* get_data();
+    size_t get_count_circles();
 
   private:
     std::string name_;
@@ -107,5 +46,8 @@ namespace goltsov
     size_t size_;
     size_t max_count_;
     size_t count_circles_ = 0;
+    bool owner_;
   };
 }
+
+#endif
