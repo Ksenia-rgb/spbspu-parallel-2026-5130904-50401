@@ -53,3 +53,40 @@ bool sedov::tryReadResponse(CommandContext & ctx, int fd)
   }
   return true;
 }
+
+void sedov::cmdCircle(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 5) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (ctx.shapes.count(words[1]) > 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  long long r, x, y;
+  if (!parseLongLong(words[2], r) || !parseLongLong(words[3], x) || !parseLongLong(words[4], y)) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (r <= 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  ctx.shapes.emplace(words[1], Shape{r, x, y});
+}
+
+void sedov::cmdShow(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 2) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  auto it = ctx.shapes.find(words[1]);
+  if (it == ctx.shapes.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const Shape & s = it->second;
+  out << s.r << " (" << s.x << " " << s.y << ")\n";
+}
