@@ -332,3 +332,42 @@ void sedov::cmdWait(const std::vector< std::string > & words, CommandContext & c
   }
   printCalcResult(calc_it->second, out);
 }
+
+void sedov::cmdStatus(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 2) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const std::string & calc_name = words[1];
+  auto calc_it = ctx.calcs.find(calc_name);
+  if (calc_it == ctx.calcs.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (calc_it->second.status == Status::InProgress) {
+    const std::string & proc_name = calc_it->second.process_name;
+    auto proc_it = ctx.processes.find(proc_name);
+    if (proc_it != ctx.processes.end() && proc_it->second.alive) {
+      int fd = proc_it->second.out_fd;
+      while (true) {
+        struct pollfd pfd{};
+        pfd.fd = fd;
+        pfd.events = POLLIN;
+        int ret = poll(&pfd, 1, 0);
+        if (ret <= 0) {
+          break;
+        }
+        if (pfd.revents & (POLLIN | POLLHUP)) {
+          if (!tryReadResponse(ctx, fd)) {
+            calc_it->second.status = Status::Canceled;
+            break;
+          }
+        }
+      }
+    } else {
+      calc_it->second.status = Status::Canceled;
+    }
+  }
+  printCalcResult(calc_it->second, out);
+}
