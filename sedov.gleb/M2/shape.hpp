@@ -26,9 +26,9 @@ namespace sedov {
   Box boundingBox(const Shape & shape);
   Box boundingBox(const std::vector< Shape > & shapes);
   bool isInside(double dx, double dy, double r);
-  Result calc(const std::vector< Shape > & shapes, const Box & box, std::size_t tests, std::size_t seed);
-  Result countTotalHits(const std::vector< Shape > & shapes, const Box & box, std::size_t threads, std::size_t tries,
-    std::size_t seed);
+  Result calc(const std::vector< Shape > & shapes, const Box & box, size_t tests, size_t seed);
+  Result countTotalHits(const std::vector< Shape > & shapes, const Box & box, size_t threads, size_t tries,
+    size_t seed);
 }
 
 #endif

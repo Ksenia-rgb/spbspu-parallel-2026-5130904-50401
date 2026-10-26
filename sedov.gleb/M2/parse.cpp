@@ -6,7 +6,7 @@
 std::vector< std::string > sedov::split(const std::string & line)
 {
   std::vector< std::string > words;
-  std::size_t i = 0, n = line.size();
+  size_t i = 0, n = line.size();
   while (i < n) {
     while (i < n && line[i] == ' ') {
       ++i;
@@ -25,7 +25,7 @@ std::vector< std::string > sedov::split(const std::string & line)
 bool sedov::parseLongLong(const std::string & s, long long & out)
 {
   try {
-    std::size_t pos = 0;
+    size_t pos = 0;
     out = std::stoll(s, &pos);
     return pos == s.size();
   } catch (const std::invalid_argument &) {

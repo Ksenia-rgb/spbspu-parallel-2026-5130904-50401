@@ -30,7 +30,7 @@ namespace sedov {
     SetMap sets;
     ProcessMap processes;
     CalcMap calcs;
-    std::map< std::size_t, std::string > calc_id_to_name;
+    std::map< size_t, std::string > calc_id_to_name;
     size_t next_calc_id = 1;
   };
 
