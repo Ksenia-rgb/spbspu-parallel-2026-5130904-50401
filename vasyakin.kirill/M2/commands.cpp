@@ -459,3 +459,52 @@ void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& 
 
   out << "<IN PROGRESS>" << '\n';
 }
+
+void vasyakin::cmd_wait(std::istream& in, std::ostream& out, vasyakin::State& state)
+{
+  std::string calc_name;
+  if (!(in >> calc_name))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  auto calc_it = state.calculations.find(calc_name);
+  if (calc_it == state.calculations.end())
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  vasyakin::Calculation& calc = calc_it->second;
+  if (calc.status == vasyakin::CalcStatus::COMPLETED)
+  {
+    out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+    return;
+  }
+
+  auto proc_it = state.processes.find(calc.process_name);
+  if (proc_it == state.processes.end())
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  vasyakin::Result result;
+  int err = 0;
+
+  size_t rec = vasyakin::recv(err, proc_it->second.rd_fd, reinterpret_cast< char* >(&result), sizeof(result));
+  if (err != 0)
+  {
+    throw std::runtime_error(std::string("IPC error: ") + std::strerror(err));
+  }
+
+  if (rec != sizeof(result))
+  {
+    throw std::runtime_error("Incomplete result received");
+  }
+
+  calc.area = result.area;
+  calc.intersection_area = result.intersection_area;
+  calc.time_ms = result.time_ms;
+  calc.status = vasyakin::CalcStatus::COMPLETED;
+
+  out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+}
