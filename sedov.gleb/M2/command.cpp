@@ -136,3 +136,38 @@ void sedov::cmdShowset(const std::vector< std::string > & words, CommandContext 
     out << s.r << " (" << s.x << " " << s.y << ")\n";
   }
 }
+
+void sedov::cmdFrame(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 2) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  auto it = ctx.shapes.find(words[1]);
+  if (it == ctx.shapes.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const Box box = boundingBox(it->second);
+  out << "(" << box.x_min << " " << box.y_min << ") (" << box.x_max << " " << box.y_max << ")\n";
+}
+
+void sedov::cmdFrameset(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 2) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  auto it = ctx.sets.find(words[1]);
+  if (it == ctx.sets.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  std::vector< Shape > shapes;
+  shapes.reserve(it->second.size());
+  for (const auto & name : it->second) {
+    shapes.push_back(ctx.shapes.at(name));
+  }
+  const Box box = boundingBox(shapes);
+  out << "(" << box.x_min << " " << box.y_min << ") (" << box.x_max << " " << box.y_max << ")\n";
+}
