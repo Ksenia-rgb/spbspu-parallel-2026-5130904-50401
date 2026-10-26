@@ -14,8 +14,8 @@ namespace vasyakin
 
     double millisec() const
     {
-      using std::chrono::high_resolution_clock;
       using std::chrono::duration_cast;
+      using std::chrono::high_resolution_clock;
       using std::chrono::milliseconds;
 
       auto t = high_resolution_clock::now();

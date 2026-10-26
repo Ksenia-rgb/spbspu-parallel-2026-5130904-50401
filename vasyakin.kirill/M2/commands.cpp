@@ -414,7 +414,7 @@ void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& 
     out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
     return;
   }
-  
+
   auto proc_it = state.processes.find(calc.process_name);
   if (proc_it == state.processes.end())
   {

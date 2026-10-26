@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   vasyakin::State state;
   state.exe_path = argv[0];
 
-  using cmd_t = void(*)(std::istream&, std::ostream&, vasyakin::State&);
+  using cmd_t = void (*)(std::istream&, std::ostream&, vasyakin::State&);
 
   std::unordered_map< std::string, cmd_t > cmds;
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   cmds["area-on"] = vasyakin::cmd_areaon;
   cmds["status"] = vasyakin::cmd_status;
   cmds["wait"] = vasyakin::cmd_wait;
-  
+
   std::string cmd;
   while (std::cin >> cmd)
   {

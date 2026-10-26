@@ -57,7 +57,8 @@ vasyakin::rectangle_t vasyakin::findRectangle(const std::vector< vasyakin::circl
   return rect;
 }
 
-std::pair< size_t, size_t > vasyakin::calc(size_t tries, unsigned int seed, const std::vector< vasyakin::circle_t >& circles)
+std::pair< size_t, size_t > vasyakin::calc(
+    size_t tries, unsigned int seed, const std::vector< vasyakin::circle_t >& circles)
 {
   size_t count_in_one_circle = 0;
   size_t count_in_all_circles = 0;
@@ -103,7 +104,7 @@ std::pair< size_t, size_t > vasyakin::calc(size_t tries, unsigned int seed, cons
 }
 
 std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigned int seed,
-  const std::vector< vasyakin::circle_t >& circles, long long& time_ms)
+    const std::vector< vasyakin::circle_t >& circles, long long& time_ms)
 {
   size_t chunk = tries / threads;
   size_t remainder = tries % threads;
@@ -160,7 +161,8 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
   }
 
   vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
-  const double rect_area = static_cast< double >(rect.max_x - rect.min_x) * static_cast< double >(rect.max_y - rect.min_y);
+  const double rect_area
+      = static_cast< double >(rect.max_x - rect.min_x) * static_cast< double >(rect.max_y - rect.min_y);
 
   const double area_union = static_cast< double >(count_in_one_circle) / tries * rect_area;
   const double area_intersect = static_cast< double >(count_in_all_circles) / tries * rect_area;
@@ -180,7 +182,7 @@ int vasyakin::worker(int cmd_fd, int res_fd, unsigned int seed)
     {
       close(cmd_fd);
       close(res_fd);
-      
+
       return (err < 0) ? 1 : 0;
     }
 
