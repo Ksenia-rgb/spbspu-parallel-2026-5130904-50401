@@ -4,6 +4,7 @@
 #include <limits>
 #include <cstdlib>
 #include <string>
+#include <cstdio>
 #include "commands.hpp"
 #include "structures.hpp"
 #include "worker.hpp"
@@ -44,24 +45,11 @@ int main(int argc, char** argv)
     try
     {
       cmds.at(cmd)(std::cin, std::cout, state);
-
-      int next = std::cin.peek();
-      if (next == '\n' || next == 't' || next == 'r')
-      {
-        std::cin.get();
-        next = std::cin.peek();
-      }
-
-      if (next != '\n' || next != EOF)
-      {
-        std::string dummy;
-        std::getline(std::cin, dummy);
-        throw std::invalid_argument("invalid command");
-      }
     }
     catch (std::out_of_range& e)
     {
       std::cout << "<UNKNOWN COMMAND>" << '\n';
+      std::cin.clear();
       std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
     catch (std::invalid_argument& e)
@@ -73,6 +61,7 @@ int main(int argc, char** argv)
     catch (std::runtime_error& e)
     {
       std::cout << e.what() << '\n';
+      std::cin.clear();
       std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
   }

@@ -6,6 +6,7 @@
 #include <utility>
 #include <pthread.h>
 #include <algorithm>
+#include <thread>
 #include "worker.hpp"
 #include "structures.hpp"
 #include "ipc.hpp"
@@ -139,7 +140,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
 
   for (size_t i = 0; i < count_th; ++i)
   {
-    int err = pthread_join(pths[i], nullptr);
+    const int err = pthread_join(pths[i], nullptr);
 
     if (err)
     {

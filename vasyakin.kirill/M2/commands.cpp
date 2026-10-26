@@ -331,8 +331,8 @@ void vasyakin::cmdAreaon(std::istream& in, std::ostream&, vasyakin::State& state
     throw std::invalid_argument("invalid command");
   }
 
-  size_t threads = static_cast< size_t >(threads_ll);
-  size_t tries = static_cast< size_t >(tries_ll);
+  const size_t threads = static_cast< size_t >(threads_ll);
+  const size_t tries = static_cast< size_t >(tries_ll);
 
   auto set_it = state.sets.find(set_name);
   if (set_it == state.sets.end())
@@ -506,7 +506,7 @@ void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& sta
   vasyakin::Result result;
   int err = 0;
 
-  size_t rec = vasyakin::recv(err, proc_it->second.rd_fd, reinterpret_cast< char* >(&result), sizeof(result));
+  const size_t rec = vasyakin::recv(err, proc_it->second.rd_fd, reinterpret_cast< char* >(&result), sizeof(result));
   if (err != 0)
   {
     throw std::runtime_error(std::string("IPC error: ") + std::strerror(err));
