@@ -12,7 +12,7 @@
 int main(int argc, char** argv)
 {
   (void)argc;
-  const char* cmd_fd_env = std::getenv("CMD_RD");
+  const char* const cmd_fd_env = std::getenv("CMD_RD");
   if (cmd_fd_env != nullptr)
   {
     const int cmd_rd = std::stoi(cmd_fd_env);
@@ -45,6 +45,18 @@ int main(int argc, char** argv)
     try
     {
       cmds.at(cmd)(std::cin, std::cout, state);
+
+      int next = std::cin.peek();
+      while (next == ' ' || next == '\t' || next == '\r')
+      {
+        std::cin.get();
+        next = std::cin.peek();
+      }
+
+      if (next != '\n' && next != EOF)
+      {
+        throw std::invalid_argument("trailing arguments");
+      }
     }
     catch (std::out_of_range& e)
     {

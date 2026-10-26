@@ -11,7 +11,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <cerrno>
-#include <cstdlib>
+#include <sys/types.h>
+#include <stdlib.h>
 #include "commands.hpp"
 #include "ipc.hpp"
 #include "structures.hpp"
@@ -403,7 +404,6 @@ void vasyakin::cmdAreaon(std::istream& in, std::ostream&, vasyakin::State& state
   calculation.status = CalcStatus::IN_PROGRESS;
   calculation.process_name = process_name;
   calculation.area = 0.0;
-  calculation.intersection_area = 0.0;
   calculation.time_ms = 0;
 
   state.calculations.insert({calc_name, calculation});
@@ -427,7 +427,7 @@ void vasyakin::cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& s
 
   if (calc.status == vasyakin::CalcStatus::COMPLETED)
   {
-    out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+    out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
     return;
   }
 
@@ -463,11 +463,10 @@ void vasyakin::cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& s
       if (std::string(result.calc_name) == calc_name)
       {
         calc.area = result.area;
-        calc.intersection_area = result.intersection_area;
         calc.time_ms = result.time_ms;
         calc.status = vasyakin::CalcStatus::COMPLETED;
 
-        out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+        out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
         return;
       }
     }
@@ -493,7 +492,7 @@ void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& sta
   vasyakin::Calculation& calc = calc_it->second;
   if (calc.status == vasyakin::CalcStatus::COMPLETED)
   {
-    out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+    out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
     return;
   }
 
@@ -518,9 +517,8 @@ void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& sta
   }
 
   calc.area = result.area;
-  calc.intersection_area = result.intersection_area;
   calc.time_ms = result.time_ms;
   calc.status = vasyakin::CalcStatus::COMPLETED;
 
-  out << calc.process_name << " " << calc.time_ms << " " << calc.area << " " << calc.intersection_area << '\n';
+  out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
 }

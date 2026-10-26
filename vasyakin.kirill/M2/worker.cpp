@@ -6,7 +6,6 @@
 #include <utility>
 #include <pthread.h>
 #include <algorithm>
-#include <thread>
 #include "worker.hpp"
 #include "structures.hpp"
 #include "ipc.hpp"
