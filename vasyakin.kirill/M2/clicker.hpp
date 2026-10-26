@@ -15,8 +15,8 @@ namespace vasyakin
     double millisec() const
     {
       using std::chrono::duration_cast;
-      using std::chrono::steady_clock;
       using std::chrono::milliseconds;
+      using std::chrono::steady_clock;
 
       auto t = steady_clock::now();
       return duration_cast< milliseconds >(t - start_).count();

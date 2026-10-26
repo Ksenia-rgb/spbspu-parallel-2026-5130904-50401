@@ -7,11 +7,16 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
-#include <poll.h>
+#include <sys/poll.h>
+#include <iostream>
+#include <stdexcept>
+#include <cerrno>
+#include <cstdlib>
 #include "commands.hpp"
 #include "ipc.hpp"
+#include "structures.hpp"
 
-void vasyakin::cmd_circle(std::istream& in, std::ostream&, vasyakin::State& state)
+void vasyakin::cmdCircle(std::istream& in, std::ostream&, vasyakin::State& state)
 {
   std::string circle_name;
   int r = 0, x = 0, y = 0;
@@ -39,7 +44,7 @@ void vasyakin::cmd_circle(std::istream& in, std::ostream&, vasyakin::State& stat
   state.circles.insert({circle_name, circle_t{r, x, y}});
 }
 
-void vasyakin::cmd_set(std::istream& in, std::ostream&, vasyakin::State& state)
+void vasyakin::cmdSet(std::istream& in, std::ostream&, vasyakin::State& state)
 {
   std::string set_name;
   size_t set_size = 0;
@@ -85,7 +90,7 @@ void vasyakin::cmd_set(std::istream& in, std::ostream&, vasyakin::State& state)
   state.sets.insert({set_name, ss});
 }
 
-void vasyakin::cmd_show(std::istream& in, std::ostream& out, vasyakin::State& state)
+void vasyakin::cmdShow(std::istream& in, std::ostream& out, vasyakin::State& state)
 {
   std::string shape_name;
 
@@ -103,7 +108,7 @@ void vasyakin::cmd_show(std::istream& in, std::ostream& out, vasyakin::State& st
   out << circle.r << " (" << circle.x << " " << circle.y << ")" << '\n';
 }
 
-void vasyakin::cmd_showset(std::istream& in, std::ostream& out, vasyakin::State& state)
+void vasyakin::cmdShowset(std::istream& in, std::ostream& out, vasyakin::State& state)
 {
   std::string set_name;
 
@@ -124,7 +129,7 @@ void vasyakin::cmd_showset(std::istream& in, std::ostream& out, vasyakin::State&
   }
 }
 
-void vasyakin::cmd_frame(std::istream& in, std::ostream& out, vasyakin::State& state)
+void vasyakin::cmdFrame(std::istream& in, std::ostream& out, vasyakin::State& state)
 {
   std::string shape_name;
 
@@ -140,13 +145,13 @@ void vasyakin::cmd_frame(std::istream& in, std::ostream& out, vasyakin::State& s
 
   const circle_t& circle = state.circles[shape_name];
 
-  std::pair< int, int > right = std::make_pair(circle.x + circle.r, circle.y + circle.r);
-  std::pair< int, int > left = std::make_pair(circle.x - circle.r, circle.y - circle.r);
+  const std::pair< int, int > right = std::make_pair(circle.x + circle.r, circle.y + circle.r);
+  const std::pair< int, int > left = std::make_pair(circle.x - circle.r, circle.y - circle.r);
 
   out << "(" << left.first << " " << left.second << ")" << " (" << right.first << " " << right.second << ")" << '\n';
 }
 
-void vasyakin::cmd_frameset(std::istream& in, std::ostream& out, vasyakin::State& state)
+void vasyakin::cmdFrameset(std::istream& in, std::ostream& out, vasyakin::State& state)
 {
   std::string set_name;
 
@@ -182,7 +187,7 @@ void vasyakin::cmd_frameset(std::istream& in, std::ostream& out, vasyakin::State
   out << "(" << left.first << " " << left.second << ")" << " (" << right.first << " " << right.second << ")" << '\n';
 }
 
-void vasyakin::cmd_spawn(std::istream& in, std::ostream&, vasyakin::State& state)
+void vasyakin::cmdSpawn(std::istream& in, std::ostream&, vasyakin::State& state)
 {
   std::string name;
   size_t seed = 0;
@@ -218,13 +223,13 @@ void vasyakin::cmd_spawn(std::istream& in, std::ostream&, vasyakin::State& state
     throw std::system_error(errno, std::generic_category(), "Failed to create pipe");
   }
 
-  int cmd_rd = cmd_pipe[0];
-  int cmd_wr = cmd_pipe[1];
+  const int cmd_rd = cmd_pipe[0];
+  const int cmd_wr = cmd_pipe[1];
 
-  int res_rd = res_pipe[0];
-  int res_wr = res_pipe[1];
+  const int res_rd = res_pipe[0];
+  const int res_wr = res_pipe[1];
 
-  pid_t pid = fork();
+  const pid_t pid = fork();
   if (pid < 0)
   {
     close(cmd_rd);
@@ -280,12 +285,17 @@ void vasyakin::cmd_spawn(std::istream& in, std::ostream&, vasyakin::State& state
   }
 }
 
-void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& state)
+void vasyakin::cmdAreaon(std::istream& in, std::ostream&, vasyakin::State& state)
 {
   std::string process_name, calc_name, set_name;
-  size_t threads = 0, tries = 0;
+  long long threads_ll = 0, tries_ll = 0;
 
-  if (!(in >> process_name >> calc_name >> set_name >> threads >> tries))
+  if (!(in >> process_name >> calc_name >> set_name >> threads_ll >> tries_ll))
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
+  if (threads_ll <= 0 || tries_ll <= 0)
   {
     throw std::invalid_argument("invalid command");
   }
@@ -321,6 +331,9 @@ void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& stat
     throw std::invalid_argument("invalid command");
   }
 
+  size_t threads = static_cast< size_t >(threads_ll);
+  size_t tries = static_cast< size_t >(tries_ll);
+
   auto set_it = state.sets.find(set_name);
   if (set_it == state.sets.end())
   {
@@ -343,6 +356,7 @@ void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& stat
   }
 
   vasyakin::CommandHeader header;
+  std::memset(&header, 0, sizeof(header));
 
   header.type = CommandType::CALCULATION;
   std::memset(header.calc_name, 0, MAX_NAME_LEN);
@@ -352,7 +366,7 @@ void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& stat
   header.tries = tries;
 
   int err = 0;
-  int wr_fd = proc_it->second.wr_fd;
+  const int wr_fd = proc_it->second.wr_fd;
 
   size_t sent = vasyakin::send(err, wr_fd, reinterpret_cast< char* >(&header), sizeof(header));
 
@@ -365,7 +379,9 @@ void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& stat
   while (i < circles.size())
   {
     vasyakin::ShapeBatch batch;
-    size_t batch_count = std::min(BATCH_SIZE, circles.size() - i);
+    std::memset(&batch, 0, sizeof(batch));
+
+    const size_t batch_count = std::min(BATCH_SIZE, circles.size() - i);
     batch.count = batch_count;
 
     for (size_t j = 0; j < batch_count; ++j)
@@ -393,7 +409,7 @@ void vasyakin::cmd_areaon(std::istream& in, std::ostream&, vasyakin::State& stat
   state.calculations.insert({calc_name, calculation});
 }
 
-void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& state)
+void vasyakin::cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& state)
 {
   std::string calc_name;
   if (!(in >> calc_name))
@@ -425,7 +441,7 @@ void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& 
   pfd.fd = proc_it->second.rd_fd;
   pfd.events = POLLIN;
 
-  int ret = poll(&pfd, 1, 0);
+  const int ret = poll(&pfd, 1, 0);
   if (ret < 0)
   {
     throw std::runtime_error(std::string("poll error: ") + std::strerror(errno));
@@ -436,7 +452,7 @@ void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& 
     vasyakin::Result result;
     int err = 0;
 
-    size_t rec = vasyakin::recv(err, proc_it->second.rd_fd, reinterpret_cast< char* >(&result), sizeof(result));
+    const size_t rec = vasyakin::recv(err, proc_it->second.rd_fd, reinterpret_cast< char* >(&result), sizeof(result));
     if (err != 0)
     {
       throw std::runtime_error("IPC error: " + std::string(std::strerror(err)));
@@ -460,7 +476,7 @@ void vasyakin::cmd_status(std::istream& in, std::ostream& out, vasyakin::State& 
   out << "<IN PROGRESS>" << '\n';
 }
 
-void vasyakin::cmd_wait(std::istream& in, std::ostream& out, vasyakin::State& state)
+void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& state)
 {
   std::string calc_name;
   if (!(in >> calc_name))

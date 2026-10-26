@@ -1,4 +1,6 @@
 #include <cstddef>
+#include <vector>
+#include <utility>
 #include "structures.hpp"
 
 namespace vasyakin

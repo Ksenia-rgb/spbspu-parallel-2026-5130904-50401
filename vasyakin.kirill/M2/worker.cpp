@@ -5,6 +5,7 @@
 #include <random>
 #include <utility>
 #include <pthread.h>
+#include <algorithm>
 #include "worker.hpp"
 #include "structures.hpp"
 #include "ipc.hpp"
@@ -30,10 +31,9 @@ namespace
 
 bool vasyakin::isInside(double x, double y, const vasyakin::circle_t& circle)
 {
-  double dx = circle.x - x;
-  double dy = circle.y - y;
-
-  double r = static_cast< double >(circle.r);
+  const double dx = circle.x - x;
+  const double dy = circle.y - y;
+  const double r = static_cast< double >(circle.r);
 
   return dx * dx + dy * dy <= r * r;
 }
@@ -63,7 +63,7 @@ std::pair< size_t, size_t > vasyakin::calc(
   size_t count_in_one_circle = 0;
   size_t count_in_all_circles = 0;
 
-  vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
+  const vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
 
   std::default_random_engine engine(seed);
   std::uniform_real_distribution< double > dist1(rect.min_x, rect.max_x);
@@ -71,8 +71,8 @@ std::pair< size_t, size_t > vasyakin::calc(
 
   for (size_t i = 0; i < tries; ++i)
   {
-    double x = dist1(engine);
-    double y = dist2(engine);
+    const double x = dist1(engine);
+    const double y = dist2(engine);
 
     bool is_any = false;
     bool is_all = true;
@@ -106,8 +106,8 @@ std::pair< size_t, size_t > vasyakin::calc(
 std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigned int seed,
     const std::vector< vasyakin::circle_t >& circles, long long& time_ms)
 {
-  size_t chunk = tries / threads;
-  size_t remainder = tries % threads;
+  const size_t chunk = tries / threads;
+  const size_t remainder = tries % threads;
 
   std::vector< pthread_t > pths(threads);
   std::vector< Thread > th(threads);
@@ -119,7 +119,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
 
   bool has_error = false;
 
-  vasyakin::Clicker timer;
+  const vasyakin::Clicker timer;
 
   for (size_t i = 0; i < threads; ++i)
   {
@@ -127,7 +127,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
     th[i].circles = circles;
     th[i].tries = (i == threads - 1) ? chunk + remainder : chunk;
 
-    int err = pthread_create(&pths[i], nullptr, threadFunc, &th[i]);
+    const int err = pthread_create(&pths[i], nullptr, threadFunc, &th[i]);
     if (err)
     {
       has_error = true;
@@ -160,7 +160,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
     return {0.0, 0.0};
   }
 
-  vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
+  const vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
   const double rect_area
       = static_cast< double >(rect.max_x - rect.min_x) * static_cast< double >(rect.max_y - rect.min_y);
 
@@ -233,7 +233,7 @@ int vasyakin::worker(int cmd_fd, int res_fd, unsigned int seed)
     result.intersection_area = calc_result.second;
     result.time_ms = time_ms;
 
-    size_t sen = send(err, res_fd, reinterpret_cast< char* >(&result), sizeof(result));
+    const size_t sen = send(err, res_fd, reinterpret_cast< char* >(&result), sizeof(result));
     if (sen != sizeof(result))
     {
       close(cmd_fd);

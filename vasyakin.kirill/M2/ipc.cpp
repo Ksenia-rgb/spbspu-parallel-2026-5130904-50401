@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <cerrno>
+#include <cstddef>
 #include "ipc.hpp"
 
 size_t vasyakin::recv(int& err, int fd, char* b, size_t k)
@@ -7,7 +8,7 @@ size_t vasyakin::recv(int& err, int fd, char* b, size_t k)
   size_t r = 0;
   while (r < k)
   {
-    ssize_t n = read(fd, b + r, k - r);
+    const ssize_t n = read(fd, b + r, k - r);
     if (n < 0)
     {
       err = errno;
@@ -31,8 +32,7 @@ size_t vasyakin::send(int& err, int fd, char* b, size_t k)
   size_t r = 0;
   while (r < k)
   {
-    ssize_t n = write(fd, b + r, k - r);
-
+    const ssize_t n = write(fd, b + r, k - r);
     if (n < 0)
     {
       err = errno;

@@ -6,17 +6,17 @@
 
 namespace vasyakin
 {
-  void cmd_circle(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_set(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_show(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_showset(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_frame(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_frameset(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdCircle(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdSet(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdShow(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdShowset(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdFrame(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdFrameset(std::istream& in, std::ostream& out, vasyakin::State& state);
 
-  void cmd_spawn(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_areaon(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_status(std::istream& in, std::ostream& out, vasyakin::State& state);
-  void cmd_wait(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdSpawn(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdAreaon(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& state);
+  void cmdWait(std::istream& in, std::ostream& out, vasyakin::State& state);
 }
 
 #endif

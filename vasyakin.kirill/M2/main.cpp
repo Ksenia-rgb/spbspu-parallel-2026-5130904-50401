@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <limits>
 #include <cstdlib>
+#include <string>
 #include "commands.hpp"
 #include "structures.hpp"
 #include "worker.hpp"
@@ -13,9 +14,9 @@ int main(int argc, char** argv)
   const char* cmd_fd_env = std::getenv("CMD_RD");
   if (cmd_fd_env != nullptr)
   {
-    int cmd_rd = std::stoi(cmd_fd_env);
-    int res_wr = std::stoi(std::getenv("RES_WR"));
-    unsigned int seed = std::stoi(std::getenv("SEED"));
+    const int cmd_rd = std::stoi(cmd_fd_env);
+    const int res_wr = std::stoi(std::getenv("RES_WR"));
+    const unsigned int seed = std::stoi(std::getenv("SEED"));
     return vasyakin::worker(cmd_rd, res_wr, seed);
   }
 
@@ -26,16 +27,16 @@ int main(int argc, char** argv)
 
   std::unordered_map< std::string, cmd_t > cmds;
 
-  cmds["circle"] = vasyakin::cmd_circle;
-  cmds["set"] = vasyakin::cmd_set;
-  cmds["show"] = vasyakin::cmd_show;
-  cmds["showset"] = vasyakin::cmd_showset;
-  cmds["frame"] = vasyakin::cmd_frame;
-  cmds["frameset"] = vasyakin::cmd_frameset;
-  cmds["spawn"] = vasyakin::cmd_spawn;
-  cmds["area-on"] = vasyakin::cmd_areaon;
-  cmds["status"] = vasyakin::cmd_status;
-  cmds["wait"] = vasyakin::cmd_wait;
+  cmds["circle"] = vasyakin::cmdCircle;
+  cmds["set"] = vasyakin::cmdSet;
+  cmds["show"] = vasyakin::cmdShow;
+  cmds["showset"] = vasyakin::cmdShowset;
+  cmds["frame"] = vasyakin::cmdFrame;
+  cmds["frameset"] = vasyakin::cmdFrameset;
+  cmds["spawn"] = vasyakin::cmdSpawn;
+  cmds["area-on"] = vasyakin::cmdAreaon;
+  cmds["status"] = vasyakin::cmdStatus;
+  cmds["wait"] = vasyakin::cmdWait;
 
   std::string cmd;
   while (std::cin >> cmd)
@@ -43,6 +44,20 @@ int main(int argc, char** argv)
     try
     {
       cmds.at(cmd)(std::cin, std::cout, state);
+
+      int next = std::cin.peek();
+      if (next == '\n' || next == 't' || next == 'r')
+      {
+        std::cin.get();
+        next = std::cin.peek();
+      }
+
+      if (next != '\n' || next != EOF)
+      {
+        std::string dummy;
+        std::getline(std::cin, dummy);
+        throw std::invalid_argument("invalid command");
+      }
     }
     catch (std::out_of_range& e)
     {
@@ -52,6 +67,7 @@ int main(int argc, char** argv)
     catch (std::invalid_argument& e)
     {
       std::cout << "<INVALID COMMAND>" << '\n';
+      std::cin.clear();
       std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
     catch (std::runtime_error& e)
