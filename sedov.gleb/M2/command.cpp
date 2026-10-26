@@ -220,3 +220,70 @@ void sedov::cmdSpawn(const std::vector< std::string > & words, CommandContext & 
   close(out_pipe[1]);
   ctx.processes.emplace(words[1], Process{pid, in_pipe[1], out_pipe[0], true});
 }
+
+void sedov::cmdAreaOn(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+{
+  if (words.size() != 6) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const std::string & proc_name = words[1];
+  const std::string & calc_name = words[2];
+  const std::string & set_name  = words[3];
+  auto proc_it = ctx.processes.find(proc_name);
+  if (proc_it == ctx.processes.end() || !proc_it->second.alive) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (ctx.calcs.count(calc_name) > 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  auto set_it = ctx.sets.find(set_name);
+  if (set_it == ctx.sets.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  long long threads_ll = 0, tries_ll = 0;
+  if (!parseLongLong(words[4], threads_ll) || threads_ll <= 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (!parseLongLong(words[5], tries_ll) || tries_ll <= 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  std::vector< Shape > shapes;
+  shapes.reserve(set_it->second.size());
+  for (const auto & shape_name : set_it->second) {
+    auto it = ctx.shapes.find(shape_name);
+    if (it == ctx.shapes.end()) {
+      out << "<INVALID COMMAND>\n";
+      return;
+    }
+    shapes.push_back(it->second);
+  }
+  RequestHeader header{};
+  header.type = RequestType::Area;
+  header.calc_id = ctx.next_calc_id++;
+  header.tries = static_cast< size_t >(tries_ll);
+  header.threads = static_cast< size_t >(threads_ll);
+  header.n_shapes = shapes.size();
+  if (!sendFull(proc_it->second.in_fd, &header, sizeof(header))) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (!shapes.empty()) {
+    if (!sendFull(proc_it->second.in_fd, shapes.data(), sizeof(Shape) * shapes.size())) {
+      out << "<INVALID COMMAND>\n";
+      return;
+    }
+  }
+  Calc calc{};
+  calc.process_name = proc_name;
+  calc.status = Status::InProgress;
+  calc.time_ms = 0;
+  calc.area = 0.0;
+  ctx.calcs.emplace(calc_name, calc);
+  ctx.calc_id_to_name.emplace(header.calc_id, calc_name);
+}
