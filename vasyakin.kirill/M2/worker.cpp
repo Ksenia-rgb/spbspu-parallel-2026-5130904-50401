@@ -167,3 +167,77 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
 
   return std::make_pair(area_union, area_intersect);
 }
+
+int vasyakin::worker(int cmd_fd, int res_fd, unsigned int seed)
+{
+  while (true)
+  {
+    vasyakin::CommandHeader header;
+    int err = 0;
+    size_t rec = recv(err, cmd_fd, reinterpret_cast< char* >(&header), sizeof(header));
+
+    if (rec != sizeof(header))
+    {
+      close(cmd_fd);
+      close(res_fd);
+      
+      return (err < 0) ? 1 : 0;
+    }
+
+    if (header.type == CommandType::SHUTDOWN)
+    {
+      close(cmd_fd);
+      close(res_fd);
+
+      return 0;
+    }
+
+    std::vector< circle_t > circles;
+    circles.reserve(header.shape_count);
+
+    size_t total_rec = 0;
+
+    while (total_rec < header.shape_count)
+    {
+      ShapeBatch batch;
+
+      rec = recv(err, cmd_fd, reinterpret_cast< char* >(&batch), sizeof(batch));
+
+      if (rec != sizeof(batch))
+      {
+        close(cmd_fd);
+        close(res_fd);
+
+        return (err < 0) ? 1 : 0;
+      }
+
+      for (size_t i = 0; i < batch.count; ++i)
+      {
+        circles.push_back(batch.shapes[i]);
+      }
+
+      total_rec += batch.count;
+    }
+
+    long long time_ms = 0;
+    auto calc_result = area(header.threads, header.tries, seed, circles, time_ms);
+
+    Result result;
+
+    std::memset(&result, 0, sizeof(result));
+    std::strncpy(result.calc_name, header.calc_name, MAX_NAME_LEN - 1);
+
+    result.area = calc_result.first;
+    result.intersection_area = calc_result.second;
+    result.time_ms = time_ms;
+
+    size_t sen = send(err, res_fd, reinterpret_cast< char* >(&result), sizeof(result));
+    if (sen != sizeof(result))
+    {
+      close(cmd_fd);
+      close(res_fd);
+
+      return (err < 0) ? 1 : 0;
+    }
+  }
+}
