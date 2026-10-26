@@ -20,7 +20,7 @@ int main()
     if (words.empty()) {
       continue;
     }
-    auto it = table.find(words[0]);
+    sedov::CommandTable::const_iterator it = table.find(words[0]);
     if (it == table.end()) {
       std::cout << "<UNKNOWN COMMAND>\n";
       continue;

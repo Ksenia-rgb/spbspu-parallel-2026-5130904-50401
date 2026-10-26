@@ -64,7 +64,7 @@ void sedov::childLoop(int in_fd, int out_fd, size_t seed)
         break;
       }
     }
-    const auto start = std::chrono::steady_clock::now();
+    const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     double area = 0.0;
     if (!shapes.empty() && header.tries > 0 && header.threads > 0) {
       const Box box = boundingBox(shapes);
@@ -73,8 +73,8 @@ void sedov::childLoop(int in_fd, int out_fd, size_t seed)
         (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
       area = square * double(hits.hits_union) / double(header.tries);
     }
-    const auto end = std::chrono::steady_clock::now();
-    const auto time_ms = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
+    const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    const std::chrono::milliseconds::rep time_ms = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 
     Response resp{};
     resp.calc_id = header.calc_id;
