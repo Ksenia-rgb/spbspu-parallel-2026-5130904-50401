@@ -65,7 +65,7 @@ std::pair< size_t, size_t > vasyakin::calc(
 
   const vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
 
-  std::default_random_engine engine(seed);
+  std::mt19937 engine(seed);
   std::uniform_real_distribution< double > dist1(rect.min_x, rect.max_x);
   std::uniform_real_distribution< double > dist2(rect.min_y, rect.max_y);
 
