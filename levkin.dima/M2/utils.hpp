@@ -9,7 +9,6 @@ namespace levkin {
   class Circle;
   class Elipse;
   
-  using BorderRange = std::array< int, 2 >;
 
   struct p_t {
     double x, y;
@@ -27,26 +26,11 @@ namespace levkin {
       return *this;
     }
   };
-
-  struct CirclesWithRanges {
-    struct Ranges {
-      BorderRange xRange;
-      BorderRange yRange;
-    };
-
-    std::vector< Circle > circles{};
-    Ranges ranges;
-
-    void updateRanges();
-    size_t rangeArea() const;
+  struct Rect {
+      p_t bottomLeft;
+      p_t topRight;
   };
+
   std::istream &operator>>(std::istream &is, Circle &c);
-
-  CirclesWithRanges getData(std::istream &is);
-  bool gotIn(levkin::Circle c, double x, double y);
-  AnyAllResult gotIn(CirclesWithRanges const &cv, double x, double y);
-  AnyAllResult runTests(size_t howManyTests, size_t seed, CirclesWithRanges const &cv);
-  std::array< BorderRange, 2 > getBorderSquare(Circle const &c);
-
 }
 #endif
