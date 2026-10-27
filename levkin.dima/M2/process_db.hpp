@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstddef>
+#include <vector>
 
 namespace levkin {
 
@@ -21,11 +22,10 @@ namespace levkin {
 
     struct SharedMemory {
         void* ptr = nullptr;
-        std::string name;
         size_t allocSize = 4096;
         size_t lstIndex = 0;
 
-        SharedMemory(std::string nameParam, size_t size = 4096);
+        SharedMemory(size_t size = 4096);
         ~SharedMemory();
 
         SharedMemory& operator=(const SharedMemory&) = delete;
@@ -42,8 +42,11 @@ namespace levkin {
         SharedMemory shmem;
         std::string name;
 
-        Process(const std::string& procName, const std::string& shmName, size_t shmSize = 4096);
+        Process(const std::string& procName, size_t shmSize = 4096);
         ~Process() = default;
+    };
+    struct ProcessDB {
+      std::vector<Process> processes  ;
     };
 
 }

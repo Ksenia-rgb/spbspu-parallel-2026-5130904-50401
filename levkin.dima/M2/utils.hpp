@@ -6,13 +6,16 @@
 #include <vector>
 
 namespace levkin {
+  class Circle;
+  class Elipse;
+  
   using BorderRange = std::array< int, 2 >;
-  struct Shape {
-      
+
+  struct p_t {
+    double x, y;
   };
-  struct Circle {
-    int x, y, radius;
-  };
+
+
 
   struct AnyAllResult {
     size_t any, all = 0;
