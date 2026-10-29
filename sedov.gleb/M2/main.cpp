@@ -21,7 +21,7 @@ int main()
     if (words.empty()) {
       continue;
     }
-    sedov::CommandTable::const_iterator it = table.find(words[0]);
+    const sedov::CommandTable::const_iterator it = table.find(words[0]);
     if (it == table.end()) {
       std::cout << "<UNKNOWN COMMAND>\n";
       continue;
@@ -29,7 +29,7 @@ int main()
     it->second(words, ctx, std::cout);
   }
   for (sedov::ProcessMap::iterator it = ctx.processes.begin(); it != ctx.processes.end(); ++it) {
-    sedov::Process& proc = it->second;
+    const sedov::Process& proc = it->second;
     if (proc.alive) {
       close(proc.in_fd);
       close(proc.out_fd);

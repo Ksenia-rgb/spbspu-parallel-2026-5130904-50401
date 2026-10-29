@@ -11,7 +11,7 @@ std::vector< std::string > sedov::split(const std::string& line)
     while (i < n && line[i] == ' ') {
       ++i;
     }
-    size_t start = i;
+    const size_t start = i;
     while (i < n && line[i] != ' ') {
       ++i;
     }
