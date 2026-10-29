@@ -11,7 +11,7 @@ namespace vasyakin
   public:
     explicit StringBuf(const std::string& str)
     {
-      const char* p = const_cast< char* >(str.data());
+      const char* const p = const_cast< char* >(str.data());
       this->setg(const_cast< char* >(p), const_cast< char* >(p), const_cast< char* >(p) + str.size());
     }
   };
