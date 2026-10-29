@@ -13,6 +13,7 @@
 #include <cerrno>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <iomanip>
 #include "commands.hpp"
 #include "ipc.hpp"
 #include "structures.hpp"
@@ -427,7 +428,7 @@ void vasyakin::cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& s
 
   if (calc.status == vasyakin::CalcStatus::COMPLETED)
   {
-    out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
+    out << std::fixed << std::setprecision(3) << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
     return;
   }
 
@@ -466,7 +467,7 @@ void vasyakin::cmdStatus(std::istream& in, std::ostream& out, vasyakin::State& s
         calc.time_ms = result.time_ms;
         calc.status = vasyakin::CalcStatus::COMPLETED;
 
-        out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
+        out << std::fixed << std::setprecision(3) << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
         return;
       }
     }
@@ -492,7 +493,7 @@ void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& sta
   vasyakin::Calculation& calc = calc_it->second;
   if (calc.status == vasyakin::CalcStatus::COMPLETED)
   {
-    out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
+    out << std::fixed << std::setprecision(3) << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
     return;
   }
 
@@ -520,5 +521,5 @@ void vasyakin::cmdWait(std::istream& in, std::ostream& out, vasyakin::State& sta
   calc.time_ms = result.time_ms;
   calc.status = vasyakin::CalcStatus::COMPLETED;
 
-  out << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
+  out << std::fixed << std::setprecision(3) << calc.process_name << " " << calc.time_ms << " " << calc.area << '\n';
 }
