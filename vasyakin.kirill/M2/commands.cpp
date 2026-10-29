@@ -28,6 +28,12 @@ void vasyakin::cmdCircle(std::istream& in, std::ostream&, vasyakin::State& state
     throw std::invalid_argument("invalid command");
   }
 
+  std::string line;
+  if (in >> line)
+  {
+    throw std::invalid_argument("invalid command");
+  }
+
   if (circle_name.empty() || !std::isalpha(static_cast< unsigned char >(circle_name[0])))
   {
     throw std::invalid_argument("invalid command");
@@ -87,6 +93,12 @@ void vasyakin::cmdSet(std::istream& in, std::ostream&, vasyakin::State& state)
     }
 
     ss.shape_names.push_back(shape_name);
+  }
+
+  std::string line;
+  if (in >> line)
+  {
+    throw std::invalid_argument("invalid command");
   }
 
   state.sets.insert({set_name, ss});
