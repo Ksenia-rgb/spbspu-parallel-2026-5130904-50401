@@ -7,8 +7,6 @@
 
 #include <sys/types.h>
 
-#include "shape.hpp"
-
 namespace sedov {
   struct Process {
     pid_t pid;
@@ -21,11 +19,7 @@ namespace sedov {
 
   void childLoop(int in_fd, int out_fd, size_t seed);
 
-  enum class RequestType : int {
-    Area = 1,
-    Cancel = 2,
-    Exit = 3
-  };
+  enum class RequestType : int { Area = 1, Cancel = 2, Exit = 3 };
 
   struct RequestHeader {
     RequestType type;

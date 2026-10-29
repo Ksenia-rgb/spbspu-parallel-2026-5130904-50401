@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 std::vector< std::string > sedov::split(const std::string& line)
 {

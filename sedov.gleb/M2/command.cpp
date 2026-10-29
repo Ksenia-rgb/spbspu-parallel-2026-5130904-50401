@@ -1,12 +1,20 @@
 #include "command.hpp"
 
-#include <iomanip>
+#include <cstddef>
+#include <map>
+#include <ostream>
+#include <string>
+#include <vector>
 #include <utility>
 
+#include <iomanip>
 #include <poll.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "parse.hpp"
+#include "process.hpp"
+#include "shape.hpp"
 
 sedov::CommandTable sedov::makeCommandTable()
 {

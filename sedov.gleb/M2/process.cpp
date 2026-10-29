@@ -2,9 +2,11 @@
 
 #include <chrono>
 #include <cstddef>
+#include <vector>
 
-#include <sys/types.h>
 #include <unistd.h>
+
+#include "shape.hpp"
 
 namespace {
   size_t send(int& err, int wr, const char* msg, size_t k)
@@ -71,12 +73,12 @@ void sedov::childLoop(int in_fd, int out_fd, size_t seed)
       const Box box = boundingBox(shapes);
       const Result hits = countTotalHits(shapes, box, header.threads, header.tries, seed);
       const double square = (static_cast< double >(box.x_max) - static_cast< double >(box.x_min))
-        * (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
+          * (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
       area = square * double(hits.hits_union) / double(header.tries);
     }
     const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     const std::chrono::milliseconds::rep time_ms
-      = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
+        = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 
     Response resp{};
     resp.calc_id = header.calc_id;

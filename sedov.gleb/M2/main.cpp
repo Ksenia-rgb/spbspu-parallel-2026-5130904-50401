@@ -1,12 +1,15 @@
 #include <csignal>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "command.hpp"
 #include "parse.hpp"
+#include "process.hpp"
 
 int main()
 {

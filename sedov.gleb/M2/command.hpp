@@ -5,16 +5,13 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #include "process.hpp"
 #include "shape.hpp"
 
 namespace sedov {
-  enum class Status {
-    InProgress,
-    Done,
-    Canceled
-  };
+  enum class Status { InProgress, Done, Canceled };
 
   struct Calc {
     std::string process_name;
@@ -34,8 +31,7 @@ namespace sedov {
     size_t next_calc_id = 1;
   };
 
-  using CommandHandler
-    = void (*)(const std::vector< std::string >&, CommandContext&, std::ostream&);
+  using CommandHandler = void (*)(const std::vector< std::string >&, CommandContext&, std::ostream&);
 
   using CommandTable = std::map< std::string, CommandHandler >;
 

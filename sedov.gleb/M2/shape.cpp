@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <future>
 #include <random>
+#include <vector>
+#include <cstddef>
+#include <functional>
 
 sedov::Box sedov::boundingBox(const Shape& shape)
 {
@@ -27,14 +30,11 @@ bool sedov::isInside(double dx, double dy, double r)
   return dx * dx + dy * dy <= r * r;
 }
 
-sedov::Result sedov::calc(
-  const std::vector< Shape >& shapes, const Box& box, size_t tests, size_t seed)
+sedov::Result sedov::calc(const std::vector< Shape >& shapes, const Box& box, size_t tests, size_t seed)
 {
   std::default_random_engine engine(seed);
-  std::uniform_real_distribution< double > dist_x(
-    static_cast< double >(box.x_min), static_cast< double >(box.x_max));
-  std::uniform_real_distribution< double > dist_y(
-    static_cast< double >(box.y_min), static_cast< double >(box.y_max));
+  std::uniform_real_distribution< double > dist_x(static_cast< double >(box.x_min), static_cast< double >(box.x_max));
+  std::uniform_real_distribution< double > dist_y(static_cast< double >(box.y_min), static_cast< double >(box.y_max));
   size_t hits_union = 0;
   size_t hits_inter = 0;
   for (size_t i = 0; i < tests; ++i) {
@@ -43,9 +43,8 @@ sedov::Result sedov::calc(
     bool in_any = false;
     bool in_all = true;
     for (size_t j = 0; j < shapes.size(); ++j) {
-      const bool res = isInside(x - static_cast< double >(shapes[j].x),
-        y - static_cast< double >(shapes[j].y),
-        static_cast< double >(shapes[j].r));
+      const bool res = isInside(x - static_cast< double >(shapes[j].x), y - static_cast< double >(shapes[j].y),
+          static_cast< double >(shapes[j].r));
       in_any = in_any || res;
       in_all = in_all && res;
     }
@@ -56,7 +55,7 @@ sedov::Result sedov::calc(
 }
 
 sedov::Result sedov::countTotalHits(
-  const std::vector< Shape >& shapes, const Box& box, size_t threads, size_t tries, size_t seed)
+    const std::vector< Shape >& shapes, const Box& box, size_t threads, size_t tries, size_t seed)
 {
   const size_t base = tries / threads;
   const size_t rem = tries % threads;
@@ -65,8 +64,8 @@ sedov::Result sedov::countTotalHits(
   for (size_t i = 0; i < threads; ++i) {
     size_t local_tries = base + (i < rem ? 1 : 0);
     size_t local_seed = seed + i;
-    futures.emplace_back(std::async(
-      std::launch::async, calc, std::cref(shapes), std::cref(box), local_tries, local_seed));
+    futures.emplace_back(
+        std::async(std::launch::async, calc, std::cref(shapes), std::cref(box), local_tries, local_seed));
   }
   Result res{0, 0};
   for (size_t i = 0; i < threads; ++i) {
