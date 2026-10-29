@@ -6,13 +6,13 @@
 
 namespace vasyakin
 {
-  class string_buf: public std::streambuf
+  class StringBuf: public std::streambuf
   {
   public:
-    explicit string_buf(const std::string& str)
+    explicit StringBuf(const std::string& str)
     {
-      char* p = const_cast< char* >(str.data());
-      this->setg(p, p, p + str.size());
+      const char* p = const_cast< char* >(str.data());
+      this->setg(const_cast< char* >(p), const_cast< char* >(p), const_cast< char* >(p) + str.size());
     }
   };
 }

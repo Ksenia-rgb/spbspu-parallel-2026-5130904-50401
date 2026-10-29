@@ -53,13 +53,13 @@ int main(int argc, char** argv)
       continue;
     }
 
-    size_t pos = line.find_first_of(" \t");
-    std::string cmd = (pos == std::string::npos) ? line : line.substr(0, pos);
-    std::string args = (pos == std::string::npos) ? "" : line.substr(pos);
+    const size_t pos = line.find_first_of(" \t");
+    const std::string cmd = (pos == std::string::npos) ? line : line.substr(0, pos);
+    const std::string args = (pos == std::string::npos) ? "" : line.substr(pos);
 
     try
     {
-      vasyakin::string_buf sbuf(args);
+      vasyakin::StringBuf sbuf(args);
       std::istream iss(&sbuf);
 
       cmds.at(cmd)(iss, std::cout, state);
