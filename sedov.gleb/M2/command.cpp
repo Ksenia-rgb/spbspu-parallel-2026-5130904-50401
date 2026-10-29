@@ -1,9 +1,11 @@
-#include <utility>
-#include <unistd.h>
-#include <poll.h>
-#include <iomanip>
-
 #include "command.hpp"
+
+#include <iomanip>
+#include <utility>
+
+#include <poll.h>
+#include <unistd.h>
+
 #include "parse.hpp"
 
 sedov::CommandTable sedov::makeCommandTable()
@@ -22,18 +24,19 @@ sedov::CommandTable sedov::makeCommandTable()
   return table;
 }
 
-void sedov::printCalcResult(const Calc & calc, std::ostream & out)
+void sedov::printCalcResult(const Calc& calc, std::ostream& out)
 {
   if (calc.status == Status::InProgress) {
     out << calc.process_name << " <IN PROGRESS>\n";
   } else if (calc.status == Status::Canceled) {
     out << calc.process_name << " <CANCELED>\n";
   } else {
-    out << calc.process_name << " " << calc.time_ms << " " << std::fixed << std::setprecision(3) << calc.area << "\n";
+    out << calc.process_name << " " << calc.time_ms << " " << std::fixed << std::setprecision(3)
+        << calc.area << "\n";
   }
 }
 
-bool sedov::tryReadResponse(CommandContext & ctx, int fd)
+bool sedov::tryReadResponse(CommandContext& ctx, int fd)
 {
   Response resp{};
   if (!recvFull(fd, &resp, sizeof(resp))) {
@@ -54,7 +57,8 @@ bool sedov::tryReadResponse(CommandContext & ctx, int fd)
   return true;
 }
 
-void sedov::cmdCircle(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdCircle(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 5) {
     out << "<INVALID COMMAND>\n";
@@ -76,7 +80,7 @@ void sedov::cmdCircle(const std::vector< std::string > & words, CommandContext &
   ctx.shapes.emplace(words[1], Shape{r, x, y});
 }
 
-void sedov::cmdShow(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdShow(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 2) {
     out << "<INVALID COMMAND>\n";
@@ -87,11 +91,11 @@ void sedov::cmdShow(const std::vector< std::string > & words, CommandContext & c
     out << "<INVALID COMMAND>\n";
     return;
   }
-  const Shape & s = it->second;
+  const Shape& s = it->second;
   out << s.r << " (" << s.x << " " << s.y << ")\n";
 }
 
-void sedov::cmdSet(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdSet(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() < 3) {
     out << "<INVALID COMMAND>\n";
@@ -120,7 +124,8 @@ void sedov::cmdSet(const std::vector< std::string > & words, CommandContext & ct
   ctx.sets.emplace(words[1], std::move(v));
 }
 
-void sedov::cmdShowset(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdShowset(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 2) {
     out << "<INVALID COMMAND>\n";
@@ -131,13 +136,16 @@ void sedov::cmdShowset(const std::vector< std::string > & words, CommandContext 
     out << "<INVALID COMMAND>\n";
     return;
   }
-  for (std::vector< std::string >::const_iterator name_it = it->second.begin(); name_it != it->second.end(); ++name_it) {
-    const Shape & s = ctx.shapes.at(*name_it);
+  for (std::vector< std::string >::const_iterator name_it = it->second.begin();
+    name_it != it->second.end();
+    ++name_it) {
+    const Shape& s = ctx.shapes.at(*name_it);
     out << s.r << " (" << s.x << " " << s.y << ")\n";
   }
 }
 
-void sedov::cmdFrame(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdFrame(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 2) {
     out << "<INVALID COMMAND>\n";
@@ -152,7 +160,8 @@ void sedov::cmdFrame(const std::vector< std::string > & words, CommandContext & 
   out << "(" << box.x_min << " " << box.y_min << ") (" << box.x_max << " " << box.y_max << ")\n";
 }
 
-void sedov::cmdFrameset(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdFrameset(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 2) {
     out << "<INVALID COMMAND>\n";
@@ -165,14 +174,17 @@ void sedov::cmdFrameset(const std::vector< std::string > & words, CommandContext
   }
   std::vector< Shape > shapes;
   shapes.reserve(it->second.size());
-  for (std::vector< std::string >::const_iterator name_it = it->second.begin(); name_it != it->second.end(); ++name_it) {
+  for (std::vector< std::string >::const_iterator name_it = it->second.begin();
+    name_it != it->second.end();
+    ++name_it) {
     shapes.push_back(ctx.shapes.at(*name_it));
   }
   const Box box = boundingBox(shapes);
   out << "(" << box.x_min << " " << box.y_min << ") (" << box.x_max << " " << box.y_max << ")\n";
 }
 
-void sedov::cmdSpawn(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdSpawn(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 3) {
     out << "<INVALID COMMAND>\n";
@@ -221,15 +233,16 @@ void sedov::cmdSpawn(const std::vector< std::string > & words, CommandContext & 
   ctx.processes.emplace(words[1], Process{pid, in_pipe[1], out_pipe[0], true});
 }
 
-void sedov::cmdAreaOn(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdAreaOn(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 6) {
     out << "<INVALID COMMAND>\n";
     return;
   }
-  const std::string & proc_name = words[1];
-  const std::string & calc_name = words[2];
-  const std::string & set_name  = words[3];
+  const std::string& proc_name = words[1];
+  const std::string& calc_name = words[2];
+  const std::string& set_name = words[3];
   ProcessMap::iterator proc_it = ctx.processes.find(proc_name);
   if (proc_it == ctx.processes.end() || !proc_it->second.alive) {
     out << "<INVALID COMMAND>\n";
@@ -256,7 +269,8 @@ void sedov::cmdAreaOn(const std::vector< std::string > & words, CommandContext &
   std::vector< Shape > shapes;
   shapes.reserve(set_it->second.size());
   for (std::vector< std::string >::const_iterator shape_it = set_it->second.begin();
-      shape_it != set_it->second.end(); ++shape_it) {
+    shape_it != set_it->second.end();
+    ++shape_it) {
     ShapeMap::iterator it = ctx.shapes.find(*shape_it);
     if (it == ctx.shapes.end()) {
       out << "<INVALID COMMAND>\n";
@@ -289,13 +303,13 @@ void sedov::cmdAreaOn(const std::vector< std::string > & words, CommandContext &
   ctx.calc_id_to_name.emplace(header.calc_id, calc_name);
 }
 
-void sedov::cmdWait(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdWait(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 2) {
     out << "<INVALID COMMAND>\n";
     return;
   }
-  const std::string & calc_name = words[1];
+  const std::string& calc_name = words[1];
   CalcMap::iterator calc_it = ctx.calcs.find(calc_name);
   if (calc_it == ctx.calcs.end()) {
     out << "<INVALID COMMAND>\n";
@@ -305,7 +319,7 @@ void sedov::cmdWait(const std::vector< std::string > & words, CommandContext & c
     printCalcResult(calc_it->second, out);
     return;
   }
-  const std::string & proc_name = calc_it->second.process_name;
+  const std::string& proc_name = calc_it->second.process_name;
   ProcessMap::iterator proc_it = ctx.processes.find(proc_name);
   if (proc_it == ctx.processes.end() || !proc_it->second.alive) {
     calc_it->second.status = Status::Canceled;
@@ -334,20 +348,21 @@ void sedov::cmdWait(const std::vector< std::string > & words, CommandContext & c
   printCalcResult(calc_it->second, out);
 }
 
-void sedov::cmdStatus(const std::vector< std::string > & words, CommandContext & ctx, std::ostream & out)
+void sedov::cmdStatus(
+  const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() != 2) {
     out << "<INVALID COMMAND>\n";
     return;
   }
-  const std::string & calc_name = words[1];
+  const std::string& calc_name = words[1];
   CalcMap::iterator calc_it = ctx.calcs.find(calc_name);
   if (calc_it == ctx.calcs.end()) {
     out << "<INVALID COMMAND>\n";
     return;
   }
   if (calc_it->second.status == Status::InProgress) {
-    const std::string & proc_name = calc_it->second.process_name;
+    const std::string& proc_name = calc_it->second.process_name;
     ProcessMap::iterator proc_it = ctx.processes.find(proc_name);
     if (proc_it != ctx.processes.end() && proc_it->second.alive) {
       int fd = proc_it->second.out_fd;

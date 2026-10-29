@@ -1,12 +1,13 @@
-#include <unistd.h>
-#include <sys/types.h>
-#include <cstddef>
-#include <chrono>
-
 #include "process.hpp"
 
+#include <chrono>
+#include <cstddef>
+
+#include <sys/types.h>
+#include <unistd.h>
+
 namespace {
-  size_t send(int & err, int wr, const char * msg, size_t k)
+  size_t send(int& err, int wr, const char* msg, size_t k)
   {
     size_t r = 0;
     while (r < k) {
@@ -19,7 +20,7 @@ namespace {
     return r;
   }
 
-  size_t recv(int & err, int rd, char * buf, size_t k)
+  size_t recv(int& err, int rd, char* buf, size_t k)
   {
     size_t r = 0;
     while (r < k) {
@@ -33,16 +34,16 @@ namespace {
   }
 }
 
-bool sedov::sendFull(int fd, const void * buf, size_t k)
+bool sedov::sendFull(int fd, const void* buf, size_t k)
 {
   int err = 0;
-  return send(err, fd, static_cast< const char * >(buf), k) == k;
+  return send(err, fd, static_cast< const char* >(buf), k) == k;
 }
 
-bool sedov::recvFull(int fd, void * buf, size_t k)
+bool sedov::recvFull(int fd, void* buf, size_t k)
 {
   int err = 0;
-  return recv(err, fd, static_cast< char * >(buf), k) == k;
+  return recv(err, fd, static_cast< char* >(buf), k) == k;
 }
 
 void sedov::childLoop(int in_fd, int out_fd, size_t seed)
@@ -69,16 +70,17 @@ void sedov::childLoop(int in_fd, int out_fd, size_t seed)
     if (!shapes.empty() && header.tries > 0 && header.threads > 0) {
       const Box box = boundingBox(shapes);
       const Result hits = countTotalHits(shapes, box, header.threads, header.tries, seed);
-      const double square = (static_cast< double >(box.x_max) - static_cast< double >(box.x_min)) *
-        (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
+      const double square = (static_cast< double >(box.x_max) - static_cast< double >(box.x_min))
+        * (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
       area = square * double(hits.hits_union) / double(header.tries);
     }
     const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    const std::chrono::milliseconds::rep time_ms = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
+    const std::chrono::milliseconds::rep time_ms
+      = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
 
     Response resp{};
     resp.calc_id = header.calc_id;
-    resp.time_ms = static_cast< std::size_t >(time_ms);
+    resp.time_ms = static_cast< size_t >(time_ms);
     resp.area = area;
     if (!sendFull(out_fd, &resp, sizeof(resp))) {
       break;

@@ -1,8 +1,9 @@
+#include <csignal>
 #include <iostream>
 #include <string>
-#include <csignal>
-#include <unistd.h>
+
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include "command.hpp"
 #include "parse.hpp"
@@ -28,11 +29,11 @@ int main()
     it->second(words, ctx, std::cout);
   }
   for (sedov::ProcessMap::iterator it = ctx.processes.begin(); it != ctx.processes.end(); ++it) {
-    sedov::Process & proc = it->second;
+    sedov::Process& proc = it->second;
     if (proc.alive) {
       close(proc.in_fd);
       close(proc.out_fd);
-      waitpid(proc.pid, nullptr, 0); 
+      waitpid(proc.pid, nullptr, 0);
     }
   }
   return 0;

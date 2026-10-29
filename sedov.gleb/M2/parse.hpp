@@ -5,8 +5,8 @@
 #include <vector>
 
 namespace sedov {
-  std::vector< std::string > split(const std::string & line);
-  bool parseLongLong(const std::string & s, long long & out);
+  std::vector< std::string > split(const std::string& line);
+  bool parseLongLong(const std::string& s, long long& out);
 }
 
 #endif

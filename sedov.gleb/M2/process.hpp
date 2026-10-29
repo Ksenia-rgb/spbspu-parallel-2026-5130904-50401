@@ -1,10 +1,11 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include <sys/types.h>
+#include <cstddef>
 #include <map>
 #include <string>
-#include <cstddef>
+
+#include <sys/types.h>
 
 #include "shape.hpp"
 
@@ -40,8 +41,8 @@ namespace sedov {
     double area;
   };
 
-  bool sendFull(int fd, const void * buf, size_t k);
-  bool recvFull(int fd, void * buf, size_t k);
+  bool sendFull(int fd, const void* buf, size_t k);
+  bool recvFull(int fd, void* buf, size_t k);
 }
 
 #endif
