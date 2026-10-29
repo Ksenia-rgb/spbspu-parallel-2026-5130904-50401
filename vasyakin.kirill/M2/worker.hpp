@@ -1,3 +1,6 @@
+#ifndef WORKER_HPP
+#define WORKER_HPP
+
 #include <cstddef>
 #include <vector>
 #include <utility>
@@ -12,3 +15,5 @@ namespace vasyakin
       const std::vector< vasyakin::circle_t >& circles, long long& time_ms);
   int worker(int cmd_fd, int res_fd, unsigned int seed);
 }
+
+#endif
