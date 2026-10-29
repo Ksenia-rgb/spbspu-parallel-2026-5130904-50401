@@ -8,6 +8,7 @@
 #include "commands.hpp"
 #include "structures.hpp"
 #include "worker.hpp"
+#include "buf.hpp"
 
 int main(int argc, char** argv)
 {
@@ -39,21 +40,32 @@ int main(int argc, char** argv)
   cmds["status"] = vasyakin::cmdStatus;
   cmds["wait"] = vasyakin::cmdWait;
 
-  std::string cmd;
-  while (std::cin >> cmd)
+  std::string line;
+  while (std::getline(std::cin, line))
   {
+    if (!line.empty() && line.back() == '\r')
+    {
+      line.pop_back();
+    }
+
+    if (line.empty())
+    {
+      continue;
+    }
+
+    size_t pos = line.find_first_of(" \t");
+    std::string cmd = (pos == std::string::npos) ? line : line.substr(0, pos);
+    std::string args = (pos == std::string::npos) ? "" : line.substr(pos);
+
     try
     {
-      cmds.at(cmd)(std::cin, std::cout, state);
+      vasyakin::string_buf sbuf(args);
+      std::istream iss(&sbuf);
 
-      int next = std::cin.peek();
-      while (next == ' ' || next == '\t' || next == '\r')
-      {
-        std::cin.get();
-        next = std::cin.peek();
-      }
+      cmds.at(cmd)(iss, std::cout, state);
 
-      if (next != '\n' && next != EOF)
+      iss >> std::ws;
+      if (iss.peek() != std::char_traits< char >::eof())
       {
         throw std::invalid_argument("trailing arguments");
       }
@@ -61,20 +73,14 @@ int main(int argc, char** argv)
     catch (std::out_of_range& e)
     {
       std::cout << "<UNKNOWN COMMAND>" << '\n';
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
     catch (std::invalid_argument& e)
     {
       std::cout << "<INVALID COMMAND>" << '\n';
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
     catch (std::runtime_error& e)
     {
       std::cout << e.what() << '\n';
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
   }
 
