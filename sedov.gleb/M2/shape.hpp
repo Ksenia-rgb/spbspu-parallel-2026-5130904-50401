@@ -16,8 +16,7 @@ namespace sedov {
   };
 
   struct Result {
-    size_t hits_union;
-    size_t hits_inter;
+    size_t hits;
   };
 
   using ShapeMap = std::map< std::string, Shape >;

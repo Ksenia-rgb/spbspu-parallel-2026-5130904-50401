@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <cctype>
 
 #include <iomanip>
 #include <poll.h>
@@ -71,6 +72,10 @@ void sedov::cmdCircle(const std::vector< std::string >& words, CommandContext& c
     out << "<INVALID COMMAND>\n";
     return;
   }
+  if (words[1].empty() || !std::isalpha(static_cast< char >(words[1][0]))) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
   if (ctx.shapes.count(words[1]) > 0) {
     out << "<INVALID COMMAND>\n";
     return;
@@ -105,6 +110,10 @@ void sedov::cmdShow(const std::vector< std::string >& words, CommandContext& ctx
 void sedov::cmdSet(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
 {
   if (words.size() < 3) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (words[1].empty() || !std::isalpha(static_cast< char >(words[1][0]))) {
     out << "<INVALID COMMAND>\n";
     return;
   }
@@ -191,6 +200,10 @@ void sedov::cmdSpawn(const std::vector< std::string >& words, CommandContext& ct
     out << "<INVALID COMMAND>\n";
     return;
   }
+  if (words[1].empty() || !std::isalpha(static_cast< char >(words[1][0]))) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
   if (ctx.processes.count(words[1]) > 0) {
     out << "<INVALID COMMAND>\n";
     return;
@@ -238,6 +251,10 @@ void sedov::cmdAreaOn(const std::vector< std::string >& words, CommandContext& c
 {
   const size_t countOfWords = 6;
   if (words.size() != countOfWords) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (words[1].empty() || !std::isalpha(static_cast< char >(words[1][0]))) {
     out << "<INVALID COMMAND>\n";
     return;
   }

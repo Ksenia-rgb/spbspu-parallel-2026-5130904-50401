@@ -34,6 +34,7 @@ int main()
   for (sedov::ProcessMap::iterator it = ctx.processes.begin(); it != ctx.processes.end(); ++it) {
     const sedov::Process& proc = it->second;
     if (proc.alive) {
+      kill(proc.pid, SIGTERM);
       close(proc.in_fd);
       close(proc.out_fd);
       waitpid(proc.pid, nullptr, 0);
