@@ -54,7 +54,6 @@ namespace vasyakin
   {
     char calc_name[MAX_NAME_LEN];
     double area;
-    double intersection_area;
     long long time_ms;
   };
 
@@ -78,7 +77,6 @@ namespace vasyakin
     std::string process_name;
     CalcStatus status;
     double area;
-    double intersection_area;
     long long time_ms;
   };
 

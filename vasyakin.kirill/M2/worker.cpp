@@ -18,13 +18,13 @@ namespace
     std::vector< vasyakin::circle_t > circles;
     size_t tries;
     unsigned int seed;
-    std::pair< size_t, size_t > result;
+    size_t union_hits;
   };
 
   void* threadFunc(void* data)
   {
     auto* param = static_cast< Thread* >(data);
-    param->result = vasyakin::calc(param->tries, param->seed, param->circles);
+    param->union_hits = vasyakin::calc(param->tries, param->seed, param->circles);
     return nullptr;
   }
 }
@@ -57,11 +57,9 @@ vasyakin::rectangle_t vasyakin::findRectangle(const std::vector< vasyakin::circl
   return rect;
 }
 
-std::pair< size_t, size_t > vasyakin::calc(
-    size_t tries, unsigned int seed, const std::vector< vasyakin::circle_t >& circles)
+size_t vasyakin::calc(size_t tries, unsigned int seed, const std::vector< vasyakin::circle_t >& circles)
 {
-  size_t count_in_one_circle = 0;
-  size_t count_in_all_circles = 0;
+  size_t count = 0;
 
   const vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
 
@@ -74,37 +72,21 @@ std::pair< size_t, size_t > vasyakin::calc(
     const double x = dist1(engine);
     const double y = dist2(engine);
 
-    bool is_any = false;
-    bool is_all = true;
-
     for (size_t j = 0; j < circles.size(); ++j)
     {
       if (vasyakin::isInside(x, y, circles[j]))
       {
-        is_any = true;
+        ++count;
+        break;
       }
-      else
-      {
-        is_all = false;
-      }
-    }
-
-    if (is_any)
-    {
-      ++count_in_one_circle;
-    }
-
-    if (is_all)
-    {
-      ++count_in_all_circles;
     }
   }
 
-  return std::make_pair(count_in_one_circle, count_in_all_circles);
+  return count;
 }
 
-std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigned int seed,
-    const std::vector< vasyakin::circle_t >& circles, long long& time_ms)
+double vasyakin::area(size_t threads, size_t tries, unsigned int seed, const std::vector< vasyakin::circle_t >& circles,
+    long long& time_ms)
 {
   const size_t chunk = tries / threads;
   const size_t remainder = tries % threads;
@@ -115,8 +97,6 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
   size_t count_th = 0;
 
   size_t count_in_one_circle = 0;
-  size_t count_in_all_circles = 0;
-
   bool has_error = false;
 
   const vasyakin::Clicker timer;
@@ -148,8 +128,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
     }
     else if (!has_error)
     {
-      count_in_one_circle += th[i].result.first;
-      count_in_all_circles += th[i].result.second;
+      count_in_one_circle += th[i].union_hits;
     }
   }
 
@@ -157,7 +136,7 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
 
   if (has_error)
   {
-    return {0.0, 0.0};
+    return 0.0;
   }
 
   const vasyakin::rectangle_t rect{vasyakin::findRectangle(circles)};
@@ -165,9 +144,8 @@ std::pair< double, double > vasyakin::area(size_t threads, size_t tries, unsigne
       = static_cast< double >(rect.max_x - rect.min_x) * static_cast< double >(rect.max_y - rect.min_y);
 
   const double area_union = static_cast< double >(count_in_one_circle) / tries * rect_area;
-  const double area_intersect = static_cast< double >(count_in_all_circles) / tries * rect_area;
 
-  return std::make_pair(area_union, area_intersect);
+  return area_union;
 }
 
 int vasyakin::worker(int cmd_fd, int res_fd, unsigned int seed)
@@ -222,15 +200,14 @@ int vasyakin::worker(int cmd_fd, int res_fd, unsigned int seed)
     }
 
     long long time_ms = 0;
-    auto calc_result = area(header.threads, header.tries, seed, circles, time_ms);
+    auto calc_result = vasyakin::area(header.threads, header.tries, seed, circles, time_ms);
 
     Result result;
 
     std::memset(&result, 0, sizeof(result));
     std::strncpy(result.calc_name, header.calc_name, MAX_NAME_LEN - 1);
 
-    result.area = calc_result.first;
-    result.intersection_area = calc_result.second;
+    result.area = calc_result;
     result.time_ms = time_ms;
 
     const size_t sen = send(err, res_fd, reinterpret_cast< char* >(&result), sizeof(result));
