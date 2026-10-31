@@ -60,7 +60,7 @@ namespace goltsov
       return !name.empty() && std::isalpha(static_cast< unsigned char >(name[0]));
     }
 
-    std::vector< std::string > read_args()
+    std::vector< std::string > readArgs()
     {
       std::string line;
       std::getline(std::cin, line);
@@ -88,15 +88,15 @@ namespace goltsov
     double toDouble(const std::string& token)
     {
       size_t pos = 0;
-      double value = std::stod(token, &pos);
+      const double value = std::stod(token, &pos);
       check(pos == token.size() && std::isfinite(value));
       return value;
     }
 
-    long long toInteger(const std::string& token)
+    long long toLongLong(const std::string& token)
     {
       size_t pos = 0;
-      long long value = std::stoll(token, &pos);
+      const long long value = std::stoll(token, &pos);
       check(pos == token.size());
       return value;
     }
@@ -137,12 +137,12 @@ namespace goltsov
 
 void goltsov::circle(SharedCircles& shared_circles)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 4);
   const std::string& name = args[0];
-  double r = toDouble(args[1]);
-  double x = toDouble(args[2]);
-  double y = toDouble(args[3]);
+  const double r = toDouble(args[1]);
+  const double x = toDouble(args[2]);
+  const double y = toDouble(args[3]);
   check(isValidName(name) && r > 0 && !name_idx_map.count(name));
   const size_t idx = shared_circles.getCountCircles();
   shared_circles.newCircle(r, x, y);
@@ -151,10 +151,10 @@ void goltsov::circle(SharedCircles& shared_circles)
 
 void goltsov::set(SharedCircles&)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() >= 2);
   const std::string& name = args[0];
-  long long set_size = toInteger(args[1]);
+  const long long set_size = toLongLong(args[1]);
   check(isValidName(name) && set_size > 0 && !sets.count(name));
   check(args.size() - 2 == static_cast< size_t >(set_size));
   std::vector< std::string > shapes;
@@ -168,15 +168,15 @@ void goltsov::set(SharedCircles&)
 
 void goltsov::show(SharedCircles& shared_circles)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 1);
-  const Circle* shape = shared_circles.getData() + name_idx_map.at(args[0]);
+  const Circle* const shape = shared_circles.getData() + name_idx_map.at(args[0]);
   std::cout << *shape << "\n";
 }
 
 void goltsov::showset(SharedCircles& shared_circles)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 1);
   std::vector< std::string > set = sets.at(args[0]);
   for (size_t i = 0; i < set.size(); ++i)
@@ -187,16 +187,16 @@ void goltsov::showset(SharedCircles& shared_circles)
 
 void goltsov::frame(SharedCircles& shared_circles)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 1);
-  const Circle* shape = shared_circles.getData() + name_idx_map.at(args[0]);
+  const Circle* const shape = shared_circles.getData() + name_idx_map.at(args[0]);
   std::cout << "(" << shape->x - shape->r << " " << shape->y - shape->r << ") (" << shape->x + shape->r << " "
             << shape->y + shape->r << ")" << "\n";
 }
 
 void goltsov::frameset(SharedCircles& shared_circles)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 1);
   std::vector< std::string > set = sets.at(args[0]);
   double min_x = std::numeric_limits< double >::max();
@@ -205,7 +205,7 @@ void goltsov::frameset(SharedCircles& shared_circles)
   double max_y = std::numeric_limits< double >::lowest();
   for (size_t i = 0; i < set.size(); ++i)
   {
-    const Circle* shape = shared_circles.getData() + name_idx_map.at(set[i]);
+    const Circle* const shape = shared_circles.getData() + name_idx_map.at(set[i]);
     min_x = std::min< double >(min_x, shape->x - shape->r);
     max_x = std::max< double >(max_x, shape->x + shape->r);
     min_y = std::min< double >(min_y, shape->y - shape->r);
@@ -216,10 +216,10 @@ void goltsov::frameset(SharedCircles& shared_circles)
 
 void goltsov::spawn(SharedCircles&)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 2);
   const std::string& process_name = args[0];
-  long long seed = toInteger(args[1]);
+  const long long seed = toLongLong(args[1]);
   check(isValidName(process_name) && seed >= 0 && !processes.count(process_name));
   int pps1[2];
   if (pipe(pps1) < 0)
@@ -233,7 +233,7 @@ void goltsov::spawn(SharedCircles&)
     close(pps1[1]);
     throw std::runtime_error("pipe");
   }
-  pid_t pid = fork();
+  const pid_t pid = fork();
   if (pid < 0)
   {
     close(pps1[0]);
@@ -261,13 +261,14 @@ void goltsov::spawn(SharedCircles&)
 
 void goltsov::areasOn(SharedCircles& shared_circles)
 {
-  std::vector< std::string > args = read_args();
-  check(args.size() == 5);
+  std::vector< std::string > args = readArgs();
+  const size_t expected_count_args = 5;
+  check(args.size() == expected_count_args);
   const std::string& process_name = args[0];
   const std::string& calc_name = args[1];
   const std::string& set_name = args[2];
-  long long threads = toInteger(args[3]);
-  long long tries = toInteger(args[4]);
+  const long long threads = toLongLong(args[3]);
+  const long long tries = toLongLong(args[4]);
   check(isValidName(calc_name) && threads > 0 && tries > 0 && !calculations.count(calc_name));
   std::vector< std::string > set = sets.at(set_name);
   Process& process = processes.at(process_name);
@@ -294,7 +295,7 @@ void goltsov::areasOn(SharedCircles& shared_circles)
 
 void goltsov::status(SharedCircles&)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 1);
   const Calculation& calculation = calculations.at(args[0]);
   Process& process = processes.at(calculation.process);
@@ -314,7 +315,7 @@ void goltsov::status(SharedCircles&)
 
 void goltsov::wait(SharedCircles&)
 {
-  std::vector< std::string > args = read_args();
+  std::vector< std::string > args = readArgs();
   check(args.size() == 1);
   const Calculation& calculation = calculations.at(args[0]);
   Process& process = processes.at(calculation.process);

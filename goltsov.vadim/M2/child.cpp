@@ -28,7 +28,7 @@ int goltsov::runChild(int rd, int wr, size_t seed)
         throw std::runtime_error("recv failed");
       }
 
-      SharedCircles shared_circles(SHMN, max_count, SharedCircles::Attach{});
+      const SharedCircles shared_circles(SHMN, max_count, SharedCircles::Attach{});
 
       size_t threads = 0;
       recvValue(rd, threads);
@@ -50,7 +50,7 @@ int goltsov::runChild(int rd, int wr, size_t seed)
         {
           throw std::runtime_error("invalid index");
         }
-        const Circle* circle = shared_circles.getData() + idxi;
+        const Circle* const circle = shared_circles.getData() + idxi;
         data.push_back(circle);
         min_x = std::min< double >(min_x, circle->x - circle->r);
         max_x = std::max< double >(max_x, circle->x + circle->r);
