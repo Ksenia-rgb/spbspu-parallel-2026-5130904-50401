@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <deque>
 #include <iostream>
@@ -42,9 +43,58 @@ namespace goltsov
     std::map< std::string, Process > processes;
     std::map< std::string, Calculation > calculations;
 
+    void check(bool condition)
+    {
+      if (!condition)
+      {
+        throw std::runtime_error("<INVALID COMMAND>");
+      }
+    }
+
     bool is_valid_name(const std::string& name)
     {
       return !name.empty() && std::isalpha(static_cast< unsigned char >(name[0]));
+    }
+
+    std::vector< std::string > read_args()
+    {
+      std::string line;
+      std::getline(std::cin, line);
+      std::vector< std::string > args;
+      const char* const spaces = " \t\r";
+      size_t pos = 0;
+      while (pos < line.size())
+      {
+        pos = line.find_first_not_of(spaces, pos);
+        if (pos == std::string::npos)
+        {
+          break;
+        }
+        size_t end = line.find_first_of(spaces, pos);
+        if (end == std::string::npos)
+        {
+          end = line.size();
+        }
+        args.push_back(line.substr(pos, end - pos));
+        pos = end;
+      }
+      return args;
+    }
+
+    double to_double(const std::string& token)
+    {
+      size_t pos = 0;
+      double value = std::stod(token, &pos);
+      check(pos == token.size() && std::isfinite(value));
+      return value;
+    }
+
+    long long to_integer(const std::string& token)
+    {
+      size_t pos = 0;
+      long long value = std::stoll(token, &pos);
+      check(pos == token.size());
+      return value;
     }
 
     void read_result(Process& process)
@@ -83,63 +133,48 @@ namespace goltsov
 
 void goltsov::circle(SharedCircles& shared_circles)
 {
-  std::string name;
-  double r;
-  double x, y;
-  std::cin >> name >> r >> x >> y;
-  if (!std::cin || !is_valid_name(name) || r <= 0 || name_idx_map.count(name))
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
+  std::vector< std::string > args = read_args();
+  check(args.size() == 4);
+  const std::string& name = args[0];
+  double r = to_double(args[1]);
+  double x = to_double(args[2]);
+  double y = to_double(args[3]);
+  check(is_valid_name(name) && r > 0 && !name_idx_map.count(name));
   size_t idx = shared_circles.get_count_circles();
   shared_circles.new_circle(r, x, y);
   name_idx_map.insert({name, idx});
 }
 
-void goltsov::set(SharedCircles&)
+void goltsov::set(SharedCircles& shared_circles)
 {
-  std::string name;
-  long long set_size;
-  std::cin >> name >> set_size;
-  if (!std::cin || !is_valid_name(name) || set_size <= 0 || sets.count(name))
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
+  std::vector< std::string > args = read_args();
+  check(args.size() >= 2);
+  const std::string& name = args[0];
+  long long set_size = to_integer(args[1]);
+  check(is_valid_name(name) && set_size > 0 && !sets.count(name));
+  check(args.size() - 2 == static_cast< size_t >(set_size));
   std::vector< std::string > shapes;
-  for (long long i = 0; i < set_size; ++i)
+  for (size_t i = 2; i < args.size(); ++i)
   {
-    std::string shapei;
-    std::cin >> shapei;
-    if (!std::cin || !name_idx_map.count(shapei))
-    {
-      throw std::runtime_error("<INVALID COMMAND>");
-    }
-    shapes.push_back(shapei);
+    check(name_idx_map.count(args[i]));
+    shapes.push_back(args[i]);
   }
   sets[name] = shapes;
 }
 
 void goltsov::show(SharedCircles& shared_circles)
 {
-  std::string shape_name;
-  std::cin >> shape_name;
-  if (!std::cin)
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
-  Circle* shape = shared_circles.get_data() + name_idx_map.at(shape_name);
+  std::vector< std::string > args = read_args();
+  check(args.size() == 1);
+  Circle* shape = shared_circles.get_data() + name_idx_map.at(args[0]);
   std::cout << *shape << "\n";
 }
 
 void goltsov::showset(SharedCircles& shared_circles)
 {
-  std::string set_name;
-  std::cin >> set_name;
-  if (!std::cin)
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
-  std::vector< std::string > set = sets.at(set_name);
+  std::vector< std::string > args = read_args();
+  check(args.size() == 1);
+  std::vector< std::string > set = sets.at(args[0]);
   for (size_t i = 0; i < set.size(); ++i)
   {
     std::cout << *(shared_circles.get_data() + name_idx_map.at(set[i])) << "\n";
@@ -148,26 +183,18 @@ void goltsov::showset(SharedCircles& shared_circles)
 
 void goltsov::frame(SharedCircles& shared_circles)
 {
-  std::string shape_name;
-  std::cin >> shape_name;
-  if (!std::cin)
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
-  Circle* shape = shared_circles.get_data() + name_idx_map.at(shape_name);
+  std::vector< std::string > args = read_args();
+  check(args.size() == 1);
+  Circle* shape = shared_circles.get_data() + name_idx_map.at(args[0]);
   std::cout << "(" << shape->x - shape->r << " " << shape->y - shape->r << ") (" << shape->x + shape->r << " "
             << shape->y + shape->r << ")" << "\n";
 }
 
 void goltsov::frameset(SharedCircles& shared_circles)
 {
-  std::string set_name;
-  std::cin >> set_name;
-  if (!std::cin)
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
-  std::vector< std::string > set = sets.at(set_name);
+  std::vector< std::string > args = read_args();
+  check(args.size() == 1);
+  std::vector< std::string > set = sets.at(args[0]);
   double min_x = std::numeric_limits< double >::max();
   double max_x = std::numeric_limits< double >::lowest();
   double min_y = std::numeric_limits< double >::max();
@@ -183,15 +210,13 @@ void goltsov::frameset(SharedCircles& shared_circles)
   std::cout << "(" << min_x << " " << min_y << ") (" << max_x << " " << max_y << ")" << "\n";
 }
 
-void goltsov::spawn(SharedCircles&)
+void goltsov::spawn(SharedCircles& shared_circles)
 {
-  std::string process_name;
-  long long seed;
-  std::cin >> process_name >> seed;
-  if (!std::cin || !is_valid_name(process_name) || seed < 0 || processes.count(process_name))
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
+  std::vector< std::string > args = read_args();
+  check(args.size() == 2);
+  const std::string& process_name = args[0];
+  long long seed = to_integer(args[1]);
+  check(is_valid_name(process_name) && seed >= 0 && !processes.count(process_name));
   int pps1[2];
   if (pipe(pps1) < 0)
   {
@@ -232,13 +257,14 @@ void goltsov::spawn(SharedCircles&)
 
 void goltsov::areas_on(SharedCircles& shared_circles)
 {
-  std::string process_name, calc_name, set_name;
-  long long threads, tries;
-  std::cin >> process_name >> calc_name >> set_name >> threads >> tries;
-  if (!std::cin || !is_valid_name(calc_name) || threads <= 0 || tries <= 0 || calculations.count(calc_name))
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
+  std::vector< std::string > args = read_args();
+  check(args.size() == 5);
+  const std::string& process_name = args[0];
+  const std::string& calc_name = args[1];
+  const std::string& set_name = args[2];
+  long long threads = to_integer(args[3]);
+  long long tries = to_integer(args[4]);
+  check(is_valid_name(calc_name) && threads > 0 && tries > 0 && !calculations.count(calc_name));
   std::vector< std::string > set = sets.at(set_name);
   Process& process = processes.at(process_name);
   size_t count_circles = shared_circles.get_count_circles();
@@ -262,15 +288,11 @@ void goltsov::areas_on(SharedCircles& shared_circles)
   calculations.insert({calc_name, Calculation{process_name, false, 0, 0.0}});
 }
 
-void goltsov::status(SharedCircles&)
+void goltsov::status(SharedCircles& shared_circles)
 {
-  std::string calc_name;
-  std::cin >> calc_name;
-  if (!std::cin)
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
-  Calculation& calculation = calculations.at(calc_name);
+  std::vector< std::string > args = read_args();
+  check(args.size() == 1);
+  Calculation& calculation = calculations.at(args[0]);
   Process& process = processes.at(calculation.process);
   if (!calculation.done)
   {
@@ -286,15 +308,11 @@ void goltsov::status(SharedCircles&)
   }
 }
 
-void goltsov::wait(SharedCircles&)
+void goltsov::wait(SharedCircles& shared_circles)
 {
-  std::string calc_name;
-  std::cin >> calc_name;
-  if (!std::cin)
-  {
-    throw std::runtime_error("<INVALID COMMAND>");
-  }
-  Calculation& calculation = calculations.at(calc_name);
+  std::vector< std::string > args = read_args();
+  check(args.size() == 1);
+  Calculation& calculation = calculations.at(args[0]);
   Process& process = processes.at(calculation.process);
   while (!calculation.done)
   {

@@ -29,6 +29,7 @@ int main()
     if (!commands.count(command))
     {
       std::cout << "<UNKNOWN COMMAND>\n";
+      std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }
     else
     {
@@ -41,8 +42,6 @@ int main()
         std::cout << "<INVALID COMMAND>\n";
       }
     }
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
   }
   goltsov::shutdown();
 }
