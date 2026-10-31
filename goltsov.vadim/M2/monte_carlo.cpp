@@ -2,6 +2,8 @@
 #include <future>
 #include <random>
 #include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <vector>
 
 bool goltsov::isInside(const Circle* s, const double& x, const double& y)
@@ -15,16 +17,17 @@ bool goltsov::isInside(const Circle* s, const double& x, const double& y)
 size_t goltsov::calc(const std::vector< const Circle* >& data, const size_t& tests, const size_t& seed,
     const double& min_x, const double& min_y, const double& max_x, const double& max_y)
 {
-  std::default_random_engine engine(seed);
-  std::uniform_real_distribution< double > dist_x(min_x, max_x);
-  std::uniform_real_distribution< double > dist_y(min_y, max_y);
+  std::mt19937_64 engine(seed);
+  const int mantissa_bits = std::numeric_limits< double >::digits;
+  const int shift = std::numeric_limits< std::uint64_t >::digits - mantissa_bits;
+  const double scale = 1.0 / static_cast< double >(1ULL << mantissa_bits);
 
   size_t count_inside = 0;
 
   for (size_t i = 0; i < tests; ++i)
   {
-    const double x = dist_x(engine);
-    const double y = dist_y(engine);
+    const double x = min_x + (max_x - min_x) * static_cast< double >(engine() >> shift) * scale;
+    const double y = min_y + (max_y - min_y) * static_cast< double >(engine() >> shift) * scale;
 
     for (size_t j = 0; j < data.size(); ++j)
     {

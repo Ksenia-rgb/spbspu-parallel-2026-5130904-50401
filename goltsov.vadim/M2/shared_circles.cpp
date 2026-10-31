@@ -99,7 +99,7 @@ std::pair< goltsov::Circle*, bool > goltsov::SharedCircles::newCircle(double r, 
     max_count_ = new_max;
     is_update_size = true;
   }
-  Circle* c = new (data_ + count_circles_) Circle{r, x, y};
+  Circle* const c = new (data_ + count_circles_) Circle{r, x, y};
   ++count_circles_;
   return std::pair< Circle*, bool >{c, is_update_size};
 }

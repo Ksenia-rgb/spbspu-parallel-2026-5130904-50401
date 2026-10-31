@@ -8,41 +8,49 @@
 #include "commands.hpp"
 #include "shared_circles.hpp"
 
+namespace
+{
+  void runCommands(goltsov::SharedCircles& shared_circles)
+  {
+    std::map< std::string, void (*)(goltsov::SharedCircles&) > commands;
+    commands.insert({"circle", &goltsov::circle});
+    commands.insert({"set", &goltsov::set});
+    commands.insert({"show", &goltsov::show});
+    commands.insert({"showset", &goltsov::showset});
+    commands.insert({"frame", &goltsov::frame});
+    commands.insert({"frameset", &goltsov::frameset});
+    commands.insert({"spawn", &goltsov::spawn});
+    commands.insert({"area-on", &goltsov::areasOn});
+    commands.insert({"status", &goltsov::status});
+    commands.insert({"wait", &goltsov::wait});
+
+    std::string command;
+    while (std::cin >> command)
+    {
+      if (!commands.count(command))
+      {
+        std::cout << "<UNKNOWN COMMAND>\n";
+        std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
+      }
+      else
+      {
+        try
+        {
+          commands.at(command)(shared_circles);
+        }
+        catch (const std::exception&)
+        {
+          std::cout << "<INVALID COMMAND>\n";
+        }
+      }
+    }
+  }
+}
+
 int main()
 {
   std::signal(SIGPIPE, SIG_IGN);
   goltsov::SharedCircles shared_circles(goltsov::SHMN, 10);
-  std::map< std::string, void (*)(goltsov::SharedCircles&) > commands;
-  commands.insert({"circle", &goltsov::circle});
-  commands.insert({"set", &goltsov::set});
-  commands.insert({"show", &goltsov::show});
-  commands.insert({"showset", &goltsov::showset});
-  commands.insert({"frame", &goltsov::frame});
-  commands.insert({"frameset", &goltsov::frameset});
-  commands.insert({"spawn", &goltsov::spawn});
-  commands.insert({"area-on", &goltsov::areasOn});
-  commands.insert({"status", &goltsov::status});
-  commands.insert({"wait", &goltsov::wait});
-
-  std::string command;
-  while (std::cin >> command)
-  {
-    if (!commands.count(command))
-    {
-      std::cout << "<UNKNOWN COMMAND>\n";
-      std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
-    }
-    else
-    {
-      try
-      {
-        commands.at(command)(shared_circles);
-      }
-      catch (const std::exception&)
-      {
-        std::cout << "<INVALID COMMAND>\n";
-      }
-    }
-  }
+  runCommands(shared_circles);
   goltsov::shutdown();
 }
