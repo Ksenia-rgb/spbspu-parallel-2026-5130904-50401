@@ -79,7 +79,6 @@ void sedov::childLoop(int in_fd, int out_fd, size_t seed)
     const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     const std::chrono::milliseconds::rep time_ms
         = std::chrono::duration_cast< std::chrono::milliseconds >(end - start).count();
-
     Response resp{};
     resp.calc_id = header.calc_id;
     resp.time_ms = static_cast< size_t >(time_ms);

@@ -7,15 +7,31 @@
 #include <vector>
 #include <utility>
 #include <cctype>
+#include <chrono>
+#include <cerrno>
+#include <csignal>
 
 #include <iomanip>
 #include <poll.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "parse.hpp"
 #include "process.hpp"
 #include "shape.hpp"
+
+namespace {
+  void printShape(const sedov::Shape& s, std::ostream& out)
+  {
+    if (s.kind == sedov::Kind::Circle) {
+      out << s.a << " (" << s.x << " " << s.y << ")\n";
+    } else {
+      out << s.a << " " << s.b << " (" << s.x << " " << s.y << ") " << std::fixed << std::setprecision(3) << s.angle
+          << "\n";
+    }
+  }
+}
 
 sedov::CommandTable sedov::makeCommandTable()
 {
@@ -30,6 +46,10 @@ sedov::CommandTable sedov::makeCommandTable()
   table.emplace("area-on", cmdAreaOn);
   table.emplace("wait", cmdWait);
   table.emplace("status", cmdStatus);
+  table.emplace("ellipse", cmdEllipse);
+  table.emplace("rotate", cmdRotate);
+  table.emplace("timeout", cmdTimeout);
+  table.emplace("kill", cmdKill);
   return table;
 }
 
@@ -89,7 +109,54 @@ void sedov::cmdCircle(const std::vector< std::string >& words, CommandContext& c
     out << "<INVALID COMMAND>\n";
     return;
   }
-  ctx.shapes.emplace(words[1], Shape{r, x, y});
+  ctx.shapes.emplace(words[1], Shape{Kind::Circle, r, r, x, y, 0.0});
+}
+
+void sedov::cmdEllipse(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
+{
+  const size_t countOfWords = 6;
+  if (words.size() != countOfWords) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (words[1].empty() || !std::isalpha(static_cast< unsigned char >(words[1][0]))) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (ctx.shapes.count(words[1]) > 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  long long a = 0, b = 0, x = 0, y = 0;
+  if (!parseLongLong(words[2], a) || !parseLongLong(words[3], b) || !parseLongLong(words[4], x)
+      || !parseLongLong(words[countOfWords - 1], y)) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (a <= 0 || b <= 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  ctx.shapes.emplace(words[1], Shape{Kind::Ellipse, a, b, x, y, 0.0});
+}
+
+void sedov::cmdRotate(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
+{
+  if (words.size() != 3) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const ShapeMap::iterator it = ctx.shapes.find(words[1]);
+  if (it == ctx.shapes.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  double ksi = 0.0;
+  if (!parseDouble(words[2], ksi)) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  it->second.angle += ksi;
 }
 
 void sedov::cmdShow(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
@@ -103,8 +170,7 @@ void sedov::cmdShow(const std::vector< std::string >& words, CommandContext& ctx
     out << "<INVALID COMMAND>\n";
     return;
   }
-  const Shape& s = it->second;
-  out << s.r << " (" << s.x << " " << s.y << ")\n";
+  printShape(it->second, out);
 }
 
 void sedov::cmdSet(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
@@ -154,7 +220,7 @@ void sedov::cmdShowset(const std::vector< std::string >& words, CommandContext& 
   for (std::vector< std::string >::const_iterator name_it = it->second.begin(); name_it != it->second.end();
       ++name_it) {
     const Shape& s = ctx.shapes.at(*name_it);
-    out << s.r << " (" << s.x << " " << s.y << ")\n";
+    printShape(s, out);
   }
 }
 
@@ -402,4 +468,90 @@ void sedov::cmdStatus(const std::vector< std::string >& words, CommandContext& c
     }
   }
   printCalcResult(calc_it->second, out);
+}
+
+void sedov::cmdTimeout(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
+{
+  if (words.size() != 3) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const std::string& calc_name = words[1];
+  long long ms = 0;
+  if (!parseLongLong(words[2], ms) || ms < 0) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const CalcMap::iterator calc_it = ctx.calcs.find(calc_name);
+  if (calc_it == ctx.calcs.end()) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  if (calc_it->second.status != Status::InProgress) {
+    printCalcResult(calc_it->second, out);
+    return;
+  }
+  const std::string& proc_name = calc_it->second.process_name;
+  const ProcessMap::iterator proc_it = ctx.processes.find(proc_name);
+  if (proc_it == ctx.processes.end() || !proc_it->second.alive) {
+    calc_it->second.status = Status::Canceled;
+    printCalcResult(calc_it->second, out);
+    return;
+  }
+  const int fd = proc_it->second.out_fd;
+  const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+  const std::chrono::milliseconds total_timeout(ms);
+  while (calc_it->second.status == Status::InProgress) {
+    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    const std::chrono::milliseconds elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(now - start_time);
+    if (elapsed >= total_timeout) {
+      break;
+    }
+    const auto remaining = std::chrono::duration_cast< std::chrono::milliseconds >(total_timeout - elapsed).count();
+    struct pollfd pfd{};
+    pfd.fd = fd;
+    pfd.events = POLLIN;
+    const int ret = poll(&pfd, 1, static_cast< int >(remaining));
+    if (ret < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      calc_it->second.status = Status::Canceled;
+      break;
+    }
+    if (ret == 0) {
+      break;
+    }
+    if (pfd.revents & (POLLIN | POLLHUP)) {
+      if (!tryReadResponse(ctx, fd)) {
+        calc_it->second.status = Status::Canceled;
+        break;
+      }
+    }
+  }
+  printCalcResult(calc_it->second, out);
+}
+
+void sedov::cmdKill(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out)
+{
+  if (words.size() != 2) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  const std::string& proc_name = words[1];
+  const ProcessMap::iterator proc_it = ctx.processes.find(proc_name);
+  if (proc_it == ctx.processes.end() || !proc_it->second.alive) {
+    out << "<INVALID COMMAND>\n";
+    return;
+  }
+  for (CalcMap::iterator it = ctx.calcs.begin(); it != ctx.calcs.end(); ++it) {
+    if (it->second.process_name == proc_name && it->second.status == Status::InProgress) {
+      it->second.status = Status::Canceled;
+    }
+  }
+  kill(proc_it->second.pid, SIGTERM);
+  close(proc_it->second.in_fd);
+  close(proc_it->second.out_fd);
+  waitpid(proc_it->second.pid, nullptr, 0);
+  proc_it->second.alive = false;
 }

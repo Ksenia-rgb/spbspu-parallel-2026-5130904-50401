@@ -47,6 +47,10 @@ namespace sedov {
   void cmdAreaOn(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
   void cmdWait(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
   void cmdStatus(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
+  void cmdEllipse(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
+  void cmdRotate(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
+  void cmdTimeout(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
+  void cmdKill(const std::vector< std::string >& words, CommandContext& ctx, std::ostream& out);
 
   bool tryReadResponse(CommandContext& ctx, int fd);
   void printCalcResult(const Calc& calc, std::ostream& out);

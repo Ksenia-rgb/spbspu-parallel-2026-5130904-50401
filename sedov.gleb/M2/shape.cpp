@@ -6,10 +6,22 @@
 #include <vector>
 #include <cstddef>
 #include <functional>
+#include <cmath>
 
 sedov::Box sedov::boundingBox(const Shape& shape)
 {
-  return Box{shape.x - shape.r, shape.x + shape.r, shape.y - shape.r, shape.y + shape.r};
+  if (shape.kind == sedov::Kind::Circle || shape.angle == 0.0) {
+    return Box{shape.x - shape.a, shape.x + shape.a, shape.y - shape.b, shape.y + shape.b};
+  }
+  const double cos_a = std::cos(shape.angle);
+  const double sin_a = std::sin(shape.angle);
+  const double x_extent = std::sqrt(
+      std::pow(static_cast< double >(shape.a) * cos_a, 2) + std::pow(static_cast< double >(shape.b) * sin_a, 2));
+  const double y_extent = std::sqrt(
+      std::pow(static_cast< double >(shape.a) * sin_a, 2) + std::pow(static_cast< double >(shape.b) * cos_a, 2));
+  return Box{static_cast< long long >(std::floor(shape.x - x_extent)),
+      static_cast< long long >(std::ceil(shape.x + x_extent)), static_cast< long long >(std::floor(shape.y - y_extent)),
+      static_cast< long long >(std::ceil(shape.y + y_extent))};
 }
 
 sedov::Box sedov::boundingBox(const std::vector< Shape >& shapes)
@@ -25,9 +37,17 @@ sedov::Box sedov::boundingBox(const std::vector< Shape >& shapes)
   return box;
 }
 
-bool sedov::isInside(double dx, double dy, double r)
+bool sedov::isInside(double x, double y, const Shape& shape)
 {
-  return dx * dx + dy * dy <= r * r;
+  const double dx = x - static_cast< double >(shape.x);
+  const double dy = y - static_cast< double >(shape.y);
+  const double cos_a = std::cos(-shape.angle);
+  const double sin_a = std::sin(-shape.angle);
+  const double tx = dx * cos_a - dy * sin_a;
+  const double ty = dx * sin_a + dy * cos_a;
+  const double nx = tx / static_cast< double >(shape.a);
+  const double ny = ty / static_cast< double >(shape.b);
+  return nx * nx + ny * ny <= 1.0;
 }
 
 sedov::Result sedov::calc(const std::vector< Shape >& shapes, const Box& box, size_t tests, size_t seed)
@@ -43,8 +63,7 @@ sedov::Result sedov::calc(const std::vector< Shape >& shapes, const Box& box, si
     const double x = x_min + (static_cast< double >(engine()) / max_val) * width;
     const double y = y_min + (static_cast< double >(engine()) / max_val) * height;
     for (size_t j = 0; j < shapes.size(); ++j) {
-      if (isInside(x - static_cast< double >(shapes[j].x), y - static_cast< double >(shapes[j].y),
-              static_cast< double >(shapes[j].r))) {
+      if (isInside(x, y, shapes[j])) {
         ++hits;
         break;
       }

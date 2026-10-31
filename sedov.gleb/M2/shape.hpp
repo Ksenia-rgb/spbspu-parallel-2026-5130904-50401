@@ -7,8 +7,12 @@
 #include <vector>
 
 namespace sedov {
+  enum class Kind { Circle, Ellipse };
+
   struct Shape {
-    long long r, x, y;
+    Kind kind;
+    long long a, b, x, y;
+    double angle;
   };
 
   struct Box {
@@ -24,7 +28,7 @@ namespace sedov {
 
   Box boundingBox(const Shape& shape);
   Box boundingBox(const std::vector< Shape >& shapes);
-  bool isInside(double dx, double dy, double r);
+  bool isInside(double x, double y, const Shape& shape);
   Result calc(const std::vector< Shape >& shapes, const Box& box, size_t tests, size_t seed);
   Result countTotalHits(const std::vector< Shape >& shapes, const Box& box, size_t threads, size_t tries, size_t seed);
 }

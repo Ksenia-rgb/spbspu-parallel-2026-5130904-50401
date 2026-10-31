@@ -36,3 +36,16 @@ bool sedov::parseLongLong(const std::string& s, long long& out)
     return false;
   }
 }
+
+bool sedov::parseDouble(const std::string& s, double& out)
+{
+  try {
+    size_t pos = 0;
+    out = std::stod(s, &pos);
+    return pos == s.size();
+  } catch (const std::invalid_argument&) {
+    return false;
+  } catch (const std::out_of_range&) {
+    return false;
+  }
+}
