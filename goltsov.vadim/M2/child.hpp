@@ -5,7 +5,7 @@
 
 namespace goltsov
 {
-  int run_child(int rd, int wr, size_t seed);
+  int runChild(int rd, int wr, size_t seed);
 }
 
 #endif

@@ -2,8 +2,9 @@
 #include <iostream>
 #include <limits>
 #include <map>
-#include <stdexcept>
 #include <string>
+#include <signal.h>
+#include <exception>
 #include "commands.hpp"
 #include "shared_circles.hpp"
 
@@ -19,7 +20,7 @@ int main()
   commands.insert({"frame", &goltsov::frame});
   commands.insert({"frameset", &goltsov::frameset});
   commands.insert({"spawn", &goltsov::spawn});
-  commands.insert({"area-on", &goltsov::areas_on});
+  commands.insert({"area-on", &goltsov::areasOn});
   commands.insert({"status", &goltsov::status});
   commands.insert({"wait", &goltsov::wait});
 

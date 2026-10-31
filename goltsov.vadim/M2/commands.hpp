@@ -12,7 +12,7 @@ namespace goltsov
   void frame(SharedCircles& shared_circles);
   void frameset(SharedCircles& shared_circles);
   void spawn(SharedCircles&);
-  void areas_on(SharedCircles& shared_circles);
+  void areasOn(SharedCircles& shared_circles);
   void status(SharedCircles&);
   void wait(SharedCircles&);
   void shutdown();

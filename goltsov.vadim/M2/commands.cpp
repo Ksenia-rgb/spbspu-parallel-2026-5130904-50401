@@ -13,8 +13,12 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include <poll.h>
+#include <utility>
 #include "child.hpp"
 #include "ipc.hpp"
+#include "shared_circles.hpp"
 
 namespace goltsov
 {
@@ -51,7 +55,7 @@ namespace goltsov
       }
     }
 
-    bool is_valid_name(const std::string& name)
+    bool isValidName(const std::string& name)
     {
       return !name.empty() && std::isalpha(static_cast< unsigned char >(name[0]));
     }
@@ -81,7 +85,7 @@ namespace goltsov
       return args;
     }
 
-    double to_double(const std::string& token)
+    double toDouble(const std::string& token)
     {
       size_t pos = 0;
       double value = std::stod(token, &pos);
@@ -89,7 +93,7 @@ namespace goltsov
       return value;
     }
 
-    long long to_integer(const std::string& token)
+    long long toInteger(const std::string& token)
     {
       size_t pos = 0;
       long long value = std::stoll(token, &pos);
@@ -97,12 +101,12 @@ namespace goltsov
       return value;
     }
 
-    void read_result(Process& process)
+    void readResult(Process& process)
     {
-      size_t ms;
-      recv_value(process.rd, ms);
-      double res;
-      recv_value(process.rd, res);
+      size_t ms = 0;
+      recvValue(process.rd, ms);
+      double res = NAN;
+      recvValue(process.rd, res);
       Calculation& calculation = calculations.at(process.pending.front());
       calculation.ms = ms;
       calculation.area = res;
@@ -110,7 +114,7 @@ namespace goltsov
       process.pending.pop_front();
     }
 
-    bool is_ready(const Process& process)
+    bool isReady(const Process& process)
     {
       pollfd pfd{process.rd, POLLIN, 0};
       return poll(&pfd, 1, 0) > 0;
@@ -118,13 +122,13 @@ namespace goltsov
 
     void update(Process& process)
     {
-      while (!process.pending.empty() && is_ready(process))
+      while (!process.pending.empty() && isReady(process))
       {
-        read_result(process);
+        readResult(process);
       }
     }
 
-    void print_result(const Process& process, const Calculation& calculation)
+    void printResult(const Process& process, const Calculation& calculation)
     {
       printf("%s %zu %.3f\n", process.name.c_str(), calculation.ms, calculation.area);
     }
@@ -136,12 +140,12 @@ void goltsov::circle(SharedCircles& shared_circles)
   std::vector< std::string > args = read_args();
   check(args.size() == 4);
   const std::string& name = args[0];
-  double r = to_double(args[1]);
-  double x = to_double(args[2]);
-  double y = to_double(args[3]);
-  check(is_valid_name(name) && r > 0 && !name_idx_map.count(name));
-  size_t idx = shared_circles.get_count_circles();
-  shared_circles.new_circle(r, x, y);
+  double r = toDouble(args[1]);
+  double x = toDouble(args[2]);
+  double y = toDouble(args[3]);
+  check(isValidName(name) && r > 0 && !name_idx_map.count(name));
+  const size_t idx = shared_circles.getCountCircles();
+  shared_circles.newCircle(r, x, y);
   name_idx_map.insert({name, idx});
 }
 
@@ -150,8 +154,8 @@ void goltsov::set(SharedCircles& shared_circles)
   std::vector< std::string > args = read_args();
   check(args.size() >= 2);
   const std::string& name = args[0];
-  long long set_size = to_integer(args[1]);
-  check(is_valid_name(name) && set_size > 0 && !sets.count(name));
+  long long set_size = toInteger(args[1]);
+  check(isValidName(name) && set_size > 0 && !sets.count(name));
   check(args.size() - 2 == static_cast< size_t >(set_size));
   std::vector< std::string > shapes;
   for (size_t i = 2; i < args.size(); ++i)
@@ -166,7 +170,7 @@ void goltsov::show(SharedCircles& shared_circles)
 {
   std::vector< std::string > args = read_args();
   check(args.size() == 1);
-  Circle* shape = shared_circles.get_data() + name_idx_map.at(args[0]);
+  const Circle* shape = shared_circles.getData() + name_idx_map.at(args[0]);
   std::cout << *shape << "\n";
 }
 
@@ -177,7 +181,7 @@ void goltsov::showset(SharedCircles& shared_circles)
   std::vector< std::string > set = sets.at(args[0]);
   for (size_t i = 0; i < set.size(); ++i)
   {
-    std::cout << *(shared_circles.get_data() + name_idx_map.at(set[i])) << "\n";
+    std::cout << *(shared_circles.getData() + name_idx_map.at(set[i])) << "\n";
   }
 }
 
@@ -185,7 +189,7 @@ void goltsov::frame(SharedCircles& shared_circles)
 {
   std::vector< std::string > args = read_args();
   check(args.size() == 1);
-  Circle* shape = shared_circles.get_data() + name_idx_map.at(args[0]);
+  const Circle* shape = shared_circles.getData() + name_idx_map.at(args[0]);
   std::cout << "(" << shape->x - shape->r << " " << shape->y - shape->r << ") (" << shape->x + shape->r << " "
             << shape->y + shape->r << ")" << "\n";
 }
@@ -201,7 +205,7 @@ void goltsov::frameset(SharedCircles& shared_circles)
   double max_y = std::numeric_limits< double >::lowest();
   for (size_t i = 0; i < set.size(); ++i)
   {
-    Circle* shape = shared_circles.get_data() + name_idx_map.at(set[i]);
+    const Circle* shape = shared_circles.getData() + name_idx_map.at(set[i]);
     min_x = std::min< double >(min_x, shape->x - shape->r);
     max_x = std::max< double >(max_x, shape->x + shape->r);
     min_y = std::min< double >(min_y, shape->y - shape->r);
@@ -215,8 +219,8 @@ void goltsov::spawn(SharedCircles& shared_circles)
   std::vector< std::string > args = read_args();
   check(args.size() == 2);
   const std::string& process_name = args[0];
-  long long seed = to_integer(args[1]);
-  check(is_valid_name(process_name) && seed >= 0 && !processes.count(process_name));
+  long long seed = toInteger(args[1]);
+  check(isValidName(process_name) && seed >= 0 && !processes.count(process_name));
   int pps1[2];
   if (pipe(pps1) < 0)
   {
@@ -247,7 +251,7 @@ void goltsov::spawn(SharedCircles& shared_circles)
       close(p.second.wr);
       close(p.second.rd);
     }
-    _exit(run_child(pps1[0], pps2[1], seed));
+    _exit(runChild(pps1[0], pps2[1], seed));
   }
   close(pps1[0]);
   close(pps2[1]);
@@ -255,34 +259,34 @@ void goltsov::spawn(SharedCircles& shared_circles)
   processes.insert({process_name, std::move(process)});
 }
 
-void goltsov::areas_on(SharedCircles& shared_circles)
+void goltsov::areasOn(SharedCircles& shared_circles)
 {
   std::vector< std::string > args = read_args();
   check(args.size() == 5);
   const std::string& process_name = args[0];
   const std::string& calc_name = args[1];
   const std::string& set_name = args[2];
-  long long threads = to_integer(args[3]);
-  long long tries = to_integer(args[4]);
-  check(is_valid_name(calc_name) && threads > 0 && tries > 0 && !calculations.count(calc_name));
+  long long threads = toInteger(args[3]);
+  long long tries = toInteger(args[4]);
+  check(isValidName(calc_name) && threads > 0 && tries > 0 && !calculations.count(calc_name));
   std::vector< std::string > set = sets.at(set_name);
   Process& process = processes.at(process_name);
-  size_t count_circles = shared_circles.get_count_circles();
-  size_t count_circles_in_set = set.size();
-  size_t threads_count = threads;
-  size_t tries_count = tries;
+  const size_t count_circles = shared_circles.getCountCircles();
+  const size_t count_circles_in_set = set.size();
+  const size_t threads_count = threads;
+  const size_t tries_count = tries;
   std::vector< size_t > indices;
   for (size_t i = 0; i < count_circles_in_set; ++i)
   {
     indices.push_back(name_idx_map.at(set[i]));
   }
-  send_value(process.wr, count_circles);
-  send_value(process.wr, threads_count);
-  send_value(process.wr, tries_count);
-  send_value(process.wr, count_circles_in_set);
+  sendValue(process.wr, count_circles);
+  sendValue(process.wr, threads_count);
+  sendValue(process.wr, tries_count);
+  sendValue(process.wr, count_circles_in_set);
   for (size_t i = 0; i < count_circles_in_set; ++i)
   {
-    send_value(process.wr, indices[i]);
+    sendValue(process.wr, indices[i]);
   }
   process.pending.push_back(calc_name);
   calculations.insert({calc_name, Calculation{process_name, false, 0, 0.0}});
@@ -292,7 +296,7 @@ void goltsov::status(SharedCircles& shared_circles)
 {
   std::vector< std::string > args = read_args();
   check(args.size() == 1);
-  Calculation& calculation = calculations.at(args[0]);
+  const Calculation& calculation = calculations.at(args[0]);
   Process& process = processes.at(calculation.process);
   if (!calculation.done)
   {
@@ -300,7 +304,7 @@ void goltsov::status(SharedCircles& shared_circles)
   }
   if (calculation.done)
   {
-    print_result(process, calculation);
+    printResult(process, calculation);
   }
   else
   {
@@ -312,13 +316,13 @@ void goltsov::wait(SharedCircles& shared_circles)
 {
   std::vector< std::string > args = read_args();
   check(args.size() == 1);
-  Calculation& calculation = calculations.at(args[0]);
+  const Calculation& calculation = calculations.at(args[0]);
   Process& process = processes.at(calculation.process);
   while (!calculation.done)
   {
-    read_result(process);
+    readResult(process);
   }
-  print_result(process, calculation);
+  printResult(process, calculation);
 }
 
 void goltsov::shutdown()

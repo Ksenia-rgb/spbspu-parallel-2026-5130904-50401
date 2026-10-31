@@ -1,5 +1,6 @@
 #include "ipc.hpp"
 #include <unistd.h>
+#include <cstddef>
 
 size_t goltsov::send(int& err, int wr, const char* b, size_t k)
 {

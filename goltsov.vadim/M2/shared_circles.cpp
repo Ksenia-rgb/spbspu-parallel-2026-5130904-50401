@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <new>
 #include <stdexcept>
+#include <ostream>
+#include <cstddef>
+#include <utility>
 
 std::ostream& goltsov::operator<<(std::ostream& os, const Circle& circle)
 {
@@ -75,13 +78,13 @@ goltsov::SharedCircles::~SharedCircles()
   }
 }
 
-std::pair< goltsov::Circle*, bool > goltsov::SharedCircles::new_circle(double r, double x, double y)
+std::pair< goltsov::Circle*, bool > goltsov::SharedCircles::newCircle(double r, double x, double y)
 {
   bool is_update_size = false;
   if (count_circles_ == max_count_)
   {
-    size_t new_max = max_count_ * 2;
-    size_t new_size = new_max * sizeof(Circle);
+    const size_t new_max = max_count_ * 2;
+    const size_t new_size = new_max * sizeof(Circle);
     if (ftruncate(shfd_, new_size) < 0)
     {
       throw std::runtime_error("ftruncate failed");
@@ -101,17 +104,17 @@ std::pair< goltsov::Circle*, bool > goltsov::SharedCircles::new_circle(double r,
   return std::pair< Circle*, bool >{c, is_update_size};
 }
 
-size_t goltsov::SharedCircles::get_size()
+size_t goltsov::SharedCircles::getSize() const
 {
   return size_;
 }
 
-goltsov::Circle* goltsov::SharedCircles::get_data()
+goltsov::Circle* goltsov::SharedCircles::getData() const
 {
   return data_;
 }
 
-size_t goltsov::SharedCircles::get_count_circles()
+size_t goltsov::SharedCircles::getCountCircles() const
 {
   return count_circles_;
 }

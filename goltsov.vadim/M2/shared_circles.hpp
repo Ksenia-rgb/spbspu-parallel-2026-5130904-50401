@@ -33,11 +33,11 @@ namespace goltsov
 
     ~SharedCircles();
 
-    std::pair< Circle*, bool > new_circle(double r, double x, double y);
+    std::pair< Circle*, bool > newCircle(double r, double x, double y);
 
-    size_t get_size();
-    Circle* get_data();
-    size_t get_count_circles();
+    size_t getSize() const;
+    Circle* getData() const;
+    size_t getCountCircles() const;
 
   private:
     std::string name_;
