@@ -91,3 +91,17 @@ void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, 
 
   sets.insert({name, std::move(set)});
 }
+
+void chernov::cmdShow(std::istream &input, std::ostream & output, ellipses_t &ellipses, sets_t &)
+{
+  std::string name;
+  if (!(input >> name)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (ellipses.find(name) == ellipses.end()) {
+    throw std::runtime_error("ellipse name not found");
+  }
+
+  output << ellipses.at(name) << "\n";
+}
