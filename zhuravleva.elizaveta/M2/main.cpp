@@ -29,6 +29,26 @@ int main()
     {
       valid = zhuravleva::rotateShape(storage, args);
     }
+    else if (args[0] == "set")
+    {
+      valid = zhuravleva::addSet(storage, args);
+    }
+    else if (args[0] == "show")
+    {
+      valid = zhuravleva::showShapes(storage, args, std::cout);
+    }
+    else if (args[0] == "showset")
+    {
+      valid = zhuravleva::showSets(storage, args, std::cout);
+    }
+    else if (args[0] == "frame")
+    {
+      valid = zhuravleva::showFrame(storage, args, std::cout);
+    }
+    else if (args[0] == "frameset")
+    {
+      valid = zhuravleva::showSetFrame(storage, args, std::cout);
+    }
     else
     {
       std::cout << "<UNKNOWN COMMAND>\n";
