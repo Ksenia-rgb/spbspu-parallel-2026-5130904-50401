@@ -17,6 +17,7 @@ namespace kondrat
     Process & operator=(const Process &) = delete;
     ~Process();
 
+    void stop();
     int requestDescriptor() const;
     int resultDescriptor() const;
 

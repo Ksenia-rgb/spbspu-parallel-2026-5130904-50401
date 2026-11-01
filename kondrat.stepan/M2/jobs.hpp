@@ -42,6 +42,8 @@ namespace kondrat
       const std::map< std::string, Shape > & shapes,
       const std::map< std::string, std::vector< std::string > > & sets);
     void show(const std::vector< std::string > & words, bool wait, std::ostream & output);
+    void timeout(const std::vector< std::string > & words, std::ostream & output);
+    void stopProcess(const std::vector< std::string > & words);
     void collectReady();
     void finishAll();
     std::vector< int > resultDescriptors() const;
@@ -53,6 +55,7 @@ namespace kondrat
     std::set< std::string > failed_processes_;
     unsigned long long next_id_;
 
+    static void printResult(const Job & job, std::ostream & output);
     void startNext(const std::string & process_name);
     void receive(const std::string & process_name);
     void cancelProcess(const std::string & process_name);

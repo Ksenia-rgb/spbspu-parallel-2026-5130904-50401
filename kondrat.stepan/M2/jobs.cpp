@@ -1,6 +1,8 @@
 #include "jobs.hpp"
 #include <cerrno>
 #include <cstddef>
+#include <algorithm>
+#include <chrono>
 #include <exception>
 #include <iomanip>
 #include <limits>
@@ -76,7 +78,7 @@ void kondrat::Jobs::startNext(const std::string & process_name)
 {
   std::deque< std::string > & queue = queues_.at(process_name);
 
-  if (queue.empty())
+  if (queue.empty() || failed_processes_.count(process_name) != 0)
   {
     return;
   }
@@ -188,7 +190,6 @@ void kondrat::Jobs::collectReady()
 void kondrat::Jobs::show(const std::vector< std::string > & words, bool wait, std::ostream & output)
 {
   constexpr size_t expected_words = 2;
-  constexpr int result_precision = 3;
 
   if (words.size() != expected_words)
   {
@@ -209,6 +210,13 @@ void kondrat::Jobs::show(const std::vector< std::string > & words, bool wait, st
   {
     receive(job.process_name);
   }
+
+  printResult(job, output);
+}
+
+void kondrat::Jobs::printResult(const Job & job, std::ostream & output)
+{
+  constexpr int result_precision = 3;
 
   output << job.process_name << ' ';
 
@@ -250,4 +258,99 @@ std::vector< int > kondrat::Jobs::resultDescriptors() const
   }
 
   return descriptors;
+}
+
+void kondrat::Jobs::timeout(const std::vector< std::string > & words, std::ostream & output)
+{
+  constexpr size_t expected_words = 3;
+  constexpr size_t milliseconds_index = 2;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const long long milliseconds = parseLongLong(words[milliseconds_index]);
+  const std::map< std::string, Job >::iterator position = jobs_.find(words[1]);
+
+  if (milliseconds < 0 || position == jobs_.end())
+  {
+    throw std::invalid_argument("Invalid timeout or calculation name");
+  }
+
+  const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+  collectReady();
+  Job & job = position->second;
+
+  while (job.state == JobState::InProgress)
+  {
+    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    const long long elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(now - start).count();
+
+    if (elapsed >= milliseconds)
+    {
+      break;
+    }
+
+    const long long remaining = milliseconds - elapsed;
+    const long long interval = std::min< long long >(remaining, std::numeric_limits< int >::max());
+    struct pollfd descriptor = {};
+    descriptor.fd = processes_.at(job.process_name)->resultDescriptor();
+    descriptor.events = POLLIN;
+    const int ready = poll(&descriptor, 1, static_cast< int >(interval));
+
+    if (ready == -1 && errno == EINTR)
+    {
+      continue;
+    }
+
+    if (ready == -1 || (descriptor.revents & (POLLERR | POLLNVAL)) != 0)
+    {
+      cancelProcess(job.process_name);
+      break;
+    }
+
+    if (ready > 0 && (descriptor.revents & (POLLIN | POLLHUP)) != 0)
+    {
+      receive(job.process_name);
+    }
+  }
+
+  printResult(job, output);
+}
+
+void kondrat::Jobs::stopProcess(const std::vector< std::string > & words)
+{
+  constexpr size_t expected_words = 2;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::string & process_name = words[1];
+  const ProcessMap::iterator position = processes_.find(process_name);
+
+  if (position == processes_.end() || failed_processes_.count(process_name) != 0)
+  {
+    throw std::invalid_argument("Unknown or unavailable process");
+  }
+
+  failed_processes_.insert(process_name);
+  std::deque< std::string > & queue = queues_[process_name];
+
+  while (queue.size() > 1)
+  {
+    Job & job = jobs_.at(queue.back());
+    job.state = JobState::Canceled;
+    std::vector< Shape >().swap(job.shapes);
+    queue.pop_back();
+  }
+
+  if (!queue.empty())
+  {
+    receive(process_name);
+  }
+
+  position->second->stop();
 }

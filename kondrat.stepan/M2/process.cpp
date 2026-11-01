@@ -66,11 +66,30 @@ kondrat::Process::Process(long long seed, const std::vector< int > & inherited_d
 
 kondrat::Process::~Process()
 {
-  close(request_descriptor_);
-  close(result_descriptor_);
+  stop();
+}
 
-  while (waitpid(pid_, nullptr, 0) == -1 && errno == EINTR)
+void kondrat::Process::stop()
+{
+  if (request_descriptor_ != -1)
   {
+    close(request_descriptor_);
+    request_descriptor_ = -1;
+  }
+
+  if (result_descriptor_ != -1)
+  {
+    close(result_descriptor_);
+    result_descriptor_ = -1;
+  }
+
+  if (pid_ != -1)
+  {
+    while (waitpid(pid_, nullptr, 0) == -1 && errno == EINTR)
+    {
+    }
+
+    pid_ = -1;
   }
 }
 
@@ -112,8 +131,18 @@ void kondrat::spawnProcess(const std::vector< std::string > & words, ProcessMap 
 
   for (const ProcessMap::value_type & entry : processes)
   {
-    inherited_descriptors.push_back(entry.second->requestDescriptor());
-    inherited_descriptors.push_back(entry.second->resultDescriptor());
+    const int request_descriptor = entry.second->requestDescriptor();
+    const int result_descriptor = entry.second->resultDescriptor();
+
+    if (request_descriptor != -1)
+    {
+      inherited_descriptors.push_back(request_descriptor);
+    }
+
+    if (result_descriptor != -1)
+    {
+      inherited_descriptors.push_back(result_descriptor);
+    }
   }
 
   std::unique_ptr< Process > process(new Process(seed, inherited_descriptors));
