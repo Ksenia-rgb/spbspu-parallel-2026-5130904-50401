@@ -14,15 +14,15 @@ namespace malashenko
 
   struct BoundingBox
   {
-    long long min_x;
-    long long min_y;
-    long long max_x;
-    long long max_y;
+    int min_x;
+    int min_y;
+    int max_x;
+    int max_y;
   };
 
   BoundingBox getBoundingBox(const Circle& circle);
 
-  BoundingBox getBoundingBox(const std::vector<Circle>& circles);
+  BoundingBox getBoundingBox(const std::vector< Circle >& circles);
 
   bool isInside(const Circle& circle, double x, double y);
 }
