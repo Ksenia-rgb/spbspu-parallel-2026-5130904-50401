@@ -31,8 +31,6 @@ namespace petrov {
   {
     if (calc.status == status_t::InProgress) {
       out << calc.process_name << " <IN PROGRESS>\n";
-    } else if (calc.status == status_t::Canceled) {
-      out << calc.process_name << " <CANCELED>\n";
     } else {
       out << calc.process_name << " " << calc.time_ms << " "
           << std::fixed << std::setprecision(3) << calc.area << "\n";
@@ -333,8 +331,6 @@ namespace petrov {
 
     auto proc_it = ctx.processes.find(calc_it->second.process_name);
     if (proc_it == ctx.processes.end()) {
-      calc_it->second.status = status_t::Canceled;
-      printCalcResult(calc_it->second, out);
       return;
     }
 
@@ -351,7 +347,6 @@ namespace petrov {
 
       if (pfd.revents & (POLLIN | POLLHUP)) {
         if (!tryReadResponse(ctx, fd)) {
-          calc_it->second.status = status_t::Canceled;
           break;
         }
       }
@@ -393,13 +388,10 @@ namespace petrov {
 
           if (pfd.revents & (POLLIN | POLLHUP)) {
             if (!tryReadResponse(ctx, fd)) {
-              calc_it->second.status = status_t::Canceled;
               break;
             }
           }
         }
-      } else {
-        calc_it->second.status = status_t::Canceled;
       }
     }
 

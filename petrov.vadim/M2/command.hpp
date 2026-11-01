@@ -14,8 +14,7 @@ namespace petrov {
   enum class status_t
   {
     InProgress,
-    Done,
-    Canceled
+    Done
   };
 
   struct calc_t
@@ -34,7 +33,7 @@ namespace petrov {
     set_map_t sets;
     process_map_t processes;
     calc_map_t calcs;
-    std::map<size_t, std::string> calc_id_to_name;
+    std::map< size_t, std::string > calc_id_to_name;
     size_t next_calc_id = 1;
   };
 
