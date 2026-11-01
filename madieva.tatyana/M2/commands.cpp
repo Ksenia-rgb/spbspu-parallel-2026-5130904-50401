@@ -67,3 +67,38 @@ void madieva::addSet(madieva::state_t & state, const madieva::Args & args)
 
   state.sets.insert({name, shapes});
 }
+
+void madieva::show(const madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 2)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+
+  const std::string & name = args[1];
+  const auto it = state.circles.find(name);
+  if (it == state.circles.end())
+  {
+    throw std::invalid_argument("the name of the circle does not exist");
+  }
+  std::cout << it->second << "\n";
+}
+
+void madieva::showSet(const madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 2)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+
+  const std::string & name = args[1];
+  const auto it = state.sets.find(name);
+  if (it == state.sets.end())
+  {
+    throw std::invalid_argument("the name of the set does not exist");
+  }
+  for (std::size_t i = 0; i < it->second.size(); ++i)
+  {
+    std::cout << *(it->second[i]) << "\n";
+  }
+}

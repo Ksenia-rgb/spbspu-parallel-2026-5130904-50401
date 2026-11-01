@@ -26,3 +26,9 @@ long long madieva::Circle::getY() const
 {
   return y_;
 }
+
+std::ostream & madieva::operator<<(std::ostream & out, const madieva::Circle & circle)
+{
+  out << circle.getRadius() << " (" << circle.getX() << " " << circle.getY() << ")";
+  return out;
+}

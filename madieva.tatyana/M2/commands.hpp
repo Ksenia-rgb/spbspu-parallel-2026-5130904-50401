@@ -12,6 +12,8 @@ namespace madieva
 
   void addCircle(madieva::state_t &, const madieva::Args &);
   void addSet(madieva::state_t &, const madieva::Args &);
+  void show(const madieva::state_t &, const madieva::Args &);
+  void showSet(const madieva::state_t &, const madieva::Args &);
 
 }
 

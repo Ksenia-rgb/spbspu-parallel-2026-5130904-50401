@@ -1,6 +1,8 @@
 #ifndef CIRCLE_HPP
 #define CIRCLE_HPP
 
+#include <iostream>
+
 namespace madieva
 {
   class Circle
@@ -10,6 +12,7 @@ namespace madieva
     long long getRadius() const;
     long long getX() const;
     long long getY() const;
+    std::ostream & operator<<(std::ostream & out);
 
   private:
     long long r_ = 0;

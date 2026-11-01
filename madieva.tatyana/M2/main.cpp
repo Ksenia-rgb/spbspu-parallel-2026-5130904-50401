@@ -13,7 +13,10 @@
 int main()
 {
   const std::map< std::string, madieva::Command > commands = {
-    {"circle", madieva::addCircle}
+    {"circle", madieva::addCircle},
+    {"set", madieva::addSet},
+    {"show", madieva::show},
+    {"showset", madieva::showSet}
   };
   madieva::state_t state;
   std::string line;
