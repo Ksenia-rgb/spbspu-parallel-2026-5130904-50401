@@ -52,7 +52,8 @@ int main()
       StringBuf sbuf(arguments);
       std::istream iss(&sbuf);
 
-      commands.at(command)(iss, std::cout, state);
+      const command_t cmd = commands.at(command);
+      cmd(iss, std::cout, state);
 
       iss >> std::ws;
       if (iss.peek() != std::char_traits< char >::eof())
