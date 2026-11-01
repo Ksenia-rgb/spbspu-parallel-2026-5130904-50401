@@ -8,9 +8,9 @@ void malashenko::createCircle(ApplicationState& state, const std::string& name, 
     throw std::invalid_argument("Circle with that name is already exist");
   }
 
-  if (name.empty())
+  if (name.empty() || !std::isalpha(static_cast< unsigned char >(name[0])))
   {
-    throw std::invalid_argument("Name can't be empty");
+    throw std::invalid_argument("Invalid name");
   }
 
   const Circle circle{radius, x, y};

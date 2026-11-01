@@ -9,23 +9,24 @@
 
 int main()
 {
-  malashenko::ApplicationState state;
+  using namespace malashenko;
 
-  using command_t = void (*)(std::istream&, std::ostream&, malashenko::ApplicationState&);
+  using command_t = void (*)(std::istream&, std::ostream&, ApplicationState&);
 
   std::unordered_map< std::string, command_t > commands;
 
-  commands["circle"] = malashenko::doCircle;
-  commands["set"] = malashenko::doSet;
-  commands["show"] = malashenko::doShow;
-  commands["showset"] = malashenko::doShowset;
-  commands["frame"] = malashenko::doFrame;
-  commands["frameset"] = malashenko::doFrameset;
-  commands["spawn"] = malashenko::doSpawn;
-  commands["area-on"] = malashenko::doAreaOn;
-  commands["status"] = malashenko::doStatus;
-  commands["wait"] = malashenko::doWait;
+  commands["circle"] = doCircle;
+  commands["set"] = doSet;
+  commands["show"] = doShow;
+  commands["showset"] = doShowset;
+  commands["frame"] = doFrame;
+  commands["frameset"] = doFrameset;
+  commands["spawn"] = doSpawn;
+  commands["area-on"] = doAreaOn;
+  commands["status"] = doStatus;
+  commands["wait"] = doWait;
 
+  ApplicationState state;
   std::string line;
 
   while (std::getline(std::cin, line))
@@ -48,33 +49,28 @@ int main()
 
     try
     {
-      auto it = commands.find(command);
+      StringBuf sbuf(arguments);
+      std::istream iss(&sbuf);
 
-      if (it == commands.end())
+      commands.at(command)(iss, std::cout, state);
+
+      iss >> std::ws;
+      if (iss.peek() != std::char_traits< char >::eof())
       {
-        std::cout << "<UNKNOWN COMMAND>\n";
-        continue;
-      }
-
-      malashenko::StringBuf buffer(arguments);
-      std::istream input(&buffer);
-
-      it->second(input, std::cout, state);
-
-      input >> std::ws;
-
-      if (input.peek() != std::char_traits< char >::eof())
-      {
-        throw std::invalid_argument("Extra arguments");
+        throw std::invalid_argument("trailing arguments");
       }
     }
-    catch (const std::invalid_argument&)
+    catch (std::out_of_range& e)
     {
-      std::cout << "<INVALID COMMAND>\n";
+      std::cout << "<UNKNOWN COMMAND>" << '\n';
     }
-    catch (const std::runtime_error& error)
+    catch (std::invalid_argument& e)
     {
-      std::cout << error.what() << '\n';
+      std::cout << "<INVALID COMMAND>" << '\n';
+    }
+    catch (std::runtime_error& e)
+    {
+      std::cout << e.what() << '\n';
     }
   }
 

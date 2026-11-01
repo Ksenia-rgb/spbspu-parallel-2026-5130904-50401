@@ -11,7 +11,7 @@ namespace malashenko
   public:
     explicit StringBuf(const std::string& str)
     {
-      char* begin = const_cast< char* >(str.data());
+      char* const begin = const_cast< char* >(str.data());
       setg(begin, begin, begin + str.size());
     }
   };
