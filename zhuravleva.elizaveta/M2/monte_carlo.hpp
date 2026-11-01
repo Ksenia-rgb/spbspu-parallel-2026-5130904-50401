@@ -3,6 +3,7 @@
 
 #include "shapes.hpp"
 #include <vector>
+#include <cstddef>
 
 namespace zhuravleva
 {
