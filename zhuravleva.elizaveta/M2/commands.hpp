@@ -6,10 +6,8 @@
 #include <string>
 #include <vector>
 
-namespace zhuravleva
-{
-  struct Storage
-  {
+namespace zhuravleva {
+  struct Storage {
     std::map< std::string, Shape > shapes;
   };
   bool addCircle(Storage& storage, const std::vector< std::string >& args);
