@@ -7,6 +7,11 @@ void malashenko::createCircle(ApplicationState& state, const std::string& name, 
     throw std::invalid_argument("Circle with that name is already exist");
   }
 
+  if (name.empty())
+  {
+    throw std::invalid_argument("Name can't be empty");
+  }
+
   const Circle circle{radius, x, y};
 
   if (radius <= 0)
@@ -19,6 +24,11 @@ void malashenko::createCircle(ApplicationState& state, const std::string& name, 
 
 void malashenko::createSet(ApplicationState& state, const std::string& name, const std::vector< std::string >& circle_names)
 {
+  if (name.empty())
+  {
+    throw std::invalid_argument("Name can't be empty");
+  }
+
   if (state.sets.count(name) != 0 || circle_names.empty())
   {
     throw std::invalid_argument("Invalid set");
@@ -81,7 +91,5 @@ malashenko::BoundingBox malashenko::getCircleFrame(const ApplicationState& state
 
 malashenko::BoundingBox malashenko::getSetFrame(const ApplicationState& state, const std::string& name)
 {
-  const std::vector< Circle > circles = collectSetCircles(state, name);
-
-  return getBoundingBox(circles);
+  return getBoundingBox(collectSetCircles(state, name));
 }
