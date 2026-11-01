@@ -18,6 +18,16 @@ namespace zhuravleva
     int y;
     double angle;
   };
+
+  struct Rectangle
+  {
+    double min_x;
+    double max_x;
+    double min_y;
+    double max_y;
+  };
+
+  Rectangle getBounds(const Shape& shape);
 }
 
 #endif
