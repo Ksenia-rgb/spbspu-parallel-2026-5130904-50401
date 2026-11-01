@@ -275,8 +275,8 @@ namespace petrov {
     long long threads_ll = 0, tries_ll = 0;
     const size_t threads_idx = 4;
     const size_t tries_idx = 5;
-    if (!parseLongLong(words[threads_idx], threads_ll) || threads_ll <= 0 ||
-        !parseLongLong(words[tries_idx], tries_ll) || tries_ll <= 0) {
+    if (!parseLongLong(words[threads_idx], threads_ll) || threads_ll <= 0 || !parseLongLong(words[tries_idx], tries_ll)
+        || tries_ll <= 0) {
       out << "<INVALID COMMAND>\n";
       return;
     }
