@@ -15,7 +15,7 @@ std::istream & chernov::operator>>(std::istream & input, const CommandIO & cmd_i
 
   if (input) {
     try {
-      cmd_io.cmds.at(str)(input, cmd_io.output, cmd_io.ellipses);
+      cmd_io.cmds.at(str)(input, cmd_io.output, cmd_io.ellipses, cmd_io.sets);
     } catch (...) {
       input.setstate(std::ios::failbit);
     }
@@ -42,7 +42,7 @@ void chernov::runCommands(std::istream & input, CommandIO & cmd_io)
   runCommands(input, cmd_io);
 }
 
-void chernov::cmdCircle(std::istream & input, std::ostream &, std::unordered_map< std::string, ellipse_t > & ellipses)
+void chernov::cmdCircle(std::istream & input, std::ostream &, ellipses_t & ellipses, sets_t &)
 {
   std::string name;
   double r, x, y;
@@ -58,4 +58,35 @@ void chernov::cmdCircle(std::istream & input, std::ostream &, std::unordered_map
   }
 
   ellipses.insert({name, ellipse_t{.center = point_t{.x = x, .y = y}, .horizontal_radius = r, .vertical_radius = r}});
+}
+
+void chernov::cmdSet(std::istream & input, std::ostream &, ellipses_t & ellipses, sets_t & sets)
+{
+  std::string name;
+  long long size;
+  if (!(input >> name >> size)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (sets.find(name) != sets.end()) {
+    throw std::runtime_error("set name already exists");
+  }
+  if (size <= 0) {
+    throw std::runtime_error("set size must be greater than zero");
+  }
+
+  set_t set(size);
+  std::string shape;
+  for (long long i = 0; i < size; ++i) {
+    if (!(input >> shape)) {
+      throw std::runtime_error("invalid input");
+    }
+    if (ellipses.find(shape) == ellipses.end()) {
+      throw std::runtime_error("shape name not found");
+    }
+
+    set.push_back(shape);
+  }
+
+  sets.insert({name, std::move(set)});
 }

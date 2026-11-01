@@ -1,7 +1,6 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
 
-#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,17 +24,6 @@ namespace chernov {
   using ellipses_t = std::unordered_map< std::string, ellipse_t >;
   using set_t = std::vector< std::string >;
   using sets_t = std::unordered_map< std::string, set_t >;
-
-  std::istream & operator>>(std::istream & input, ellipse_t & ellipse);
-  std::istream & operator>>(std::istream & input, set_t & set);
-
-  namespace detail {
-    struct DelimiterIO {
-      char exp;
-    };
-
-    std::istream & operator>>(std::istream & input, DelimiterIO && delimiter);
-  }
 }
 
 #endif

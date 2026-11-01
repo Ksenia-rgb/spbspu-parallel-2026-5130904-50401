@@ -6,11 +6,13 @@
 
 int main()
 {
-  std::unordered_map< std::string, chernov::ellipse_t > ellipses;
+  chernov::ellipses_t ellipses;
+  chernov::sets_t sets;
 
   std::unordered_map< std::string, chernov::cmd_t > cmds;
   cmds["circle"] = chernov::cmdCircle;
+  cmds["set"] = chernov::cmdSet;
 
-  auto cmd_io = chernov::CommandIO{std::cout, cmds, ellipses};
+  auto cmd_io = chernov::CommandIO{std::cout, cmds, ellipses, sets};
   chernov::runCommands(std::cin, cmd_io);
 }

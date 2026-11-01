@@ -7,19 +7,21 @@
 #include <unordered_map>
 
 namespace chernov {
-  using cmd_t = std::function< void(std::istream &, std::ostream &, std::unordered_map< std::string, ellipse_t > &) >;
+  using cmd_t = std::function< void(std::istream &, std::ostream &, ellipses_t &, sets_t &) >;
 
   struct CommandIO {
     std::ostream &output;
     const std::unordered_map< std::string, cmd_t > &cmds;
-    std::unordered_map< std::string, ellipse_t > &ellipses;
+    ellipses_t &ellipses;
+    sets_t &sets;
   };
 
   std::istream &operator>>(std::istream &input, const CommandIO &cmd_io);
 
   void runCommands(std::istream & input, CommandIO & cmd_io);
 
-  void cmdCircle(std::istream &, std::ostream &, std::unordered_map< std::string, ellipse_t > &);
+  void cmdCircle(std::istream &, std::ostream &, ellipses_t &, sets_t &);
+  void cmdSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
 }
 
 #endif
