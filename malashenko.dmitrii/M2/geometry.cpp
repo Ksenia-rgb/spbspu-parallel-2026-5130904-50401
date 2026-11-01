@@ -37,11 +37,3 @@ malashenko::BoundingBox malashenko::getBoundingBox(const std::vector< Circle > &
   return result;
 }
 
-bool malashenko::isInside(const Circle &circle, double x, double y)
-{
-  const double dx = x - circle.x;
-  const double dy = y - circle.y;
-
-  return dx * dx + dy * dy <= static_cast< double >(circle.radius) * circle.radius;
-}
-

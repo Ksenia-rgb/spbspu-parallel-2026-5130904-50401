@@ -1,11 +1,11 @@
 #ifndef APPLICATION_HPP
 #define APPLICATION_HPP
 
-#include "geometry.hpp"
-#include "process.hpp"
 #include <map>
 #include <string>
 #include <vector>
+#include "geometry.hpp"
+#include "process.hpp"
 
 namespace malashenko
 {

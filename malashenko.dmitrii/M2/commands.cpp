@@ -1,13 +1,13 @@
 #include "commands.hpp"
-#include "application.hpp"
-#include "process.hpp"
-
 #include <iomanip>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <iostream>
+
+#include "application.hpp"
+#include "process.hpp"
 
 void malashenko::showCircle(const Circle& circle, std::ostream& out)
 {

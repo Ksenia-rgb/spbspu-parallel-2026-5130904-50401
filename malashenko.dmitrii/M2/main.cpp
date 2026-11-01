@@ -1,69 +1,83 @@
-#include "application.hpp"
-#include "commands.hpp"
 #include <iostream>
 #include <csignal>
 #include <signal.h>
 #include <unordered_map>
 #include <limits>
+#include "application.hpp"
+#include "commands.hpp"
+#include "string_buf.hpp"
 
 int main()
 {
-  struct sigaction action{};
+  malashenko::ApplicationState state;
 
-  action.sa_handler = SIG_IGN;
-  sigemptyset(&action.sa_mask);
+  using command_t = void (*)(std::istream&, std::ostream&, malashenko::ApplicationState&);
 
-  if (sigaction(SIGPIPE, &action, nullptr) == -1)
+  std::unordered_map< std::string, command_t > commands;
+
+  commands["circle"] = malashenko::doCircle;
+  commands["set"] = malashenko::doSet;
+  commands["show"] = malashenko::doShow;
+  commands["showset"] = malashenko::doShowset;
+  commands["frame"] = malashenko::doFrame;
+  commands["frameset"] = malashenko::doFrameset;
+  commands["spawn"] = malashenko::doSpawn;
+  commands["area-on"] = malashenko::doAreaOn;
+  commands["status"] = malashenko::doStatus;
+  commands["wait"] = malashenko::doWait;
+
+  std::string line;
+
+  while (std::getline(std::cin, line))
   {
-    return 1;
-  }
+    if (!line.empty() && line.back() == '\r')
+    {
+      line.pop_back();
+    }
 
-  using namespace malashenko;
+    if (line.empty())
+    {
+      continue;
+    }
 
-  using cmd_t = void (*)(std::istream &, std::ostream &, ApplicationState &);
-  std::unordered_map< std::string, cmd_t > cmds;
-  cmds["circle"] = doCircle;
-  cmds["set"] = doSet;
-  cmds["show"] = doShow;
-  cmds["showset"] = doShowset;
-  cmds["frame"] = doFrame;
-  cmds["frameset"] = doFrameset;
-  cmds["spawn"] = doSpawn;
-  cmds["area-on"] = doAreaOn;
-  cmds["status"] = doStatus;
-  cmds["wait"] = doWait;
+    const size_t pos = line.find_first_of(" \t");
 
-  ApplicationState state;
-  std::string cmd;
-  while (std::cin >> cmd)
-  {
+    const std::string command = (pos == std::string::npos) ? line : line.substr(0, pos);
+
+    const std::string arguments = (pos == std::string::npos) ? "" : line.substr(pos);
+
     try
     {
-      cmds.at(cmd)(std::cin, std::cout, state);
+      auto it = commands.find(command);
+
+      if (it == commands.end())
+      {
+        std::cout << "<UNKNOWN COMMAND>\n";
+        continue;
+      }
+
+      malashenko::StringBuf buffer(arguments);
+      std::istream input(&buffer);
+
+      it->second(input, std::cout, state);
+
+      input >> std::ws;
+
+      if (input.peek() != std::char_traits< char >::eof())
+      {
+        throw std::invalid_argument("Extra arguments");
+      }
     }
-    catch (const std::out_of_range &)
-    {
-      std::cout << "<UNKNOWN COMMAND>\n";
-      auto toignore = std::numeric_limits< std::streamsize >::max();
-      std::cin.ignore(toignore, '\n');
-    }
-    catch (const std::exception &)
+    catch (const std::invalid_argument&)
     {
       std::cout << "<INVALID COMMAND>\n";
-      auto toignore = std::numeric_limits< std::streamsize >::max();
-      std::cin.ignore(toignore, '\n');
+    }
+    catch (const std::runtime_error& error)
+    {
+      std::cout << error.what() << '\n';
     }
   }
-  for (auto it = state.processes.begin(); it != state.processes.end(); ++it)
-  {
-    closeProcess(it->second);
-  }
 
-  if (!std::cin.eof())
-  {
-    std::cerr << "Bad input\n";
-    return 1;
-  }
   return 0;
 }
 

@@ -24,7 +24,11 @@ size_t malashenko::calc(const CalculationParams &params)
 
     for (const Circle &circle : params.circles)
     {
-      if (isInside(circle, x, y))
+      const double dx = x - circle.x;
+      const double dy = y - circle.y;
+      const double radius = static_cast< double >(circle.radius);
+
+      if (dx * dx + dy * dy <= radius * radius)
       {
         inside = true;
         break;
@@ -50,6 +54,11 @@ double malashenko::getArea(const BoundingBox &box, size_t tries, size_t inside_a
 
 size_t malashenko::calcParallel(const CalculationParams &params)
 {
+  if (params.threads == 1)
+  {
+    return calc(params);
+  }
+
   const size_t actual_threads = std::min(params.threads, params.tries);
 
   const size_t tries_per_thread = params.tries / actual_threads;

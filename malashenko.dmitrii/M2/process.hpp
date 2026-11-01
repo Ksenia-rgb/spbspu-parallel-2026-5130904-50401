@@ -1,13 +1,12 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include "geometry.hpp"
-
 #include <cstddef>
 #include <vector>
 #include <sys/types.h>
 #include <map>
 #include <future>
+#include "geometry.hpp"
 
 namespace malashenko
 {

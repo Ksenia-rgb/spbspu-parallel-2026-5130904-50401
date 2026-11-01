@@ -1,5 +1,4 @@
 #include "process.hpp"
-#include "monte_carlo.hpp"
 
 #include <cerrno>
 #include <chrono>
@@ -18,6 +17,8 @@
 #include <limits>
 #include <stdexcept>
 #include <cstddef>
+
+#include "monte_carlo.hpp"
 
 bool malashenko::writeAll(int fd, const void* data, size_t size)
 {

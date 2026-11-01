@@ -23,7 +23,6 @@ namespace malashenko
 
   BoundingBox getBoundingBox(const std::vector< Circle >& circles);
 
-  bool isInside(const Circle& circle, double x, double y);
 }
 
 #endif

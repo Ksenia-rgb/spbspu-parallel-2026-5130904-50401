@@ -1,10 +1,9 @@
 #ifndef MONTE_CARLO_HPP
 #define MONTE_CARLO_HPP
 
-#include "geometry.hpp"
-
 #include <cstddef>
 #include <vector>
+#include "geometry.hpp"
 
 namespace malashenko
 {
