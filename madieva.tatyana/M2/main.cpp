@@ -1,2 +1,48 @@
+#include <map>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <functional>
+#include <limits>
+#include <stdexcept>
+#include "circle.hpp"
+#include "state.hpp"
+#include "commands.hpp"
+#include"parser.hpp"
+
 int main()
-{}
+{
+  const std::map< std::string, madieva::Command > commands = {
+    {"circle", madieva::addCircle}
+  };
+  madieva::state_t state;
+  std::string line;
+  while (std::getline(std::cin, line))
+  {
+    const madieva::Args args = madieva::split(line);
+    if (args.empty())
+    {
+      std::cout << "<UNKNOWN COMMAND>\n";
+      continue;
+    }
+
+    const auto it = commands.find(args[0]);
+    if (it == commands.end())
+    {
+      std::cout << "<UNKNOWN COMMAND>\n";
+      continue;
+    }
+
+    try
+    {
+      it->second(state, args);
+    }
+    catch (const std::invalid_argument &)
+    {
+      std::cout << "<INVALID COMMAND>\n";
+    }
+  }
+
+  return 0;
+
+}
