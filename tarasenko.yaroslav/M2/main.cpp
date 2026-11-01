@@ -1,6 +1,34 @@
+#include <exception>
 #include <iostream>
+#include <limits>
+#include <string>
+#include <unordered_map>
+#include "commands.hpp"
 
 int main()
 {
-  std::cout << "Hi!\n";
+  using cmd_t = void (*)(std::istream&, std::ostream&);
+  std::unordered_map< std::string, cmd_t > cmds;
+  cmds["circle"] = tarasenko::circle;
+  cmds["set"] = tarasenko::set;
+  cmds["show"] = tarasenko::show;
+  cmds["showset"] = tarasenko::showSet;
+  cmds["frame"] = tarasenko::frame;
+  cmds["frameset"] = tarasenko::frameSet;
+  cmds["spawn"] = tarasenko::spawn;
+  cmds["area-on"] = tarasenko::areaOn;
+  cmds["status"] = tarasenko::status;
+  cmds["wait"] = tarasenko::wait;
+
+  std::string cmd;
+  while (std::cin >> cmd) {
+    try {
+      cmds.at(cmd)(std::cin, std::cout);
+    } catch (const std::exception&) {
+      std::cout << "<INVALID COMMAND>\n";
+      auto toignore = std::numeric_limits< std::streamsize >::max();
+      std::cin.clear();
+      std::cin.ignore(toignore, '\n');
+    }
+  }
 }
