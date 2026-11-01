@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include <cstddef>
+#include <cmath>
 #include <stdexcept>
 
 std::vector< std::string > kondrat::splitCommand(const std::string & line)
@@ -54,4 +55,17 @@ bool kondrat::isValidName(const std::string & name)
 
   return (first >= 'a' && first <= 'z') ||
     (first >= 'A' && first <= 'Z');
+}
+
+double kondrat::parseReal(const std::string & word)
+{
+  size_t position = 0;
+  const double value = std::stod(word, &position);
+
+  if (position != word.size() || !std::isfinite(value))
+  {
+    throw std::invalid_argument("Invalid real number");
+  }
+
+  return value;
 }

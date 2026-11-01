@@ -1,5 +1,8 @@
 #include "commands.hpp"
 #include <cstddef>
+#include <cmath>
+#include <iomanip>
+#include <ostream>
 #include <stdexcept>
 #include "input.hpp"
 
@@ -53,4 +56,72 @@ void kondrat::createShape(
   };
 
   shapes.emplace(name, shape);
+}
+
+void kondrat::showShape(
+  const std::vector< std::string > & words,
+  const std::map< std::string, Shape > & shapes,
+  std::ostream & output)
+{
+  constexpr size_t expected_words = 2;
+  constexpr int angle_precision = 3;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::map< std::string, Shape >::const_iterator position = shapes.find(words[1]);
+
+  if (position == shapes.end())
+  {
+    throw std::invalid_argument("Unknown shape");
+  }
+
+  const Shape & shape = position->second;
+  output << shape.horizontal_radius;
+
+  if (shape.kind == ShapeKind::Ellipse)
+  {
+    output << ' ' << shape.vertical_radius;
+  }
+
+  output << " (" << shape.x << ' ' << shape.y << ')';
+
+  if (shape.kind == ShapeKind::Ellipse)
+  {
+    output << ' ' << std::fixed << std::setprecision(angle_precision) << shape.angle;
+  }
+
+  output << '\n';
+}
+
+void kondrat::rotateShape(
+  const std::vector< std::string > & words,
+  std::map< std::string, Shape > & shapes)
+{
+  constexpr size_t expected_words = 3;
+  constexpr size_t angle_index = 2;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::map< std::string, Shape >::iterator position = shapes.find(words[1]);
+
+  if (position == shapes.end())
+  {
+    throw std::invalid_argument("Unknown shape");
+  }
+
+  const double angle = parseReal(words[angle_index]);
+  const double new_angle = position->second.angle + angle;
+
+  if (!std::isfinite(new_angle))
+  {
+    throw std::invalid_argument("Angle is out of range");
+  }
+
+  position->second.angle = new_angle;
 }
