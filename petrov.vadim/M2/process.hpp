@@ -1,5 +1,5 @@
-#ifndef PETROV_PROCESS_HPP
-#define PETROV_PROCESS_HPP
+#ifndef PROCESS_HPP
+#define PROCESS_HPP
 
 #include <cstddef>
 #include <map>

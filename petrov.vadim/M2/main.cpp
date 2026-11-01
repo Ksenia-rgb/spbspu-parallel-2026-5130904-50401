@@ -15,6 +15,8 @@ int main()
   sigaction(SIGPIPE, &sa, nullptr);
 
   petrov::command_context_t ctx;
+  ctx.next_calc_id = 1;
+
   const petrov::command_table_t table = petrov::makeCommandTable();
 
   std::string line;
@@ -33,8 +35,8 @@ int main()
     it->second(words, ctx, std::cout);
   }
 
-  for (auto& pair : ctx.processes) {
-    petrov::process_t& proc = pair.second;
+  for (const auto& pair : ctx.processes) {
+    const petrov::process_t& proc = pair.second;
     close(proc.in_fd);
     close(proc.out_fd);
     waitpid(proc.pid, nullptr, 0);

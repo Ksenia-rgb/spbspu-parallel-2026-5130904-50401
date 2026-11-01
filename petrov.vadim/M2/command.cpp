@@ -60,7 +60,8 @@ namespace petrov {
 
   void cmdCircle(const std::vector< std::string >& words, command_context_t& ctx, std::ostream& out)
   {
-    if (words.size() != 5 || words[1].empty() || !std::isalpha(static_cast< unsigned char >(words[1][0]))) {
+    const size_t expected_args = 5;
+    if (words.size() != expected_args || words[1].empty() || !std::isalpha(static_cast< unsigned char >(words[1][0]))) {
       out << "<INVALID COMMAND>\n";
       return;
     }
@@ -249,7 +250,8 @@ namespace petrov {
 
   void cmdAreaOn(const std::vector< std::string >& words, command_context_t& ctx, std::ostream& out)
   {
-    if (words.size() != 6 || words[1].empty() || !std::isalpha(static_cast< unsigned char >(words[1][0]))) {
+    const size_t expected_args = 6;
+    if (words.size() != expected_args || words[1].empty() || !std::isalpha(static_cast< unsigned char >(words[1][0]))) {
       out << "<INVALID COMMAND>\n";
       return;
     }
@@ -271,8 +273,10 @@ namespace petrov {
     }
 
     long long threads_ll = 0, tries_ll = 0;
-    if (!parseLongLong(words[4], threads_ll) || threads_ll <= 0 || !parseLongLong(words[5], tries_ll)
-        || tries_ll <= 0) {
+    const size_t threads_idx = 4;
+    const size_t tries_idx = 5;
+    if (!parseLongLong(words[threads_idx], threads_ll) || threads_ll <= 0 ||
+        !parseLongLong(words[tries_idx], tries_ll) || tries_ll <= 0) {
       out << "<INVALID COMMAND>\n";
       return;
     }

@@ -1,5 +1,5 @@
-#ifndef PETROV_COMMAND_HPP
-#define PETROV_COMMAND_HPP
+#ifndef COMMAND_HPP
+#define COMMAND_HPP
 
 #include <map>
 #include <ostream>
