@@ -77,12 +77,14 @@ void malashenko::doCircle(std::istream& in, std::ostream&, ApplicationState& sta
 void malashenko::doSet(std::istream& in, std::ostream&, ApplicationState& state)
 {
   std::string name;
-  size_t size = 0;
+  long long size_input = 0;
 
-  if (!(in >> name >> size))
+  if (!(in >> name >> size_input) || size_input <= 0)
   {
     throw std::invalid_argument("Invalid arguments");
   }
+
+  const size_t size = static_cast< size_t >(size_input);
 
   if (size == 0)
   {
@@ -155,7 +157,7 @@ void malashenko::doFrame(std::istream& in, std::ostream& out, ApplicationState& 
 
   if (!state.circles.count(circle_name))
   {
-    throw std::invalid_argument("invalid command");
+    throw std::invalid_argument("Invalid circle name");
   }
 
   showBox(getCircleFrame(state, circle_name), out);
@@ -188,7 +190,12 @@ void malashenko::doSpawn(std::istream& in, std::ostream&, ApplicationState& stat
     throw std::invalid_argument("Invalid arguments");
   }
 
-  const size_t seed = 0;
+  if (seed_input < 0)
+  {
+    throw std::invalid_argument("Invalid process");
+  }
+
+  const size_t seed = static_cast< size_t >(seed_input);
 
   if (state.processes.count(name) != 0)
   {
@@ -237,6 +244,11 @@ void malashenko::doAreaOn(std::istream& in, std::ostream&, ApplicationState& sta
 
   const size_t threads = static_cast< size_t >(threads_input);
   const size_t tries = static_cast< size_t >(tries_input);
+
+  if (state.calculations.count(calc_name) != 0)
+  {
+    throw std::invalid_argument("Invalid calculation");
+  }
 
   auto process_it = state.processes.find(process_name);
 

@@ -4,6 +4,7 @@
 #include <csignal>
 #include <signal.h>
 #include <unordered_map>
+#include <limits>
 
 int main()
 {
@@ -18,7 +19,8 @@ int main()
   }
 
   using namespace malashenko;
-  using cmd_t = void (*)(std::istream&, std::ostream&, ApplicationState&);
+
+  using cmd_t = void (*)(std::istream &, std::ostream &, ApplicationState &);
   std::unordered_map< std::string, cmd_t > cmds;
   cmds["circle"] = doCircle;
   cmds["set"] = doSet;
@@ -39,16 +41,15 @@ int main()
     {
       cmds.at(cmd)(std::cin, std::cout, state);
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range &)
     {
       std::cout << "<UNKNOWN COMMAND>\n";
       auto toignore = std::numeric_limits< std::streamsize >::max();
       std::cin.ignore(toignore, '\n');
     }
-    catch (const std::exception& e)
+    catch (const std::exception &)
     {
       std::cout << "<INVALID COMMAND>\n";
-      std::cout << e.what() << '\n';
       auto toignore = std::numeric_limits< std::streamsize >::max();
       std::cin.ignore(toignore, '\n');
     }
@@ -65,3 +66,4 @@ int main()
   }
   return 0;
 }
+
