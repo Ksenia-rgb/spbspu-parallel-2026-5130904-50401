@@ -8,25 +8,30 @@
 #include <unordered_map>
 
 namespace chernov {
-  using cmd_t = std::function< void(std::istream &, std::ostream &, ellipses_t &, sets_t &) >;
+  using processes_t = std::unordered_map< std::string, pid_t >;
+  struct App {
+    ellipses_t &ellipses;
+    sets_t &sets;
+    processes_t &processes;
+  };
 
+  using cmd_t = std::function< void(std::istream &, std::ostream &, App &) >;
   struct CommandIO {
     std::ostream &output;
     const std::unordered_map< std::string, cmd_t > &cmds;
-    ellipses_t &ellipses;
-    sets_t &sets;
+    App & app;
   };
 
   std::istream &operator>>(std::istream &input, const CommandIO &cmd_io);
 
   void runCommands(std::istream &input, CommandIO &cmd_io);
 
-  void cmdCircle(std::istream &, std::ostream &, ellipses_t &, sets_t &);
-  void cmdSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
-  void cmdShow(std::istream &, std::ostream &, ellipses_t &, sets_t &);
-  void cmdShowSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
-  void cmdFrame(std::istream &, std::ostream &, ellipses_t &, sets_t &);
-  void cmdFrameSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
+  void cmdCircle(std::istream &, std::ostream &, App &);
+  void cmdSet(std::istream &, std::ostream &, App &);
+  void cmdShow(std::istream &, std::ostream &, App &);
+  void cmdShowSet(std::istream &, std::ostream &, App &);
+  void cmdFrame(std::istream &, std::ostream &, App &);
+  void cmdFrameSet(std::istream &, std::ostream &, App &);
 }
 
 #endif

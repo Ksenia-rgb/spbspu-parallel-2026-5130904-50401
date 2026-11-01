@@ -16,7 +16,7 @@ std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 
   if (input) {
     try {
-      cmd_io.cmds.at(str)(input, cmd_io.output, cmd_io.ellipses, cmd_io.sets);
+      cmd_io.cmds.at(str)(input, cmd_io.output, cmd_io.app);
     } catch (...) {
       input.setstate(std::ios::failbit);
     }
@@ -43,7 +43,7 @@ void chernov::runCommands(std::istream &input, CommandIO &cmd_io)
   runCommands(input, cmd_io);
 }
 
-void chernov::cmdCircle(std::istream &input, std::ostream &, ellipses_t &ellipses, sets_t &)
+void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
 {
   std::string name;
   double r, x, y;
@@ -51,18 +51,18 @@ void chernov::cmdCircle(std::istream &input, std::ostream &, ellipses_t &ellipse
     throw std::runtime_error("invalid input");
   }
 
-  if (ellipses.find(name) != ellipses.end()) {
+  if (app.ellipses.find(name) != app.ellipses.end()) {
     throw std::runtime_error("ellipse name already exists");
   }
   if (r <= 0) {
     throw std::runtime_error("ellipse radius must be greater than zero");
   }
 
-  ellipses.insert(
+  app.ellipses.insert(
       {name, ellipse_t{.center = point_t{.x = x, .y = y}, .horizontal_radius = r, .vertical_radius = r, .ksi = 0}});
 }
 
-void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, sets_t &sets)
+void chernov::cmdSet(std::istream &input, std::ostream &, App &app)
 {
   std::string name;
   long long size;
@@ -70,7 +70,7 @@ void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, 
     throw std::runtime_error("invalid input");
   }
 
-  if (sets.find(name) != sets.end()) {
+  if (app.sets.find(name) != app.sets.end()) {
     throw std::runtime_error("set name already exists");
   }
   if (size <= 0) {
@@ -84,79 +84,79 @@ void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, 
     if (!(input >> shape)) {
       throw std::runtime_error("invalid input");
     }
-    if (ellipses.find(shape) == ellipses.end()) {
+    if (app.ellipses.find(shape) == app.ellipses.end()) {
       throw std::runtime_error("shape name not found");
     }
 
     set.push_back(shape);
   }
 
-  sets.insert({name, std::move(set)});
+  app.sets.insert({name, std::move(set)});
 }
 
-void chernov::cmdShow(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &)
+void chernov::cmdShow(std::istream &input, std::ostream &output, App &app)
 {
   std::string name;
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
 
-  if (ellipses.find(name) == ellipses.end()) {
+  if (app.ellipses.find(name) == app.ellipses.end()) {
     throw std::runtime_error("ellipse name not found");
   }
 
-  output << ellipses.at(name) << "\n";
+  output << app.ellipses.at(name) << "\n";
 }
 
-void chernov::cmdShowSet(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &sets)
+void chernov::cmdShowSet(std::istream &input, std::ostream &output, App &app)
 {
   std::string name;
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
 
-  if (sets.find(name) == sets.end()) {
+  if (app.sets.find(name) == app.sets.end()) {
     throw std::runtime_error("set name not found");
   }
 
-  const set_t &set = sets.at(name);
+  const set_t &set = app.sets.at(name);
   for (std::string ellipse_name : set) {
-    output << ellipses.at(ellipse_name) << "\n";
+    output << app.ellipses.at(ellipse_name) << "\n";
   }
 }
 
-void chernov::cmdFrame(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &)
+void chernov::cmdFrame(std::istream &input, std::ostream &output, App &app)
 {
   std::string name;
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
 
-  if (ellipses.find(name) == ellipses.end()) {
+  if (app.ellipses.find(name) == app.ellipses.end()) {
     throw std::runtime_error("ellipse name not found");
   }
 
-  const frame_t frame = getFrame(ellipses.at(name));
+  const frame_t frame = getFrame(app.ellipses.at(name));
   output << frame << "\n";
 }
 
-void chernov::cmdFrameSet(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &sets)
+void chernov::cmdFrameSet(std::istream &input, std::ostream &output, App &app)
 {
   std::string name;
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
 
-  if (sets.find(name) == sets.end()) {
+  if (app.sets.find(name) == app.sets.end()) {
     throw std::runtime_error("set name not found");
   }
 
-  const set_t &set = sets.at(name);
+  const set_t &set = app.sets.at(name);
   std::vector< ellipse_t > ellipses_vector;
   ellipses_vector.reserve(set.size());
 
   for (std::string ellipse_name : set) {
-    ellipses_vector.push_back(ellipses.at(ellipse_name));
+    ellipses_vector.push_back(app.ellipses.at(ellipse_name));
   }
 
   const frame_t frame = getFrame(ellipses_vector);
