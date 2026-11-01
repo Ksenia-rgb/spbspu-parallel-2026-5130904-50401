@@ -1,5 +1,6 @@
 #include "parse.hpp"
 #include <cctype>
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -44,6 +45,29 @@ bool zhuravleva::parseInt(const std::string& text, int& value)
       return false;
     }
     value = static_cast< int >(number);
+    return true;
+  }
+  catch (const std::invalid_argument&)
+  {
+    return false;
+  }
+  catch (const std::out_of_range&)
+  {
+    return false;
+  }
+}
+
+bool zhuravleva::parseDouble(const std::string& text, double& value)
+{
+  try
+  {
+    std::size_t pos = 0;
+    const double number = std::stod(text, &pos);
+    if (pos != text.size() || !std::isfinite(number))
+    {
+      return false;
+    }
+    value = number;
     return true;
   }
   catch (const std::invalid_argument&)

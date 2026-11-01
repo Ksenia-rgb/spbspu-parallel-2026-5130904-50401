@@ -8,6 +8,7 @@ namespace zhuravleva
 {
   std::vector< std::string > splitLine(const std::string& line);
   bool parseInt(const std::string& text, int& value);
+  bool parseDouble(const std::string& text, double& value);
 }
 
 #endif
