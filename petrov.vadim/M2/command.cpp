@@ -232,6 +232,12 @@ namespace petrov {
     if (pid == 0) {
       close(in_pipe[1]);
       close(out_pipe[0]);
+
+      for (auto& pair : ctx.processes) {
+        close(pair.second.in_fd);
+        close(pair.second.out_fd);
+      }
+
       childLoop(in_pipe[0], out_pipe[1], static_cast< size_t >(seed));
       _exit(0);
     }
