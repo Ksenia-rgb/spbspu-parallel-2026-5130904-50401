@@ -11,6 +11,8 @@ namespace madieva
   using Command = std::function< void(madieva::state_t &, const madieva::Args &) >;
 
   void addCircle(madieva::state_t &, const madieva::Args &);
+  void addSet(madieva::state_t &, const madieva::Args &);
+
 }
 
 #endif

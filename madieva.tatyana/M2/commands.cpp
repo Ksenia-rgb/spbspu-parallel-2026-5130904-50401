@@ -1,18 +1,19 @@
 #include "commands.hpp"
 #include <string>
 #include <stdexcept>
-#include"parser.hpp"
+#include "parser.hpp"
 
-void madieva::addCircle(madieva::state_t & state, const madieva::Args & args) //logic_error
+void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
 {
-  if (args.size() != 5) {
+  if (args.size() != 5)
+  {
     throw std::invalid_argument("incorrect number of arguments");
   }
 
-  std::string name = args[1];
-  long long r = parseInteger(args[2]);
-  long long x = parseInteger(args[3]);
-  long long y = parseInteger(args[4]);
+  const std::string & name = args[1];
+  const long long & r = parseInteger(args[2]);
+  const long long & x = parseInteger(args[3]);
+  const long long & y = parseInteger(args[4]);
 
   Circle circle(r, x, y);
 
@@ -22,4 +23,47 @@ void madieva::addCircle(madieva::state_t & state, const madieva::Args & args) //
     throw std::invalid_argument("the name of the circle exists");
   }
   state.circles.insert({name, circle});
+}
+
+void madieva::addSet(madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() < 3)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+
+  const std::string & name = args[1];
+  const long long count = parseInteger(args[2]);
+
+  if (count <= 0)
+  {
+    throw std::invalid_argument("incorrect count");
+  }
+
+  if (args.size() != 3 + static_cast< std::size_t >(count))
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+
+  const auto it_name = state.sets.find(name);
+  if (it_name != state.sets.end())
+  {
+    throw std::invalid_argument("the name of the set exists");
+  }
+
+  std::vector< const Circle * > shapes;
+  shapes.reserve(count);
+
+  for (std::size_t i = 3; i < args.size(); ++i)
+  {
+    const std::string & circle_name = args[i];
+    const auto it = state.circles.find(circle_name);
+    if (it == state.circles.end())
+    {
+      throw std::invalid_argument("the circle name does not exist");
+    }
+    shapes.push_back(&it->second);
+  }
+
+  state.sets.insert({name, shapes});
 }

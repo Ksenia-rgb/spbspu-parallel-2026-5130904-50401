@@ -41,6 +41,11 @@ int main()
     {
       std::cout << "<INVALID COMMAND>\n";
     }
+    catch (const std::exception & e)
+    {
+      std::cerr << "internal error: " << e.what() << "\n";
+      return 2;
+    }
   }
 
   return 0;
