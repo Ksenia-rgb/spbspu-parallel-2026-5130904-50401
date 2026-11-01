@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include <cstddef>
+#include <stdexcept>
 
 std::vector< std::string > kondrat::splitCommand(const std::string & line)
 {
@@ -27,4 +28,30 @@ std::vector< std::string > kondrat::splitCommand(const std::string & line)
   }
 
   return words;
+}
+
+int kondrat::parseInteger(const std::string & word)
+{
+  size_t position = 0;
+  const int value = std::stoi(word, &position);
+
+  if (position != word.size())
+  {
+    throw std::invalid_argument("Invalid integer");
+  }
+
+  return value;
+}
+
+bool kondrat::isValidName(const std::string & name)
+{
+  if (name.empty())
+  {
+    return false;
+  }
+
+  const char first = name.front();
+
+  return (first >= 'a' && first <= 'z') ||
+    (first >= 'A' && first <= 'Z');
 }
