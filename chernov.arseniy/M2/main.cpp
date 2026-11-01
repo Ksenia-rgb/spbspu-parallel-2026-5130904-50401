@@ -15,6 +15,7 @@ int main()
   cmds["show"] = chernov::cmdShow;
   cmds["showset"] = chernov::cmdShowSet;
   cmds["frame"] = chernov::cmdFrame;
+  cmds["frameset"] = chernov::cmdFrameSet;
 
   auto cmd_io = chernov::CommandIO{std::cout, cmds, ellipses, sets};
   chernov::runCommands(std::cin, cmd_io);

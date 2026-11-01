@@ -26,6 +26,7 @@ namespace chernov {
   void cmdShow(std::istream &, std::ostream &, ellipses_t &, sets_t &);
   void cmdShowSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
   void cmdFrame(std::istream &, std::ostream &, ellipses_t &, sets_t &);
+  void cmdFrameSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
 }
 
 #endif

@@ -1,5 +1,6 @@
 #include "commands.hpp"
 
+#include <iostream>
 #include <istream>
 #include <limits>
 
@@ -93,7 +94,7 @@ void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, 
   sets.insert({name, std::move(set)});
 }
 
-void chernov::cmdShow(std::istream &input, std::ostream & output, ellipses_t &ellipses, sets_t &)
+void chernov::cmdShow(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &)
 {
   std::string name;
   if (!(input >> name)) {
@@ -107,7 +108,7 @@ void chernov::cmdShow(std::istream &input, std::ostream & output, ellipses_t &el
   output << ellipses.at(name) << "\n";
 }
 
-void chernov::cmdShowSet(std::istream &input, std::ostream & output, ellipses_t &ellipses, sets_t & sets)
+void chernov::cmdShowSet(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &sets)
 {
   std::string name;
   if (!(input >> name)) {
@@ -118,14 +119,13 @@ void chernov::cmdShowSet(std::istream &input, std::ostream & output, ellipses_t 
     throw std::runtime_error("set name not found");
   }
 
-    const set_t & set = sets.at(name);
-    output << ellipses.at(set[0]);
-    for (size_t i = 1; i < set.size(); ++i) {
-      output << "\n" << ellipses.at(set[i]);
-    }
+  const set_t &set = sets.at(name);
+  for (std::string ellipse_name : set) {
+    output << ellipses.at(ellipse_name) << "\n";
+  }
 }
 
-void chernov::cmdFrame(std::istream &input, std::ostream & output, ellipses_t &ellipses, sets_t &)
+void chernov::cmdFrame(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &)
 {
   std::string name;
   if (!(input >> name)) {
@@ -137,5 +137,28 @@ void chernov::cmdFrame(std::istream &input, std::ostream & output, ellipses_t &e
   }
 
   const frame_t frame = getFrame(ellipses.at(name));
+  output << frame << "\n";
+}
+
+void chernov::cmdFrameSet(std::istream &input, std::ostream &output, ellipses_t &ellipses, sets_t &sets)
+{
+  std::string name;
+  if (!(input >> name)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (sets.find(name) == sets.end()) {
+    throw std::runtime_error("set name not found");
+  }
+
+  const set_t &set = sets.at(name);
+  std::vector< ellipse_t > ellipses_vector;
+  ellipses_vector.reserve(set.size());
+
+  for (std::string ellipse_name : set) {
+    ellipses_vector.push_back(ellipses.at(ellipse_name));
+  }
+
+  const frame_t frame = getFrame(ellipses_vector);
   output << frame << "\n";
 }
