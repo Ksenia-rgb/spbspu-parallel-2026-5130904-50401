@@ -28,6 +28,7 @@ namespace zhuravleva
   };
 
   Rectangle getBounds(const Shape& shape);
+  bool isInside(double x, double y, const Shape& shape);
 }
 
 #endif
