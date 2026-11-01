@@ -69,3 +69,16 @@ double kondrat::parseReal(const std::string & word)
 
   return value;
 }
+
+long long kondrat::parseLongLong(const std::string & word)
+{
+  size_t position = 0;
+  const long long value = std::stoll(word, &position);
+
+  if (position != word.size())
+  {
+    throw std::invalid_argument("Invalid integer");
+  }
+
+  return value;
+}
