@@ -24,6 +24,7 @@ namespace chernov {
   void cmdCircle(std::istream &, std::ostream &, ellipses_t &, sets_t &);
   void cmdSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
   void cmdShow(std::istream &, std::ostream &, ellipses_t &, sets_t &);
+  void cmdShowSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);
 }
 
 #endif

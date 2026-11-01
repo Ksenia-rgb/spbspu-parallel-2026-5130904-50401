@@ -13,6 +13,7 @@ int main()
   cmds["circle"] = chernov::cmdCircle;
   cmds["set"] = chernov::cmdSet;
   cmds["show"] = chernov::cmdShow;
+  cmds["showset"] = chernov::cmdShowSet;
 
   auto cmd_io = chernov::CommandIO{std::cout, cmds, ellipses, sets};
   chernov::runCommands(std::cin, cmd_io);

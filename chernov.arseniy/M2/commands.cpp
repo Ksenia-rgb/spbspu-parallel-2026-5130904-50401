@@ -76,7 +76,8 @@ void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, 
     throw std::runtime_error("set size must be greater than zero");
   }
 
-  set_t set(size);
+  set_t set;
+  set.reserve(size);
   std::string shape;
   for (long long i = 0; i < size; ++i) {
     if (!(input >> shape)) {
@@ -104,4 +105,22 @@ void chernov::cmdShow(std::istream &input, std::ostream & output, ellipses_t &el
   }
 
   output << ellipses.at(name) << "\n";
+}
+
+void chernov::cmdShowSet(std::istream &input, std::ostream & output, ellipses_t &ellipses, sets_t & sets)
+{
+  std::string name;
+  if (!(input >> name)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (sets.find(name) == sets.end()) {
+    throw std::runtime_error("set name not found");
+  }
+
+    const set_t & set = sets.at(name);
+    output << ellipses.at(set[0]);
+    for (size_t i = 1; i < set.size(); ++i) {
+      output << "\n" << ellipses.at(set[i]);
+    }
 }
