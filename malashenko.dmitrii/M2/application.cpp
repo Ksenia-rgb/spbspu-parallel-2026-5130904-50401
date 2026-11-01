@@ -1,7 +1,8 @@
 
 #include "application.hpp"
 
-void malashenko::createCircle(ApplicationState& state, const std::string& name, int radius, int x, int y) {
+void malashenko::createCircle(ApplicationState& state, const std::string& name, int radius, int x, int y)
+{
   if (state.circles.count(name) != 0)
   {
     throw std::invalid_argument("Circle with that name is already exist");
@@ -22,7 +23,8 @@ void malashenko::createCircle(ApplicationState& state, const std::string& name, 
   state.circles.emplace(name, circle);
 }
 
-void malashenko::createSet(ApplicationState& state, const std::string& name, const std::vector< std::string >& circle_names)
+void malashenko::createSet(
+    ApplicationState& state, const std::string& name, const std::vector< std::string >& circle_names)
 {
   if (name.empty())
   {

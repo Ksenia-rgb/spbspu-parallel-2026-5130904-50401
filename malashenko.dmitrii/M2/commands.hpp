@@ -16,14 +16,11 @@ namespace malashenko
   void doStatus(std::istream& in, std::ostream&, ApplicationState& state);
   void doWait(std::istream& in, std::ostream&, ApplicationState& state);
 
-
   void showCircle(const Circle& circle, std::ostream&);
   void showBox(const BoundingBox& box, std::ostream&);
   void updateCalculation(ApplicationState& state, Calculation& calculation, bool should_wait);
   void printCalculationStatus(const malashenko::Calculation& calculation, std::ostream& out);
 
-
 }
-
 
 #endif

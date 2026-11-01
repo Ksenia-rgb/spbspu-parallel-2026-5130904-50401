@@ -6,14 +6,12 @@
 #include <stdexcept>
 #include <vector>
 
-
-
 size_t malashenko::calc(const CalculationParams &params)
 {
   std::default_random_engine generator(params.seed);
 
-  std::uniform_real_distribution<double> x_distribution(params.box.min_x, params.box.max_x);
-  std::uniform_real_distribution<double> y_distribution(params.box.min_y, params.box.max_y);
+  std::uniform_real_distribution< double > x_distribution(params.box.min_x, params.box.max_x);
+  std::uniform_real_distribution< double > y_distribution(params.box.min_y, params.box.max_y);
 
   size_t inside_any = 0;
 
@@ -41,13 +39,13 @@ size_t malashenko::calc(const CalculationParams &params)
 
 double malashenko::getArea(const BoundingBox &box, size_t tries, size_t inside_any)
 {
-  const double width = static_cast<double>(box.max_x) - box.min_x;
+  const double width = static_cast< double >(box.max_x) - box.min_x;
 
-  const double height = static_cast<double>(box.max_y) - box.min_y;
+  const double height = static_cast< double >(box.max_y) - box.min_y;
 
   const double box_area = width * height;
 
-  return box_area * (static_cast<double>(inside_any) / tries);
+  return box_area * (static_cast< double >(inside_any) / tries);
 }
 
 size_t malashenko::calcParallel(const CalculationParams &params)
@@ -58,7 +56,7 @@ size_t malashenko::calcParallel(const CalculationParams &params)
 
   const size_t remainder = params.tries % actual_threads;
 
-  std::vector<std::future<size_t>> futures;
+  std::vector< std::future< size_t > > futures;
 
   futures.reserve(actual_threads);
 

@@ -11,7 +11,7 @@ namespace malashenko
 
   struct CalculationParams
   {
-    const std::vector<Circle> &circles;
+    const std::vector< Circle > &circles;
     BoundingBox box;
     size_t threads;
     size_t tries;
@@ -22,9 +22,6 @@ namespace malashenko
   size_t calcParallel(const CalculationParams &params);
   double getArea(const BoundingBox &box, size_t tries, size_t inside_any);
   size_t calc(const CalculationParams &params);
-
-
-
 
 }
 

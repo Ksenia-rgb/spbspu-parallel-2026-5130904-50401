@@ -2,7 +2,6 @@
 #define GEOMETRY_HPP
 #include <vector>
 
-
 namespace malashenko
 {
   struct Circle

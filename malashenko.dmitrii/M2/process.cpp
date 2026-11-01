@@ -21,7 +21,7 @@
 
 bool malashenko::writeAll(int fd, const void* data, size_t size)
 {
-  const char* buffer = static_cast< const char* >(data);
+  const char* const buffer = static_cast< const char* >(data);
   size_t written = 0;
 
   while (written < size)
@@ -49,9 +49,9 @@ bool malashenko::writeAll(int fd, const void* data, size_t size)
   return true;
 }
 
-bool malashenko::readAll(int fd, void *data, size_t size)
+bool malashenko::readAll(int fd, void* data, size_t size)
 {
-  char* buffer = static_cast< char * >(data);
+  char* const buffer = static_cast< char* >(data);
   size_t received = 0;
 
   while (received < size)
@@ -79,7 +79,8 @@ bool malashenko::readAll(int fd, void *data, size_t size)
   return true;
 }
 
-malashenko::CalcResponse malashenko::calculateInWorker(std::vector<Circle> circles, size_t id, size_t threads, size_t tries, size_t seed)
+malashenko::CalcResponse malashenko::calculateInWorker(
+    std::vector< Circle > circles, size_t id, size_t threads, size_t tries, size_t seed)
 {
   const auto start = std::chrono::steady_clock::now();
 
@@ -88,15 +89,13 @@ malashenko::CalcResponse malashenko::calculateInWorker(std::vector<Circle> circl
 
   const auto finish = std::chrono::steady_clock::now();
 
-  const double milliseconds = std::chrono::duration<double, std::milli>(finish - start).count();
+  const double milliseconds = std::chrono::duration< double, std::milli >(finish - start).count();
 
   return {id, CalcStatus::done, milliseconds, area};
 }
 
-
-
-
-malashenko::CalcResponse malashenko::checkCalculation(size_t id, bool should_wait, PendingCalculations& pending, FinishedCalculations& finished)
+malashenko::CalcResponse malashenko::checkCalculation(
+    size_t id, bool should_wait, PendingCalculations& pending, FinishedCalculations& finished)
 {
   const auto finished_it = finished.find(id);
 
@@ -156,7 +155,7 @@ int malashenko::workerLoop(int command_fd, int response_fd, size_t seed)
     {
     case RequestType::start:
     {
-      std::vector<Circle> circles(request.circles_count);
+      std::vector< Circle > circles(request.circles_count);
 
       if (request.circles_count == 0 || !readAll(command_fd, circles.data(), circles.size() * sizeof(Circle)))
       {
@@ -171,15 +170,8 @@ int malashenko::workerLoop(int command_fd, int response_fd, size_t seed)
 
       try
       {
-        pending.emplace(
-            rid,
-            std::async(
-                std::launch::async,
-                calculateInWorker,
-                std::move(circles),
-                rid,
-                request.threads,
-                request.tries,
+        pending.emplace(rid,
+            std::async(std::launch::async, calculateInWorker, std::move(circles), rid, request.threads, request.tries,
                 seed + rid));
 
         response.status = CalcStatus::in_progress;
@@ -220,7 +212,7 @@ int malashenko::workerLoop(int command_fd, int response_fd, size_t seed)
   return 0;
 }
 
-malashenko::Process malashenko::spawnProcess(size_t seed, const std::vector<Process>& existing_processes)
+malashenko::Process malashenko::spawnProcess(size_t seed, const std::vector< Process >& existing_processes)
 {
   int commands[2] = {-1, -1};
   int responses[2] = {-1, -1};
@@ -262,7 +254,7 @@ malashenko::Process malashenko::spawnProcess(size_t seed, const std::vector<Proc
     close(commands[1]);
     close(responses[0]);
 
-    for (const Process &process : existing_processes)
+    for (const Process& process : existing_processes)
     {
       if (process.command_fd >= 0)
       {
@@ -289,19 +281,20 @@ malashenko::Process malashenko::spawnProcess(size_t seed, const std::vector<Proc
   return {pid, commands[1], responses[0], true};
 }
 
-malashenko::CalcResponse malashenko::startCalc(Process& process, size_t id, circles_t circles, size_t threads, size_t tries)
+malashenko::CalcResponse malashenko::startCalc(
+    Process& process, size_t id, circles_t circles, size_t threads, size_t tries)
 {
   if (!process.alive || circles.empty() || threads == 0 || tries == 0)
   {
     throw std::invalid_argument("Invalid calculation");
   }
 
-  if (circles.size() > std::numeric_limits<size_t>::max() / sizeof(Circle))
+  if (circles.size() > std::numeric_limits< size_t >::max() / sizeof(Circle))
   {
     throw std::length_error("Too many circles");
   }
 
-  const Request request{ RequestType::start, id, threads, tries, circles.size()};
+  const Request request{RequestType::start, id, threads, tries, circles.size()};
 
   if (!writeAll(process.command_fd, &request, sizeof(request)))
   {
@@ -352,7 +345,7 @@ malashenko::CalcResponse malashenko::queryCalc(Process& process, size_t id, bool
   return response;
 }
 
-void malashenko::closeProcess(Process &process)
+void malashenko::closeProcess(Process& process)
 {
   process.alive = false;
 

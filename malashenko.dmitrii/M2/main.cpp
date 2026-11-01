@@ -3,10 +3,10 @@
 #include <iostream>
 #include <csignal>
 #include <signal.h>
+#include <unordered_map>
 
 int main()
 {
-
   struct sigaction action{};
 
   action.sa_handler = SIG_IGN;
@@ -19,7 +19,7 @@ int main()
 
   using namespace malashenko;
   using cmd_t = void (*)(std::istream&, std::ostream&, ApplicationState&);
-  std::unordered_map<std::string, cmd_t> cmds;
+  std::unordered_map< std::string, cmd_t > cmds;
   cmds["circle"] = doCircle;
   cmds["set"] = doSet;
   cmds["show"] = doShow;
@@ -39,17 +39,17 @@ int main()
     {
       cmds.at(cmd)(std::cin, std::cout, state);
     }
-    catch(const std::out_of_range&)
+    catch (const std::out_of_range&)
     {
       std::cout << "<UNKNOWN COMMAND>\n";
-      auto toignore = std::numeric_limits<std::streamsize>::max();
+      auto toignore = std::numeric_limits< std::streamsize >::max();
       std::cin.ignore(toignore, '\n');
     }
     catch (const std::exception& e)
     {
       std::cout << "<INVALID COMMAND>\n";
       std::cout << e.what() << '\n';
-      auto toignore = std::numeric_limits<std::streamsize>::max();
+      auto toignore = std::numeric_limits< std::streamsize >::max();
       std::cin.ignore(toignore, '\n');
     }
   }

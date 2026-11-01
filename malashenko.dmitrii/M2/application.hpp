@@ -48,5 +48,4 @@ namespace malashenko
   BoundingBox getSetFrame(const ApplicationState& state, const std::string& name);
 }
 
-
 #endif

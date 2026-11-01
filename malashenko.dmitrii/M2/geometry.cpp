@@ -1,6 +1,7 @@
 #include "geometry.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 
 malashenko::BoundingBox malashenko::getBoundingBox(const Circle &circle)
 {
@@ -10,14 +11,10 @@ malashenko::BoundingBox malashenko::getBoundingBox(const Circle &circle)
   }
 
   return {
-      (circle.x) - circle.radius,
-      (circle.y) - circle.radius,
-      (circle.x) + circle.radius,
-      (circle.y) + circle.radius
-    };
+      (circle.x) - circle.radius, (circle.y) - circle.radius, (circle.x) + circle.radius, (circle.y) + circle.radius};
 }
 
-malashenko::BoundingBox malashenko::getBoundingBox(const std::vector<Circle> &circles)
+malashenko::BoundingBox malashenko::getBoundingBox(const std::vector< Circle > &circles)
 {
   if (circles.empty())
   {
@@ -45,7 +42,6 @@ bool malashenko::isInside(const Circle &circle, double x, double y)
   const double dx = x - circle.x;
   const double dy = y - circle.y;
 
-  return dx * dx + dy * dy <= static_cast<double>(circle.radius) * circle.radius;
+  return dx * dx + dy * dy <= static_cast< double >(circle.radius) * circle.radius;
 }
-
 

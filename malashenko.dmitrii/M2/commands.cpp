@@ -9,7 +9,6 @@
 #include <vector>
 #include <iostream>
 
-
 void malashenko::showCircle(const Circle& circle, std::ostream& out)
 {
   out << circle.radius << " (" << circle.x << " " << circle.y << ")" << '\n';
@@ -19,50 +18,48 @@ void malashenko::showBox(const BoundingBox& box, std::ostream& out)
   out << "(" << box.min_x << " " << box.min_y << ")" << " (" << box.max_x << " " << box.max_y << ")" << '\n';
 }
 
+void malashenko::printCalculationStatus(const malashenko::Calculation& calculation, std::ostream& out)
+{
+  using namespace malashenko;
 
-  void malashenko::printCalculationStatus(const malashenko::Calculation& calculation, std::ostream& out)
+  if (calculation.status == CalcStatus::in_progress)
   {
-    using namespace malashenko;
-
-    if (calculation.status == CalcStatus::in_progress)
-    {
-      out << calculation.process_name << " <IN PROGRESS>\n";
-      return;
-    }
-
-    if (calculation.status == CalcStatus::failed)
-    {
-      throw std::runtime_error("Calculation failed");
-    }
-
-    const std::ios::fmtflags flags = out.flags();
-    const std::streamsize precision = out.precision();
-
-    out << calculation.process_name << ' ' << std::fixed << std::setprecision(3) << calculation.milliseconds << ' ' << calculation.area << '\n';
-
-    out.flags(flags);
-    out.precision(precision);
+    out << calculation.process_name << " <IN PROGRESS>\n";
+    return;
   }
 
-  void malashenko::updateCalculation(ApplicationState& state, Calculation& calculation, bool should_wait)
+  if (calculation.status == CalcStatus::failed)
   {
-    using namespace malashenko;
-
-    auto process_it = state.processes.find(calculation.process_name);
-
-    if (process_it == state.processes.end() ||
-        !process_it->second.alive)
-    {
-      throw std::runtime_error("Process is unavailable");
-    }
-
-    const CalcResponse response = queryCalc(process_it->second, calculation.id, should_wait);
-
-    calculation.status = response.status;
-    calculation.milliseconds = response.milliseconds;
-    calculation.area = response.area;
+    throw std::runtime_error("Calculation failed");
   }
 
+  const std::ios::fmtflags flags = out.flags();
+  const std::streamsize precision = out.precision();
+
+  out << calculation.process_name << ' ' << std::fixed << std::setprecision(3) << calculation.milliseconds << ' '
+      << calculation.area << '\n';
+
+  out.flags(flags);
+  out.precision(precision);
+}
+
+void malashenko::updateCalculation(ApplicationState& state, Calculation& calculation, bool should_wait)
+{
+  using namespace malashenko;
+
+  auto process_it = state.processes.find(calculation.process_name);
+
+  if (process_it == state.processes.end() || !process_it->second.alive)
+  {
+    throw std::runtime_error("Process is unavailable");
+  }
+
+  const CalcResponse response = queryCalc(process_it->second, calculation.id, should_wait);
+
+  calculation.status = response.status;
+  calculation.milliseconds = response.milliseconds;
+  calculation.area = response.area;
+}
 
 void malashenko::doCircle(std::istream& in, std::ostream&, ApplicationState& state)
 {
@@ -91,7 +88,6 @@ void malashenko::doSet(std::istream& in, std::ostream&, ApplicationState& state)
   {
     throw std::invalid_argument("Invalid arguments");
   }
-
 
   std::vector< std::string > circle_names;
   circle_names.reserve(size);
@@ -192,14 +188,14 @@ void malashenko::doSpawn(std::istream& in, std::ostream&, ApplicationState& stat
     throw std::invalid_argument("Invalid arguments");
   }
 
-  size_t seed = 0;
+  const size_t seed = 0;
 
   if (state.processes.count(name) != 0)
   {
     throw std::invalid_argument("Invalid process");
   }
 
-  std::vector<Process> existing_processes;
+  std::vector< Process > existing_processes;
   existing_processes.reserve(state.processes.size());
 
   for (const auto& entry : state.processes)
@@ -220,7 +216,6 @@ void malashenko::doSpawn(std::istream& in, std::ostream&, ApplicationState& stat
   }
 }
 
-
 void malashenko::doAreaOn(std::istream& in, std::ostream&, ApplicationState& state)
 {
   std::string process_name;
@@ -240,8 +235,8 @@ void malashenko::doAreaOn(std::istream& in, std::ostream&, ApplicationState& sta
     throw std::invalid_argument("Invalid calculation");
   }
 
-  const size_t threads = static_cast<size_t>(threads_input);
-  const size_t tries = static_cast<size_t>(tries_input);
+  const size_t threads = static_cast< size_t >(threads_input);
+  const size_t tries = static_cast< size_t >(tries_input);
 
   auto process_it = state.processes.find(process_name);
 
@@ -250,7 +245,7 @@ void malashenko::doAreaOn(std::istream& in, std::ostream&, ApplicationState& sta
     throw std::invalid_argument("Process does not exist");
   }
 
-  const std::vector<Circle> circles = collectSetCircles(state, set_name);
+  const std::vector< Circle > circles = collectSetCircles(state, set_name);
 
   const size_t id = state.next_calculation_id++;
 
@@ -260,7 +255,7 @@ void malashenko::doAreaOn(std::istream& in, std::ostream&, ApplicationState& sta
 
   try
   {
-    const CalcResponse response = startCalc(process_it->second, id, circles, threads, tries );
+    const CalcResponse response = startCalc(process_it->second, id, circles, threads, tries);
 
     if (response.status != CalcStatus::in_progress)
     {

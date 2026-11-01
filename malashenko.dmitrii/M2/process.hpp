@@ -11,8 +11,7 @@
 
 namespace malashenko
 {
-  using circles_t = const std::vector<Circle>&;
-
+  using circles_t = const std::vector< Circle >&;
 
   enum class CalcStatus
   {
@@ -69,11 +68,12 @@ namespace malashenko
 
   CalcResponse calculateInWorker(std::vector< Circle > circles, size_t id, size_t threads, size_t tries, size_t seed);
 
-  CalcResponse checkCalculation(size_t id, bool should_wait, PendingCalculations& pending, FinishedCalculations& finished);
+  CalcResponse checkCalculation(
+      size_t id, bool should_wait, PendingCalculations& pending, FinishedCalculations& finished);
 
   int workerLoop(int command_fd, int response_fd, size_t seed);
 
-  Process spawnProcess(size_t seed, const std::vector<Process>& existing_processes);
+  Process spawnProcess(size_t seed, const std::vector< Process >& existing_processes);
 
   CalcResponse startCalc(Process& process, size_t id, circles_t circles, size_t threads, size_t tries);
 
