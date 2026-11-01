@@ -2,6 +2,7 @@
 #define SHAPE_HPP
 
 #include <iosfwd>
+#include <vector>
 
 namespace kondrat
 {
@@ -32,6 +33,7 @@ namespace kondrat
   Rectangle findFrame(const Shape & shape);
   void printFrame(const Rectangle & rectangle, std::ostream & output);
   void printShape(const Shape & shape, std::ostream & output);
+  double calculateArea(const std::vector< Shape > & shapes, long long threads, long long tries, long long seed);
 }
 
 #endif

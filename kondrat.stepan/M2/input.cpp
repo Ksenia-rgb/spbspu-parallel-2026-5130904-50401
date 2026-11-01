@@ -53,8 +53,7 @@ bool kondrat::isValidName(const std::string & name)
 
   const char first = name.front();
 
-  return (first >= 'a' && first <= 'z') ||
-    (first >= 'A' && first <= 'Z');
+  return (first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z');
 }
 
 double kondrat::parseReal(const std::string & word)
