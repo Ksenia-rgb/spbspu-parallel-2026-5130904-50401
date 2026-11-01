@@ -8,7 +8,7 @@
 
 int main()
 {
-  tarasenko::Data context;
+  tarasenko::Data data;
   using cmd_t = void (*)(tarasenko::Data&, std::istream&, std::ostream&);
   std::unordered_map< std::string, cmd_t > cmds;
   cmds["circle"] = tarasenko::circle;
@@ -25,7 +25,7 @@ int main()
   std::string cmd;
   while (std::cin >> cmd) {
     try {
-      cmds.at(cmd)(context, std::cin, std::cout);
+      cmds.at(cmd)(data, std::cin, std::cout);
     } catch (const std::exception&) {
       std::cout << "<INVALID COMMAND>\n";
       auto toignore = std::numeric_limits< std::streamsize >::max();

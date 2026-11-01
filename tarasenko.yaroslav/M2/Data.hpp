@@ -1,5 +1,5 @@
-#ifndef TARASENKO_YAROSLAV_M2_CONTEXT_HPP
-#define TARASENKO_YAROSLAV_M2_CONTEXT_HPP
+#ifndef TARASENKO_YAROSLAV_M2_DATA_HPP
+#define TARASENKO_YAROSLAV_M2_DATA_HPP
 
 #include <string>
 #include <unordered_map>

@@ -5,19 +5,19 @@
 #include "Data.hpp"
 
 namespace tarasenko {
-  void circle(Data& context, std::istream& in, std::ostream&)
+  void circle(Data& data, std::istream& in, std::ostream&)
   {
     std::string name;
     Circle shape{};
     in >> name >> shape.radius >> shape.center.x >> shape.center.y;
-    context.circles.emplace(name, shape);
+    data.circles.emplace(name, shape);
   }
 
-  void show(Data& context, std::istream& in, std::ostream& out)
+  void show(Data& data, std::istream& in, std::ostream& out)
   {
     std::string name;
     in >> name;
-    const Circle& shape = context.circles.at(name);
+    const Circle& shape = data.circles.at(name);
     out << shape.radius << " (" << shape.center.x << ' ' << shape.center.y << ")\n";
   }
 
@@ -27,8 +27,16 @@ namespace tarasenko {
   void showSet(Data&, std::istream&, std::ostream&)
   {}
 
-  void frame(Data&, std::istream&, std::ostream&)
-  {}
+  void frame(Data& data, std::istream& in, std::ostream& out)
+  {
+    std::string name;
+    in >> name;
+    const Circle& shape = data.circles.at(name);
+    const Rectangle rectangle = {{shape.center.x - shape.radius, shape.center.y - shape.radius},
+                                 {shape.center.x + shape.radius, shape.center.y + shape.radius}};
+    out << '(' << rectangle.left_bottom.x << ' ' << rectangle.left_bottom.y << ") ("
+        << rectangle.right_top.x << ' ' << rectangle.right_top.y << ")\n";
+  }
 
   void frameSet(Data&, std::istream&, std::ostream&)
   {}
