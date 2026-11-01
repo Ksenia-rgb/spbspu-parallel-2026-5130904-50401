@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <ostream>
 
-std::ostream & chernov::operator<<(std::ostream & output, const point_t & point)
+std::ostream& chernov::operator<<(std::ostream& output, const point_t& point)
 {
   std::ostream::sentry sentry(output);
   if (!sentry) {
@@ -16,7 +16,7 @@ std::ostream & chernov::operator<<(std::ostream & output, const point_t & point)
   return output;
 }
 
-std::ostream & chernov::operator<<(std::ostream & output, const frame_t & frame)
+std::ostream& chernov::operator<<(std::ostream& output, const frame_t& frame)
 {
   std::ostream::sentry sentry(output);
   if (!sentry) {
@@ -29,7 +29,7 @@ std::ostream & chernov::operator<<(std::ostream & output, const frame_t & frame)
   return output;
 }
 
-std::ostream & chernov::operator<<(std::ostream & output, const ellipse_t & ellipse)
+std::ostream& chernov::operator<<(std::ostream& output, const ellipse_t& ellipse)
 {
   std::ostream::sentry sentry(output);
   if (!sentry) {
@@ -47,7 +47,15 @@ std::ostream & chernov::operator<<(std::ostream & output, const ellipse_t & elli
   return output;
 }
 
-chernov::detail::IOguard::IOguard(std::basic_ios< char > & s):
+chernov::frame_t chernov::getFrame(const ellipse_t& ellipse)
+{
+  return {
+      .left_bottom = {ellipse.center.x - ellipse.horizontal_radius, ellipse.center.y - ellipse.vertical_radius},
+      .right_top = {ellipse.center.x + ellipse.horizontal_radius, ellipse.center.y + ellipse.vertical_radius},
+  };
+}
+
+chernov::detail::IOguard::IOguard(std::basic_ios< char >& s):
   s_(s),
   width_(s.width()),
   fill_(s.fill()),

@@ -31,6 +31,8 @@ namespace chernov {
   std::ostream& operator<<(std::ostream& output, const frame_t& frame);
   std::ostream& operator<<(std::ostream& output, const ellipse_t& ellipse);
 
+  frame_t getFrame(const ellipse_t & ellipse);
+
   namespace detail {
     class IOguard {
     public:
