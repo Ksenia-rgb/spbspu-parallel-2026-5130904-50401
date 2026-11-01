@@ -28,6 +28,15 @@ namespace kondrat
     const std::map< std::string, Shape > & shapes,
     const std::map< std::string, std::vector< std::string > > & sets,
     std::ostream & output);
+  void showFrame(
+    const std::vector< std::string > & words,
+    const std::map< std::string, Shape > & shapes,
+    std::ostream & output);
+  void showSetFrame(
+    const std::vector< std::string > & words,
+    const std::map< std::string, Shape > & shapes,
+    const std::map< std::string, std::vector< std::string > > & sets,
+    std::ostream & output);
 }
 
 #endif

@@ -20,6 +20,17 @@ namespace kondrat
     int y;
     double angle;
   };
+
+  struct Rectangle
+  {
+    double left;
+    double right;
+    double bottom;
+    double top;
+  };
+
+  Rectangle findFrame(const Shape & shape);
+  void printFrame(const Rectangle & rectangle, std::ostream & output);
   void printShape(const Shape & shape, std::ostream & output);
 }
 

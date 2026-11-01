@@ -1,5 +1,7 @@
 #include "shape.hpp"
+#include <cmath>
 #include <iomanip>
+#include <limits>
 #include <ostream>
 
 void kondrat::printShape(const Shape & shape, std::ostream & output)
@@ -21,4 +23,36 @@ void kondrat::printShape(const Shape & shape, std::ostream & output)
   }
 
   output << '\n';
+}
+
+kondrat::Rectangle kondrat::findFrame(const Shape & shape)
+{
+  const double a = shape.horizontal_radius;
+  const double b = shape.vertical_radius;
+  double half_width = a;
+  double half_height = a;
+
+  if (shape.kind == ShapeKind::Ellipse)
+  {
+    const double cosine = std::cos(shape.angle);
+    const double sine = std::sin(shape.angle);
+
+    half_width = std::hypot(a * cosine, b * sine);
+    half_height = std::hypot(a * sine, b * cosine);
+  }
+
+  return
+  {
+    shape.x - half_width,
+    shape.x + half_width,
+    shape.y - half_height,
+    shape.y + half_height
+  };
+}
+
+void kondrat::printFrame(const Rectangle & rectangle, std::ostream & output)
+{
+  output << std::defaultfloat << std::setprecision(std::numeric_limits< double >::max_digits10);
+  output << '(' << rectangle.left << ' ' << rectangle.bottom << ") ("
+    << rectangle.right << ' ' << rectangle.top << ")\n";
 }

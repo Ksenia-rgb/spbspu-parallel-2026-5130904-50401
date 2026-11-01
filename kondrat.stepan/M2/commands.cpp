@@ -1,4 +1,5 @@
 #include "commands.hpp"
+#include <algorithm>
 #include <cstddef>
 #include <cmath>
 #include <ostream>
@@ -178,4 +179,62 @@ void kondrat::showSet(
   {
     printShape(shapes.at(name), output);
   }
+}
+
+void kondrat::showFrame(
+  const std::vector< std::string > & words,
+  const std::map< std::string, Shape > & shapes,
+  std::ostream & output)
+{
+  constexpr size_t expected_words = 2;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::map< std::string, Shape >::const_iterator position = shapes.find(words[1]);
+
+  if (position == shapes.end())
+  {
+    throw std::invalid_argument("Unknown shape");
+  }
+
+  printFrame(findFrame(position->second), output);
+}
+
+void kondrat::showSetFrame(
+  const std::vector< std::string > & words,
+  const std::map< std::string, Shape > & shapes,
+  const std::map< std::string, std::vector< std::string > > & sets,
+  std::ostream & output)
+{
+  constexpr size_t expected_words = 2;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::map< std::string, std::vector< std::string > >::const_iterator position = sets.find(words[1]);
+
+  if (position == sets.end())
+  {
+    throw std::invalid_argument("Unknown set");
+  }
+
+  const std::vector< std::string > & names = position->second;
+  Rectangle rectangle = findFrame(shapes.at(names.front()));
+
+  for (const std::string & name : names)
+  {
+    const Rectangle frame = findFrame(shapes.at(name));
+
+    rectangle.left = std::min(rectangle.left, frame.left);
+    rectangle.right = std::max(rectangle.right, frame.right);
+    rectangle.bottom = std::min(rectangle.bottom, frame.bottom);
+    rectangle.top = std::max(rectangle.top, frame.top);
+  }
+
+  printFrame(rectangle, output);
 }
