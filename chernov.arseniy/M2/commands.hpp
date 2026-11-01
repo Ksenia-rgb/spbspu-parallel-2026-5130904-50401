@@ -3,6 +3,7 @@
 #include "geometry.hpp"
 
 #include <functional>
+#include <ios>
 #include <iosfwd>
 #include <unordered_map>
 
@@ -18,7 +19,7 @@ namespace chernov {
 
   std::istream &operator>>(std::istream &input, const CommandIO &cmd_io);
 
-  void runCommands(std::istream & input, CommandIO & cmd_io);
+  void runCommands(std::istream &input, CommandIO &cmd_io);
 
   void cmdCircle(std::istream &, std::ostream &, ellipses_t &, sets_t &);
   void cmdSet(std::istream &, std::ostream &, ellipses_t &, sets_t &);

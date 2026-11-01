@@ -1,6 +1,7 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
 
+#include <ios>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,11 +20,30 @@ namespace chernov {
     point_t center;
     double horizontal_radius;
     double vertical_radius;
+    double ksi;
   };
 
   using ellipses_t = std::unordered_map< std::string, ellipse_t >;
   using set_t = std::vector< std::string >;
   using sets_t = std::unordered_map< std::string, set_t >;
+
+  std::ostream& operator<<(std::ostream& output, const point_t& point);
+  std::ostream& operator<<(std::ostream& output, const frame_t& frame);
+  std::ostream& operator<<(std::ostream& output, const ellipse_t& ellipse);
+
+  namespace detail {
+    class IOguard {
+    public:
+      explicit IOguard(std::basic_ios< char >& s);
+      ~IOguard();
+    private:
+      std::basic_ios< char >& s_;
+      std::streamsize width_;
+      char fill_;
+      std::streamsize precision_;
+      std::basic_ios< char >::fmtflags fmt_;
+    };
+  }
 }
 
 #endif

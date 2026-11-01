@@ -3,7 +3,7 @@
 #include <istream>
 #include <limits>
 
-std::istream & chernov::operator>>(std::istream & input, const CommandIO & cmd_io)
+std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 {
   std::istream::sentry sentry(input);
   if (!sentry) {
@@ -34,7 +34,7 @@ std::istream & chernov::operator>>(std::istream & input, const CommandIO & cmd_i
   return input;
 }
 
-void chernov::runCommands(std::istream & input, CommandIO & cmd_io)
+void chernov::runCommands(std::istream &input, CommandIO &cmd_io)
 {
   if (!(input >> cmd_io)) {
     return;
@@ -42,7 +42,7 @@ void chernov::runCommands(std::istream & input, CommandIO & cmd_io)
   runCommands(input, cmd_io);
 }
 
-void chernov::cmdCircle(std::istream & input, std::ostream &, ellipses_t & ellipses, sets_t &)
+void chernov::cmdCircle(std::istream &input, std::ostream &, ellipses_t &ellipses, sets_t &)
 {
   std::string name;
   double r, x, y;
@@ -57,10 +57,11 @@ void chernov::cmdCircle(std::istream & input, std::ostream &, ellipses_t & ellip
     throw std::runtime_error("ellipse radius must be greater than zero");
   }
 
-  ellipses.insert({name, ellipse_t{.center = point_t{.x = x, .y = y}, .horizontal_radius = r, .vertical_radius = r}});
+  ellipses.insert(
+      {name, ellipse_t{.center = point_t{.x = x, .y = y}, .horizontal_radius = r, .vertical_radius = r, .ksi = 0}});
 }
 
-void chernov::cmdSet(std::istream & input, std::ostream &, ellipses_t & ellipses, sets_t & sets)
+void chernov::cmdSet(std::istream &input, std::ostream &, ellipses_t &ellipses, sets_t &sets)
 {
   std::string name;
   long long size;
