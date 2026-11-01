@@ -1,6 +1,8 @@
 #ifndef SHAPE_HPP
 #define SHAPE_HPP
 
+#include <iosfwd>
+
 namespace kondrat
 {
   enum class ShapeKind
@@ -18,6 +20,7 @@ namespace kondrat
     int y;
     double angle;
   };
+  void printShape(const Shape & shape, std::ostream & output);
 }
 
 #endif

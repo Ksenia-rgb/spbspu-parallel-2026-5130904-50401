@@ -1,7 +1,6 @@
 #include "commands.hpp"
 #include <cstddef>
 #include <cmath>
-#include <iomanip>
 #include <ostream>
 #include <stdexcept>
 #include "input.hpp"
@@ -64,7 +63,6 @@ void kondrat::showShape(
   std::ostream & output)
 {
   constexpr size_t expected_words = 2;
-  constexpr int angle_precision = 3;
 
   if (words.size() != expected_words)
   {
@@ -78,22 +76,7 @@ void kondrat::showShape(
     throw std::invalid_argument("Unknown shape");
   }
 
-  const Shape & shape = position->second;
-  output << shape.horizontal_radius;
-
-  if (shape.kind == ShapeKind::Ellipse)
-  {
-    output << ' ' << shape.vertical_radius;
-  }
-
-  output << " (" << shape.x << ' ' << shape.y << ')';
-
-  if (shape.kind == ShapeKind::Ellipse)
-  {
-    output << ' ' << std::fixed << std::setprecision(angle_precision) << shape.angle;
-  }
-
-  output << '\n';
+  printShape(position->second, output);
 }
 
 void kondrat::rotateShape(
@@ -124,4 +107,75 @@ void kondrat::rotateShape(
   }
 
   position->second.angle = new_angle;
+}
+
+void kondrat::createSet(
+  const std::vector< std::string > & words,
+  const std::map< std::string, Shape > & shapes,
+  std::map< std::string, std::vector< std::string > > & sets)
+{
+  constexpr size_t names_begin = 3;
+  constexpr size_t size_index = 2;
+
+  if (words.size() < names_begin)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::string & name = words[1];
+
+  if (!isValidName(name) || sets.find(name) != sets.end())
+  {
+    throw std::invalid_argument("Invalid or duplicate set name");
+  }
+
+  const int set_size = parseInteger(words[size_index]);
+
+  if (set_size <= 0 || static_cast< size_t >(set_size) != words.size() - names_begin)
+  {
+    throw std::invalid_argument("Invalid set size");
+  }
+
+  std::vector< std::string > names;
+
+  for (size_t i = names_begin; i < words.size(); ++i)
+  {
+    if (shapes.find(words[i]) == shapes.end())
+    {
+      throw std::invalid_argument("Unknown shape");
+    }
+
+    names.push_back(words[i]);
+  }
+
+  sets.emplace(name, names);
+}
+
+void kondrat::showSet(
+  const std::vector< std::string > & words,
+  const std::map< std::string, Shape > & shapes,
+  const std::map< std::string, std::vector< std::string > > & sets,
+  std::ostream & output)
+{
+  constexpr size_t expected_words = 2;
+
+  if (words.size() != expected_words)
+  {
+    throw std::invalid_argument("Invalid parameter count");
+  }
+
+  const std::map< std::string, std::vector< std::string > >::const_iterator position = sets.find(words[1]);
+
+  if (position == sets.end())
+  {
+    throw std::invalid_argument("Unknown set");
+  }
+
+  const std::vector< std::string > & names = position->second;
+  output << names.size() << '\n';
+
+  for (const std::string & name : names)
+  {
+    printShape(shapes.at(name), output);
+  }
 }
