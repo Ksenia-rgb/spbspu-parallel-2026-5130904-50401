@@ -3,11 +3,13 @@
 #include <limits>
 #include <string>
 #include <unordered_map>
+#include "Data.hpp"
 #include "commands.hpp"
 
 int main()
 {
-  using cmd_t = void (*)(std::istream&, std::ostream&);
+  tarasenko::Data context;
+  using cmd_t = void (*)(tarasenko::Data&, std::istream&, std::ostream&);
   std::unordered_map< std::string, cmd_t > cmds;
   cmds["circle"] = tarasenko::circle;
   cmds["set"] = tarasenko::set;
@@ -23,7 +25,7 @@ int main()
   std::string cmd;
   while (std::cin >> cmd) {
     try {
-      cmds.at(cmd)(std::cin, std::cout);
+      cmds.at(cmd)(context, std::cin, std::cout);
     } catch (const std::exception&) {
       std::cout << "<INVALID COMMAND>\n";
       auto toignore = std::numeric_limits< std::streamsize >::max();
