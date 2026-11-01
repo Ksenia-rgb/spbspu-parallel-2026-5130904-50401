@@ -33,7 +33,7 @@ namespace petrov {
   {
     const double dx = x - static_cast< double >(shape.x);
     const double dy = y - static_cast< double >(shape.y);
-    const double r = static_cast<double>(shape.r);
+    const double r = static_cast< double >(shape.r);
 
     return (dx * dx) + (dy * dy) <= (r * r);
   }
@@ -64,7 +64,8 @@ namespace petrov {
     return result_t{hits};
   }
 
-  result_t countTotalHits(const std::vector<shape_t>& shapes, const box_t& box, size_t threads, size_t tries, size_t seed)
+  result_t countTotalHits(
+      const std::vector< shape_t >& shapes, const box_t& box, size_t threads, size_t tries, size_t seed)
   {
     if (threads == 1) {
       return calc(shapes, box, tries, seed);
@@ -73,15 +74,14 @@ namespace petrov {
     const size_t base = tries / threads;
     const size_t rem = tries % threads;
 
-    std::vector<std::future<result_t>> futures;
+    std::vector< std::future< result_t > > futures;
     futures.reserve(threads);
 
     for (size_t i = 0; i < threads; ++i) {
       size_t local_tries = base + (i < rem ? 1 : 0);
       size_t local_seed = seed + i;
       futures.emplace_back(
-        std::async(std::launch::async, calc, std::cref(shapes), std::cref(box), local_tries, local_seed)
-      );
+          std::async(std::launch::async, calc, std::cref(shapes), std::cref(box), local_tries, local_seed));
     }
 
     result_t res{0};

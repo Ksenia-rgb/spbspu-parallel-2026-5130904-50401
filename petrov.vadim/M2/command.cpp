@@ -32,8 +32,7 @@ namespace petrov {
     if (calc.status == status_t::InProgress) {
       out << calc.process_name << " <IN PROGRESS>\n";
     } else {
-      out << calc.process_name << " " << calc.time_ms << " "
-          << std::fixed << std::setprecision(3) << calc.area << "\n";
+      out << calc.process_name << " " << calc.time_ms << " " << std::fixed << std::setprecision(3) << calc.area << "\n";
     }
   }
 
@@ -266,8 +265,8 @@ namespace petrov {
     }
 
     long long threads_ll = 0, tries_ll = 0;
-    if (!parseLongLong(words[4], threads_ll) || threads_ll <= 0 ||
-        !parseLongLong(words[5], tries_ll) || tries_ll <= 0) {
+    if (!parseLongLong(words[4], threads_ll) || threads_ll <= 0 || !parseLongLong(words[5], tries_ll)
+        || tries_ll <= 0) {
       out << "<INVALID COMMAND>\n";
       return;
     }

@@ -8,48 +8,48 @@
 #include "shape.hpp"
 
 namespace petrov {
-namespace {
+  namespace {
 
-  size_t send(int& err, int wr, const char* msg, size_t k)
-  {
-    size_t r = 0;
-    while (r < k) {
-      err = write(wr, msg + r, k - r);
-      if (err <= 0) {
-        break;
+    size_t send(int& err, int wr, const char* msg, size_t k)
+    {
+      size_t r = 0;
+      while (r < k) {
+        err = write(wr, msg + r, k - r);
+        if (err <= 0) {
+          break;
+        }
+        r += static_cast< size_t >(err);
       }
-      r += static_cast< size_t >(err);
+
+      return r;
     }
 
-    return r;
-  }
-
-  size_t recv(int& err, int rd, char* buf, size_t k)
-  {
-    size_t r = 0;
-    while (r < k) {
-      err = read(rd, buf + r, k - r);
-      if (err <= 0) {
-        break;
+    size_t recv(int& err, int rd, char* buf, size_t k)
+    {
+      size_t r = 0;
+      while (r < k) {
+        err = read(rd, buf + r, k - r);
+        if (err <= 0) {
+          break;
+        }
+        r += static_cast< size_t >(err);
       }
-      r += static_cast< size_t >(err);
+
+      return r;
     }
 
-    return r;
   }
-
-}
 
   bool sendFull(int fd, const void* buf, size_t k)
   {
     int err = 0;
-    return send(err, fd, static_cast<const char*>(buf), k) == k;
+    return send(err, fd, static_cast< const char* >(buf), k) == k;
   }
 
   bool recvFull(int fd, void* buf, size_t k)
   {
     int err = 0;
-    return recv(err, fd, static_cast<char*>(buf), k) == k;
+    return recv(err, fd, static_cast< char* >(buf), k) == k;
   }
 
   void childLoop(int in_fd, int out_fd, size_t seed)
@@ -74,8 +74,8 @@ namespace {
         const box_t box = boundingBox(shapes);
         const result_t hits = countTotalHits(shapes, box, header.threads, header.tries, seed);
 
-        const double square = (static_cast< double >(box.x_max) - static_cast< double >(box.x_min)) *
-                              (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
+        const double square = (static_cast< double >(box.x_max) - static_cast< double >(box.x_min))
+            * (static_cast< double >(box.y_max) - static_cast< double >(box.y_min));
 
         area = square * (static_cast< double >(hits.hits) / static_cast< double >(header.tries));
       }

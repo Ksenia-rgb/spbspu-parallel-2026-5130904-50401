@@ -11,14 +11,9 @@
 
 namespace petrov {
 
-  enum class status_t
-  {
-    InProgress,
-    Done
-  };
+  enum class status_t { InProgress, Done };
 
-  struct calc_t
-  {
+  struct calc_t {
     std::string process_name;
     status_t status;
     size_t time_ms;
@@ -27,8 +22,7 @@ namespace petrov {
 
   using calc_map_t = std::map< std::string, calc_t >;
 
-  struct command_context_t
-  {
+  struct command_context_t {
     shape_map_t shapes;
     set_map_t sets;
     process_map_t processes;
