@@ -8,33 +8,41 @@
 
 size_t malashenko::calc(const CalculationParams &params)
 {
-  std::default_random_engine generator(params.seed);
+  using Engine = std::default_random_engine;
 
-  std::uniform_real_distribution< double > x_distribution(params.box.min_x, params.box.max_x);
-  std::uniform_real_distribution< double > y_distribution(params.box.min_y, params.box.max_y);
+  Engine generator(params.seed);
+
+  const double engine_min = static_cast< double >(Engine::min());
+  const double engine_range = static_cast< double >(Engine::max() - Engine::min()) + 1.0;
+  const double inv_range = 1.0 / engine_range;
+
+  const double box_min_x = params.box.min_x;
+  const double box_min_y = params.box.min_y;
+  const double box_range_x = static_cast< double >(params.box.max_x) - params.box.min_x;
+  const double box_range_y = static_cast< double >(params.box.max_y) - params.box.min_y;
 
   size_t inside_any = 0;
 
   for (size_t i = 0; i < params.tries; ++i)
   {
-    const double x = x_distribution(generator);
-    const double y = y_distribution(generator);
+    const double u1 = (static_cast< double >(generator()) - engine_min) * inv_range;
+    const double u2 = (static_cast< double >(generator()) - engine_min) * inv_range;
+
+    const double x = box_min_x + u1 * box_range_x;
+    const double y = box_min_y + u2 * box_range_y;
 
     bool inside = false;
-
     for (const Circle &circle : params.circles)
     {
       const double dx = x - circle.x;
       const double dy = y - circle.y;
       const double radius = static_cast< double >(circle.radius);
-
       if (dx * dx + dy * dy <= radius * radius)
       {
         inside = true;
         break;
       }
     }
-
     inside_any += inside;
   }
 
