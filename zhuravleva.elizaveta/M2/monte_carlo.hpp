@@ -5,7 +5,8 @@
 #include <vector>
 #include <cstddef>
 
-namespace zhuravleva {
+namespace zhuravleva
+{
   Rectangle getSetBounds(const std::vector< Shape >& shapes);
   bool checkPoint(const std::vector< Shape >& shapes, double x, double y);
   std::size_t calcMonte(

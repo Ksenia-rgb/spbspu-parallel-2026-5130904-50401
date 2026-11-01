@@ -1,10 +1,16 @@
 #ifndef SHAPES_HPP
 #define SHAPES_HPP
 
-namespace zhuravleva {
-  enum class ShapeType { circle, ellipse };
+namespace zhuravleva
+{
+  enum class ShapeType
+  {
+    circle,
+    ellipse
+  };
 
-  struct Shape {
+  struct Shape
+  {
     ShapeType type;
     int rx;
     int ry;
@@ -13,7 +19,8 @@ namespace zhuravleva {
     double angle;
   };
 
-  struct Rectangle {
+  struct Rectangle
+  {
     double min_x;
     double max_x;
     double min_y;

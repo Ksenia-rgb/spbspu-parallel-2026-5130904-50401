@@ -7,13 +7,15 @@
 
 zhuravleva::Rectangle zhuravleva::getSetBounds(const std::vector< Shape >& shapes)
 {
-  if (shapes.empty()) {
+  if (shapes.empty())
+  {
     throw std::invalid_argument("Empty shape set");
   }
 
   Rectangle bounds = getBounds(shapes.front());
 
-  for (std::size_t i = 1; i < shapes.size(); ++i) {
+  for (std::size_t i = 1; i < shapes.size(); ++i)
+  {
     const Rectangle current = getBounds(shapes[i]);
 
     bounds.min_x = std::min(bounds.min_x, current.min_x);
@@ -26,8 +28,10 @@ zhuravleva::Rectangle zhuravleva::getSetBounds(const std::vector< Shape >& shape
 
 bool zhuravleva::checkPoint(const std::vector< Shape >& shapes, double x, double y)
 {
-  for (const Shape& shape : shapes) {
-    if (isInside(x, y, shape)) {
+  for (const Shape& shape : shapes)
+  {
+    if (isInside(x, y, shape))
+    {
       return true;
     }
   }
@@ -42,10 +46,12 @@ std::size_t zhuravleva::calcMonte(
   std::uniform_real_distribution< double > dist_y(bounds.min_y, bounds.max_y);
   std::size_t hits = 0;
 
-  for (std::size_t i = 0; i < tries; ++i) {
+  for (std::size_t i = 0; i < tries; ++i)
+  {
     const double x = dist_x(generator);
     const double y = dist_y(generator);
-    if (checkPoint(shapes, x, y)) {
+    if (checkPoint(shapes, x, y))
+    {
       ++hits;
     }
   }
@@ -60,14 +66,16 @@ std::size_t zhuravleva::calcParallMonte(const std::vector< Shape >& shapes, cons
   const std::size_t leftover = tries % workers;
   std::vector< std::future< std::size_t > > futures;
 
-  for (std::size_t i = 0; i < workers; ++i) {
+  for (std::size_t i = 0; i < workers; ++i)
+  {
     const std::size_t count = base + (i < leftover ? 1 : 0);
 
     futures.push_back(std::async(std::launch::async, calcMonte, std::cref(shapes), std::cref(bounds), count, seed + i));
   }
   std::size_t total_hits = 0;
 
-  for (std::future< std::size_t >& future : futures) {
+  for (std::future< std::size_t >& future : futures)
+  {
     total_hits += future.get();
   }
   return total_hits;
@@ -76,11 +84,13 @@ std::size_t zhuravleva::calcParallMonte(const std::vector< Shape >& shapes, cons
 double zhuravleva::calculateArea(
     const std::vector< Shape >& shapes, std::size_t threads, std::size_t tries, std::size_t seed)
 {
-  if (threads == 0 || tries == 0) {
+  if (threads == 0 || tries == 0)
+  {
     throw std::invalid_argument("Invalid Monte Carlo parameters");
   }
 
-  if (shapes.empty()) {
+  if (shapes.empty())
+  {
     return 0.0;
   }
 
