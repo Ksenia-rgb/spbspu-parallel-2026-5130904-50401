@@ -5,7 +5,7 @@
 #include <limits>
 #include <thread>
 #include <vector>
-#include "area.hpp"
+#include "../common/area.hpp"
 
 namespace tarasenko {
   constexpr int min_args = 3;
