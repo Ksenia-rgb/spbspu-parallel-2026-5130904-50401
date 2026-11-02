@@ -65,3 +65,92 @@ namespace {
     }
   }
 }
+
+bool petrov::startWorker(size_t seed, const Workers& others, Worker& worker)
+{
+  int requests[2] = {no_fd, no_fd};
+  int responses[2] = {no_fd, no_fd};
+  if (pipe(requests) == -1) {
+    return false;
+  }
+  if (pipe(responses) == -1) {
+    close(requests[0]);
+    close(requests[1]);
+    return false;
+  }
+  setStopHandler();
+  const pid_t pid = fork();
+  if (pid == -1) {
+    close(requests[0]);
+    close(requests[1]);
+    close(responses[0]);
+    close(responses[1]);
+    return false;
+  }
+  if (pid == 0) {
+    close(requests[1]);
+    close(responses[0]);
+    for (Workers::const_iterator it = others.begin(); it != others.end(); ++it) {
+      Worker other = it->second;
+      closeFd(other.request_fd);
+      closeFd(other.response_fd);
+    }
+    try {
+      workerLoop(requests[0], responses[1], seed);
+    } catch (const std::exception&) {
+      _exit(error_exit_code);
+    }
+    _exit(0);
+  }
+  close(requests[0]);
+  close(responses[1]);
+  worker.pid = pid;
+  worker.request_fd = requests[1];
+  worker.response_fd = responses[0];
+  return true;
+}
+
+bool petrov::isRunning(const Worker& worker)
+{
+  return worker.response_fd != no_fd;
+}
+
+bool petrov::acceptsRequests(const Worker& worker)
+{
+  return worker.request_fd != no_fd;
+}
+
+bool petrov::hasResponse(const Worker& worker, int wait_ms)
+{
+  const nfds_t fd_count = 1;
+  pollfd waiting{};
+  waiting.fd = worker.response_fd;
+  waiting.events = POLLIN;
+  return poll(&waiting, fd_count, wait_ms) > 0;
+}
+
+void petrov::stopWorker(Worker& worker)
+{
+  if (isRunning(worker)) {
+    kill(worker.pid, SIGUSR1);
+  }
+  closeFd(worker.request_fd);
+}
+
+void petrov::finishWorker(Worker& worker)
+{
+  closeFd(worker.request_fd);
+  closeFd(worker.response_fd);
+  waitpid(worker.pid, nullptr, 0);
+}
+
+void petrov::stopAllWorkers(Workers& workers)
+{
+  for (Workers::iterator it = workers.begin(); it != workers.end(); ++it) {
+    Worker& worker = it->second;
+    if (isRunning(worker)) {
+      kill(worker.pid, SIGTERM);
+      finishWorker(worker);
+    }
+  }
+}
