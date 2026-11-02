@@ -14,6 +14,8 @@ namespace madieva
   void addSet(madieva::state_t &, const madieva::Args &);
   void show(const madieva::state_t &, const madieva::Args &);
   void showSet(const madieva::state_t &, const madieva::Args &);
+  void frame(const madieva::state_t &, const madieva::Args &);
+  void frameSet(const madieva::state_t &, const madieva::Args &);
 
 }
 

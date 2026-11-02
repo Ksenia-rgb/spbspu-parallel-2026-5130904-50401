@@ -16,7 +16,9 @@ int main()
     {"circle", madieva::addCircle},
     {"set", madieva::addSet},
     {"show", madieva::show},
-    {"showset", madieva::showSet}
+    {"showset", madieva::showSet},
+    {"frame", madieva::frame},
+    {"frameset", madieva::frameSet}
   };
   madieva::state_t state;
   std::string line;

@@ -102,3 +102,35 @@ void madieva::showSet(const madieva::state_t & state, const madieva::Args & args
     std::cout << *(it->second[i]) << "\n";
   }
 }
+
+void madieva::frame(const madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 2)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+
+  const std::string & name = args[1];
+  const auto it = state.circles.find(name);
+  if (it == state.circles.end())
+  {
+    throw std::invalid_argument("the name of the circle does not exist");
+  }
+  std::cout << madieva::computeFrame(it->second) << "\n";
+}
+
+void madieva::frameSet(const madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 2)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+
+  const std::string & name = args[1];
+  const auto it = state.sets.find(name);
+  if (it == state.sets.end())
+  {
+    throw std::invalid_argument("the name of the set does not exist");
+  }
+  std::cout << madieva::computeFrame(it->second) << "\n";
+}
