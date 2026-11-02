@@ -66,6 +66,32 @@ namespace {
             it->second.ms = resp.ms;
             it->second.area = resp.area;
           }
+        } else if (rec == 0) {
+          for (auto& proc : table.processes) {
+            if (proc.second.resp_rd == pfds[i].fd) {
+              ::close(proc.second.resp_rd);
+              proc.second.resp_rd = -1;
+              for (auto& c : table.calcs) {
+                if (c.second.process_name == proc.first && c.second.status == zubarev::CalcStatus::IN_PROGRESS) {
+                  c.second.status = zubarev::CalcStatus::CANCELED;
+                }
+              }
+              break;
+            }
+          }
+        }
+      } else if (pfds[i].revents & (POLLHUP | POLLERR | POLLNVAL)) {
+        for (auto& proc : table.processes) {
+          if (proc.second.resp_rd == pfds[i].fd) {
+            ::close(proc.second.resp_rd);
+            proc.second.resp_rd = -1;
+            for (auto& c : table.calcs) {
+              if (c.second.process_name == proc.first && c.second.status == zubarev::CalcStatus::IN_PROGRESS) {
+                c.second.status = zubarev::CalcStatus::CANCELED;
+              }
+            }
+            break;
+          }
         }
       }
     }
@@ -235,6 +261,7 @@ void zubarev::status(CalcTable& table, const std::string& calc_name, std::ostrea
   } else {
     out << c.process_name << " <IN PROGRESS>\n";
   }
+  out << std::flush;
 }
 
 void zubarev::wait(CalcTable& table, const std::string& calc_name, std::ostream& out)

@@ -9,15 +9,43 @@ size_t zubarev::calc(const std::vector< Circle >& circles, size_t tests, size_t 
   }
 
   std::mt19937 gen(seed);
-  std::uniform_real_distribution< double > dist_x(f.min_x, f.max_x);
-  std::uniform_real_distribution< double > dist_y(f.min_y, f.max_y);
+  const double min_x = f.min_x;
+  const double min_y = f.min_y;
+  const double factor_x = (f.max_x - min_x) / 4294967296.0;
+  const double factor_y = (f.max_y - min_y) / 4294967296.0;
 
   size_t hits = 0;
+
+  if (circles.size() == 1) {
+    const double cx = circles[0].x;
+    const double cy = circles[0].y;
+    const double r2 = circles[0].r * circles[0].r;
+
+    for (size_t j = 0; j < tests; ++j) {
+      const double x = min_x + gen() * factor_x;
+      const double y = min_y + gen() * factor_y;
+      const double dx = x - cx;
+      const double dy = y - cy;
+      if (dx * dx + dy * dy <= r2) {
+        hits++;
+      }
+    }
+    return hits;
+  }
+
+  const size_t n = circles.size();
+  std::vector< double > r2(n);
+  for (size_t i = 0; i < n; ++i) {
+    r2[i] = circles[i].r * circles[i].r;
+  }
+
   for (size_t j = 0; j < tests; ++j) {
-    const double x = dist_x(gen);
-    const double y = dist_y(gen);
-    for (const auto& c : circles) {
-      if (isInside(c, x, y)) {
+    const double x = min_x + gen() * factor_x;
+    const double y = min_y + gen() * factor_y;
+    for (size_t i = 0; i < n; ++i) {
+      const double dx = x - circles[i].x;
+      const double dy = y - circles[i].y;
+      if (dx * dx + dy * dy <= r2[i]) {
         hits++;
         break;
       }
@@ -38,6 +66,11 @@ double zubarev::area(const std::vector< Circle >& circles, size_t threads, size_
 
   Frame f = frame(circles);
   const double frame_area = (f.max_x - f.min_x) * (f.max_y - f.min_y);
+
+  if (threads == 1) {
+    size_t hits = calc(circles, tests, seed, f);
+    return frame_area * (static_cast< double >(hits) / tests);
+  }
 
   std::vector< std::future< size_t > > tasks(threads);
 

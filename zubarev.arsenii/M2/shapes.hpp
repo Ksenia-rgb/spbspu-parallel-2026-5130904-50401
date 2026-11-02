@@ -22,7 +22,11 @@ namespace zubarev {
 
   Frame frame(const Circle& c);
   Frame frame(const std::vector< Circle >& circles);
-  bool isInside(const Circle& c, double x, double y);
+
+  inline bool isInside(const Circle& c, double x, double y)
+  {
+    return (x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) <= c.r * c.r;
+  }
 }
 
 #endif

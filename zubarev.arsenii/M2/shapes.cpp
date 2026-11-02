@@ -39,8 +39,3 @@ zubarev::Frame zubarev::frame(const std::vector< Circle >& circles)
 
   return Frame{min_x, min_y, max_x, max_y};
 }
-
-bool zubarev::isInside(const Circle& c, double x, double y)
-{
-  return (x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) <= c.r * c.r;
-}
