@@ -32,7 +32,7 @@ namespace ulanova
         response_t resp{};
         try
         {
-          size_t shmSize = req.shapes_count * sizeof(circle_t);
+          const size_t shmSize = req.shapes_count * sizeof(circle_t);
 
           Mapping shm;
           shm.open(shmName, shmSize);
@@ -44,7 +44,7 @@ namespace ulanova
             shapesPtrs[i] = &shapesData[i];
           }
 
-          size_t hits = calc(shapesPtrs.data(), shapesPtrs.data() + req.shapes_count, req.rect, req.tests, req.seed);
+          const size_t hits = calc(shapesPtrs.data(), shapesPtrs.data() + req.shapes_count, req.rect, req.tests, req.seed);
 
           resp.status = status_t::SUCCESS;
           resp.hits = hits;
@@ -67,4 +67,3 @@ namespace ulanova
     }
   }
 }
-

@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 #include <signal.h>
 #include "cli.hpp"

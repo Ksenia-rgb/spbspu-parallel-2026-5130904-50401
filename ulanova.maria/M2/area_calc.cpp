@@ -1,15 +1,15 @@
 #include "area_calc.hpp"
-#include <cmath>
 #include <algorithm>
-#include <random>
 #include <future>
+#include <random>
+#include <vector>
 
 namespace ulanova
 {
   bool isInside(double x, double y, const circle_t& cl)
   {
-    double dx = x - cl.x;
-    double dy = y - cl.y;
+    const double dx = x - cl.x;
+    const double dy = y - cl.y;
     return (dx * dx + dy * dy) <= (static_cast< double >(cl.r) * cl.r);
   }
 
@@ -67,19 +67,19 @@ namespace ulanova
       return 0.0;
     }
 
-    rect_t rect = bounds(b, e);
-    double boxArea = (rect.xmax - rect.xmin) * (rect.ymax - rect.ymin);
+    const rect_t rect = bounds(b, e);
+    const double boxArea = (rect.xmax - rect.xmin) * (rect.ymax - rect.ymin);
 
-    size_t testsPerThread = tests / thrds;
-    size_t remainder = tests % thrds;
+    const size_t testsPerThread = tests / thrds;
+    const size_t remainder = tests % thrds;
 
     std::vector< std::future< size_t > > futures;
     futures.reserve(thrds);
 
     for (size_t i = 0; i < thrds; ++i)
     {
-      size_t currentTests = testsPerThread + (i == 0 ? remainder : 0);
-      size_t currentSeed = seed + i;
+      const size_t currentTests = testsPerThread + (i == 0 ? remainder : 0);
+      const size_t currentSeed = seed + i;
 
       futures.push_back(std::async(std::launch::async, calc, b, e, rect, currentTests, currentSeed));
     }

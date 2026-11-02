@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
-#include <sys/types.h>
+#include <cstddef>
+#include "area_calc.hpp"
 #include "interprocess_connect.hpp"
 
 namespace ulanova
@@ -40,7 +40,6 @@ namespace ulanova
   {
   public:
     CLI() = default;
-    ~CLI() = default;
 
     void run();
 
