@@ -4,7 +4,8 @@
 #include <iosfwd>
 #include "data.hpp"
 
-namespace tarasenko {
+namespace tarasenko
+{
   void circle(Data& data, std::istream& in, std::ostream& out);
   void set(Data& data, std::istream& in, std::ostream& out);
   void show(Data& data, std::istream& in, std::ostream& out);

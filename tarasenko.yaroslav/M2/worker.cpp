@@ -1,19 +1,20 @@
 #include "worker.hpp"
 #include <chrono>
-#include <random>
 #include <string>
 #include <thread>
 #include <sys/mman.h>
 #include "../common/area.hpp"
 #include "shared_memory.hpp"
 
-namespace tarasenko {
+namespace tarasenko
+{
   void runWorker(unsigned long seed, const char* memory_name, WorkerState* state)
   {
-    std::mt19937 generator(seed);
     size_t next = 0;
-    while (!state->stopping || next < state->submitted) {
-      if (next == state->submitted) {
+    while (!state->stopping || next < state->submitted)
+    {
+      if (next == state->submitted)
+      {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         continue;
       }
@@ -24,7 +25,7 @@ namespace tarasenko {
       Ellipse* const ellipses = static_cast< Ellipse* >(
           openSharedMemory(calculation->set_memory_name, calculation->count * sizeof(Ellipse)));
       const auto start = std::chrono::steady_clock::now();
-      const auto result = getArea(ellipses, calculation->count, calculation->threads, calculation->tries, generator());
+      const auto result = getArea(ellipses, calculation->count, calculation->threads, calculation->tries, seed);
       const auto finish = std::chrono::steady_clock::now();
       calculation->area = result.first;
       calculation->milliseconds = std::chrono::duration< double, std::milli >(finish - start).count();

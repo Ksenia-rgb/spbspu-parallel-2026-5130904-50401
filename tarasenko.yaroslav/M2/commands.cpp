@@ -13,11 +13,14 @@
 #include "data.hpp"
 #include "worker.hpp"
 
-namespace tarasenko {
-  namespace {
+namespace tarasenko
+{
+  namespace
+  {
     void checkWorker(const Worker& worker)
     {
-      if (waitpid(worker.pid, nullptr, WNOHANG) != 0) {
+      if (waitpid(worker.pid, nullptr, WNOHANG) != 0)
+      {
         throw std::runtime_error("Worker broken");
       }
     }
@@ -25,10 +28,12 @@ namespace tarasenko {
     template< class T >
     void readValue(std::istream& in, T& value)
     {
-      while (in.peek() != '\n' && std::isspace(in.peek())) {
+      while (in.peek() != '\n' && std::isspace(in.peek()))
+      {
         in.get();
       }
-      if (in.peek() == '\n' || !(in >> value)) {
+      if (in.peek() == '\n' || !(in >> value))
+      {
         throw std::invalid_argument("Missing or invalid argument");
       }
     }
@@ -38,7 +43,8 @@ namespace tarasenko {
       std::string name;
       readValue(in, name);
       const char first = name.front();
-      if (!((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z'))) {
+      if (!((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z')))
+      {
         throw std::invalid_argument("Invalid name");
       }
       return name;
@@ -46,10 +52,12 @@ namespace tarasenko {
 
     void checkEnd(std::istream& in)
     {
-      while (in.peek() != '\n' && std::isspace(in.peek())) {
+      while (in.peek() != '\n' && std::isspace(in.peek()))
+      {
         in.get();
       }
-      if (in.peek() != '\n' && in.peek() != EOF) {
+      if (in.peek() != '\n' && in.peek() != EOF)
+      {
         throw std::invalid_argument("Unexpected argument");
       }
     }
@@ -58,13 +66,16 @@ namespace tarasenko {
     {
       const Calculation& calculation = *info.calculation;
       out << info.process_name << ' ';
-      if (calculation.state == CalculationState::done) {
+      if (calculation.state == CalculationState::done)
+      {
         const auto flags = out.flags();
         const auto precision = out.precision();
         out << std::fixed << std::setprecision(3) << calculation.milliseconds << ' ' << calculation.area << '\n';
         out.flags(flags);
         out.precision(precision);
-      } else {
+      }
+      else
+      {
         out << "<IN PROGRESS>\n";
       }
     }
@@ -80,7 +91,8 @@ namespace tarasenko {
     readValue(in, x);
     readValue(in, y);
     checkEnd(in);
-    if (radius <= 0 || data.ellipses.count(name)) {
+    if (radius <= 0 || data.ellipses.count(name))
+    {
       throw std::invalid_argument("Invalid circle");
     }
     Ellipse shape{};
@@ -104,20 +116,25 @@ namespace tarasenko {
     const std::string name = readName(in);
     long count = 0;
     readValue(in, count);
-    if (count <= 0 || data.sets.count(name)) {
+    if (count <= 0 || data.sets.count(name))
+    {
       throw std::invalid_argument("Invalid set");
     }
     const size_t set_size = count;
     const std::string memory_name = "/m2_" + std::to_string(data.sets.size());
     Ellipse* const ellipses = allocateSharedCircles(memory_name.c_str(), set_size);
-    try {
-      for (size_t i = 0; i < set_size; ++i) {
+    try
+    {
+      for (size_t i = 0; i < set_size; ++i)
+      {
         const std::string ellipse_name = readName(in);
         ellipses[i] = data.ellipses.at(ellipse_name);
       }
       checkEnd(in);
       data.sets.emplace(name, CircleSet{memory_name, ellipses, set_size});
-    } catch (...) {
+    }
+    catch (...)
+    {
       freeSharedCircles(memory_name.c_str(), ellipses, set_size);
       throw;
     }
@@ -128,7 +145,8 @@ namespace tarasenko {
     std::string name;
     in >> name;
     const CircleSet& set = data.sets.at(name);
-    for (size_t i = 0; i < set.count; ++i) {
+    for (size_t i = 0; i < set.count; ++i)
+    {
       const Ellipse& shape = set.ellipses[i];
       out << shape.rx << " (" << shape.center.x << ' ' << shape.center.y << ")\n";
     }
@@ -159,7 +177,8 @@ namespace tarasenko {
     std::string name;
     unsigned long seed = 0;
     in >> name >> seed;
-    if (data.processes.count(name)) {
+    if (data.processes.count(name))
+    {
       throw std::invalid_argument("Process already exists");
     }
     const std::string memory_name = "/worker_" + std::to_string(data.processes.size());
@@ -167,14 +186,19 @@ namespace tarasenko {
         = static_cast< WorkerState* >(allocateSharedMemory(memory_name.c_str(), sizeof(WorkerState)));
     *state = {0, false};
     const pid_t pid = fork();
-    if (pid == -1) {
+    if (pid == -1)
+    {
       freeSharedMemory(memory_name.c_str(), state, sizeof(WorkerState));
       throw std::runtime_error("Cannot create process");
     }
-    if (pid == 0) {
-      try {
+    if (pid == 0)
+    {
+      try
+      {
         runWorker(seed, memory_name.c_str(), state);
-      } catch (const std::exception&) {
+      }
+      catch (const std::exception&)
+      {
         _exit(1);
       }
       _exit(0);
@@ -192,7 +216,8 @@ namespace tarasenko {
     readValue(in, threads);
     readValue(in, tries);
     checkEnd(in);
-    if (threads < 0 || tries <= 0 || data.calculations.count(calculation_name)) {
+    if (threads < 0 || tries <= 0 || data.calculations.count(calculation_name))
+    {
       throw std::invalid_argument("Invalid calculation");
     }
     const Worker& worker = data.processes.at(process_name);
@@ -207,9 +232,12 @@ namespace tarasenko {
     calculation->threads = threads == 0 ? 1 : threads;
     calculation->tries = tries;
     calculation->state = CalculationState::ready;
-    try {
+    try
+    {
       data.calculations.emplace(calculation_name, CalculationInfo{process_name, memory_name, calculation});
-    } catch (...) {
+    }
+    catch (...)
+    {
       freeSharedMemory(memory_name.c_str(), calculation, sizeof(Calculation));
       throw;
     }
@@ -221,7 +249,8 @@ namespace tarasenko {
     std::string name;
     in >> name;
     const CalculationInfo& info = data.calculations.at(name);
-    if (info.calculation->state != CalculationState::done) {
+    if (info.calculation->state != CalculationState::done)
+    {
       checkWorker(data.processes.at(info.process_name));
     }
     printStatus(info, out);
@@ -232,7 +261,8 @@ namespace tarasenko {
     std::string name;
     in >> name;
     const CalculationInfo& info = data.calculations.at(name);
-    while (info.calculation->state != CalculationState::done) {
+    while (info.calculation->state != CalculationState::done)
+    {
       checkWorker(data.processes.at(info.process_name));
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }

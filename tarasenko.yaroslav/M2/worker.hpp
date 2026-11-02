@@ -3,12 +3,19 @@
 
 #include <stddef.h>
 
-namespace tarasenko {
+namespace tarasenko
+{
   constexpr size_t memory_name_size = 32;
 
-  enum class CalculationState { ready, running, done };
+  enum class CalculationState
+  {
+    ready,
+    running,
+    done
+  };
 
-  struct Calculation {
+  struct Calculation
+  {
     char set_memory_name[memory_name_size];
     size_t count;
     long threads;
@@ -18,7 +25,8 @@ namespace tarasenko {
     double milliseconds;
   };
 
-  struct WorkerState {
+  struct WorkerState
+  {
     size_t submitted;
     bool stopping;
   };

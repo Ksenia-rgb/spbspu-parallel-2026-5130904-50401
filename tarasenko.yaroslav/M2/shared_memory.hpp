@@ -4,7 +4,8 @@
 #include <stddef.h>
 #include "../common/geometry.hpp"
 
-namespace tarasenko {
+namespace tarasenko
+{
   void* allocateSharedMemory(const char* name, size_t bytes);
   void* openSharedMemory(const char* name, size_t bytes);
   void freeSharedMemory(const char* name, void* memory, size_t bytes);
