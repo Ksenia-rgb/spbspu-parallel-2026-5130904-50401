@@ -3,10 +3,8 @@
 
 #include <vector>
 
-namespace zubarev
-{
-  struct Circle
-  {
+namespace zubarev {
+  struct Circle {
     double x = 0.0;
     double y = 0.0;
     double r = 0.0;
@@ -15,8 +13,7 @@ namespace zubarev
     Circle(double x, double y, double r);
   };
 
-  struct Frame
-  {
+  struct Frame {
     double min_x;
     double min_y;
     double max_x;
