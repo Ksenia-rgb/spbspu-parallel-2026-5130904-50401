@@ -1,6 +1,7 @@
 #include "commands.hpp"
 #include <istream>
 #include <cstring>
+#include <iomanip>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -120,8 +121,23 @@ namespace tarasenko {
     ++worker.state->submitted;
   }
 
-  void status(Data&, std::istream&, std::ostream&)
-  {}
+  void status(Data& data, std::istream& in, std::ostream& out)
+  {
+    std::string name;
+    in >> name;
+    const CalculationInfo& info = data.calculations.at(name);
+    const Calculation& calculation = *info.calculation;
+    out << info.process_name << ' ';
+    if (calculation.state == CalculationState::done) {
+      const auto flags = out.flags();
+      const auto precision = out.precision();
+      out << std::fixed << std::setprecision(3) << calculation.milliseconds << ' ' << calculation.area << '\n';
+      out.flags(flags);
+      out.precision(precision);
+    } else {
+      out << "<IN PROGRESS>\n";
+    }
+  }
 
   void wait(Data&, std::istream&, std::ostream&)
   {}
