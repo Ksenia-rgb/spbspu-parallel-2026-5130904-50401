@@ -99,14 +99,15 @@ double hvostov::calcArea(
     workers.emplace_back(
         [&, local_tries, thread_seed]()
         {
-          std::mt19937_64 rng(thread_seed);
-          std::uniform_real_distribution< double > dx(frame.min_x, frame.max_x);
-          std::uniform_real_distribution< double > dy(frame.min_y, frame.max_y);
+          std::default_random_engine eng(static_cast< unsigned >(thread_seed));
+          const double eng_max = static_cast< double >(eng.max());
+          const double kx = frame.max_x - frame.min_x;
+          const double ky = frame.max_y - frame.min_y;
 
           size_t count = 0;
           for (size_t i = 0; i < local_tries; ++i) {
-            const double px = dx(rng);
-            const double py = dy(rng);
+            const double px = frame.min_x + (static_cast< double >(eng()) / eng_max) * kx;
+            const double py = frame.min_y + (static_cast< double >(eng()) / eng_max) * ky;
             for (const shape_t& s : shapes) {
               if (isInside(px, py, s)) {
                 ++count;
