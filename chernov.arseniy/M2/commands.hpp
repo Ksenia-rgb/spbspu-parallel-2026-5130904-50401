@@ -1,5 +1,6 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
+#include "calculations.hpp"
 #include "geometry.hpp"
 
 #include <functional>
@@ -8,7 +9,6 @@
 #include <unordered_map>
 
 namespace chernov {
-  using processes_t = std::unordered_map< std::string, pid_t >;
   struct App {
     ellipses_t &ellipses;
     sets_t &sets;
@@ -32,6 +32,7 @@ namespace chernov {
   void cmdShowSet(std::istream &, std::ostream &, App &);
   void cmdFrame(std::istream &, std::ostream &, App &);
   void cmdFrameSet(std::istream &, std::ostream &, App &);
+  void cmdSpawn(std::istream &, std::ostream &, App &);
 }
 
 #endif

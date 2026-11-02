@@ -3,6 +3,7 @@
 #include <iostream>
 #include <istream>
 #include <limits>
+#include <unistd.h>
 
 std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 {
@@ -161,4 +162,42 @@ void chernov::cmdFrameSet(std::istream &input, std::ostream &output, App &app)
 
   const frame_t frame = getFrame(ellipses_vector);
   output << frame << "\n";
+}
+
+void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
+{
+  std::string process_name;
+  size_t seed;
+  if (!(input >> process_name >> seed)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.processes.find(process_name) != app.processes.end()) {
+    throw std::runtime_error("process name already exists");
+  }
+
+  int to_child[2];
+  int to_parent[2];
+
+  if (pipe(to_child) == -1) {
+    throw std::runtime_error("pipe error");
+  }
+
+  if (pipe(to_parent) == -1) {
+    close(to_child[0]);
+    close(to_child[1]);
+    throw std::runtime_error("pipe error");
+  }
+
+  const pid_t pid = fork();
+
+  if (pid == -1) {
+    throw std::runtime_error("fork failed");
+  }
+  if (pid == 0) {
+
+  } else {
+    app.processes.insert(
+        {process_name, process_t{pid, seed, {to_child[0], to_child[1]}, {to_parent[0], to_parent[1]}}});
+  }
 }
