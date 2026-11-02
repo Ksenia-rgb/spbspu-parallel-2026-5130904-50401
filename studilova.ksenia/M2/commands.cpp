@@ -120,3 +120,36 @@ void studilova::showCircle(std::istream& in, std::ostream& out, const circles_t&
   const circle_t& circle = found->second;
   out << circle.radius << " (" << circle.x << ' ' << circle.y << ")\n";
 }
+
+void studilova::createSet(std::istream& in, const circles_t& circles, sets_t& sets)
+{
+  const std::string name = detail::readArgument(in);
+  const int size = detail::readInteger(in);
+
+  if (!detail::isValidName(name) || size <= 0)
+  {
+    throw std::invalid_argument("Invalid set parameters");
+  }
+
+  if (sets.find(name) != sets.end())
+  {
+    throw std::invalid_argument("Set already exists");
+  }
+
+  circle_set_t circleSet;
+
+  for (int i = 0; i < size; ++i)
+  {
+    const std::string circleName = detail::readArgument(in);
+
+    if (circles.find(circleName) == circles.end())
+    {
+      throw std::invalid_argument("Circle does not exist");
+    }
+
+    circleSet.push_back(circleName);
+  }
+
+  detail::lineEnd(in);
+  sets.emplace(name, circleSet);
+}
