@@ -18,6 +18,7 @@ namespace zhuravleva
   {
     std::uint64_t id;
     double area;
+    double milliseconds;
     std::uint32_t success;
   };
 

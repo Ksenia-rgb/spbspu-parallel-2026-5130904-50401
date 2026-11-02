@@ -105,15 +105,15 @@ int main()
       valid = args.size() == 2 && zhuravleva::waitCalculation(process_storage, args[1], area);
       if (valid)
       {
-        std::cout << area << '\n';
+        valid = zhuravleva::showStatus(process_storage, args[1], std::cout);
       }
     }
     else if (args[0] == "status")
     {
-      valid = args.size() == 1;
+      valid = args.size() == 2;
       if (valid)
       {
-        zhuravleva::showStatus(process_storage, std::cout);
+        valid = zhuravleva::showStatus(process_storage, args[1], std::cout);
       }
     }
     else if (args[0] == "timeout")

@@ -4,6 +4,7 @@
 #include "monte_carlo.hpp"
 #include <cerrno>
 #include <csignal>
+#include <iomanip>
 #include <limits>
 #include <poll.h>
 #include <chrono>
@@ -66,6 +67,7 @@ namespace
       }
       zhuravleva::AreaResult result{};
       result.id = request.id;
+      const auto start = std::chrono::steady_clock::now();
       try
       {
         result.area = zhuravleva::calculateArea(shapes, static_cast< std::size_t >(request.threads),
@@ -76,6 +78,8 @@ namespace
       {
         result.success = 0;
       }
+      const auto finish = std::chrono::steady_clock::now();
+      result.milliseconds = std::chrono::duration< double, std::milli >(finish - start).count();
       if (!zhuravleva::writeAll(write_fd, &result, sizeof(result)))
       {
         break;
@@ -101,6 +105,7 @@ namespace
       if (item.second.id == result.id && item.second.process_name == process_name)
       {
         item.second.area = result.area;
+        item.second.milliseconds = result.milliseconds;
         item.second.state = result.success != 0 ? zhuravleva::CalcState::done : zhuravleva::CalcState::failed;
         return true;
       }
@@ -214,7 +219,7 @@ bool zhuravleva::submitArea(ProcessStorage& storage, const std::string& process_
     killProcess(storage, process_name);
     return false;
   }
-  storage.calculations.emplace(calc_name, Calculation{request.id, process_name, CalcState::pending, 0.0});
+  storage.calculations.emplace(calc_name, Calculation{request.id, process_name, CalcState::pending, 0.0, 0.0});
   ++storage.next_id;
   return true;
 }
@@ -277,26 +282,33 @@ void zhuravleva::refreshCalculations(ProcessStorage& storage)
   }
 }
 
-void zhuravleva::showStatus(ProcessStorage& storage, std::ostream& out)
+bool zhuravleva::showStatus(ProcessStorage& storage, const std::string& name, std::ostream& out)
 {
-  refreshCalculations(storage);
-  for (const auto& item : storage.calculations)
+  const auto it = storage.calculations.find(name);
+  if (it == storage.calculations.end())
   {
-    out << item.first << ' ';
-    switch (item.second.state)
-    {
-    case CalcState::pending:
-      out << "pending";
-      break;
-    case CalcState::done:
-      out << "done " << item.second.area;
-      break;
-    case CalcState::failed:
-      out << "failed";
-      break;
-    }
-    out << '\n';
+    return false;
   }
+  refreshCalculations(storage);
+  const Calculation& calc = it->second;
+  out << calc.process_name << ' ';
+  if (calc.state == CalcState::pending)
+  {
+    out << "<IN PROGRESS>\n";
+  }
+  else if (calc.state == CalcState::done)
+  {
+    const auto flags = out.flags();
+    const auto precision = out.precision();
+    out << std::fixed << std::setprecision(3) << calc.milliseconds << ' ' << calc.area << '\n';
+    out.flags(flags);
+    out.precision(precision);
+  }
+  else
+  {
+    out << "<FAILED>\n";
+  }
+  return true;
 }
 
 bool zhuravleva::timeoutCalculation(

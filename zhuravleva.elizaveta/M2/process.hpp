@@ -32,6 +32,7 @@ namespace zhuravleva
     std::string process_name;
     CalcState state;
     double area;
+    double milliseconds;
   };
 
   struct ProcessStorage
@@ -48,7 +49,7 @@ namespace zhuravleva
       const std::vector< Shape >& shapes, std::size_t threads, std::size_t tries);
   bool waitCalculation(ProcessStorage& storage, const std::string& calc_name, double& area);
   void refreshCalculations(ProcessStorage& storage);
-  void showStatus(ProcessStorage& storage, std::ostream& out);
+  bool showStatus(ProcessStorage& storage, const std::string& name, std::ostream& out);
   bool timeoutCalculation(
       ProcessStorage& storage, const std::string& name, int milliseconds, double& area, bool& finished);
 }
