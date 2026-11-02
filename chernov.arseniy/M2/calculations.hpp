@@ -14,7 +14,12 @@ namespace chernov {
     int to_parent[2];
   };
 
-  using processes_t = std::unordered_map< std::string, process_t >;
+  struct calc_t {
+    std::string process_name;
+    bool done;
+    double milliseconds;
+    double result;
+  };
 
   struct Task {
     size_t offset;
@@ -22,6 +27,9 @@ namespace chernov {
     size_t threads;
     size_t tries;
   };
+
+  using processes_t = std::unordered_map< std::string, process_t >;
+  using calcs_t = std::unordered_map< std::string, calc_t >;
 
   bool read_all(int fd, void *buffer, size_t size);
   bool write_all(int fd, const void *buffer, size_t size);

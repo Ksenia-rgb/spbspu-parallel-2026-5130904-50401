@@ -56,21 +56,21 @@ chernov::frame_t chernov::getFrame(const ellipse_t& ellipse)
   };
 }
 
-chernov::frame_t chernov::getFrame(const std::vector<ellipse_t> &ellipses)
+chernov::frame_t chernov::getFrame(const std::vector< ellipse_t >& ellipses)
 {
-  auto cmp_min_x = [](const ellipse_t &a, const ellipse_t &b)
+  auto cmp_min_x = [](const ellipse_t& a, const ellipse_t& b)
   {
     return a.center.x - a.horizontal_radius < b.center.x - b.horizontal_radius;
   };
-  auto cmp_min_y = [](const ellipse_t &a, const ellipse_t &b)
+  auto cmp_min_y = [](const ellipse_t& a, const ellipse_t& b)
   {
     return a.center.y - a.vertical_radius < b.center.y - b.vertical_radius;
   };
-  auto cmp_max_x = [](const ellipse_t &a, const ellipse_t &b)
+  auto cmp_max_x = [](const ellipse_t& a, const ellipse_t& b)
   {
     return a.center.x + a.horizontal_radius < b.center.x + b.horizontal_radius;
   };
-  auto cmp_max_y = [](const ellipse_t &a, const ellipse_t &b)
+  auto cmp_max_y = [](const ellipse_t& a, const ellipse_t& b)
   {
     return a.center.y + a.vertical_radius < b.center.y + b.vertical_radius;
   };

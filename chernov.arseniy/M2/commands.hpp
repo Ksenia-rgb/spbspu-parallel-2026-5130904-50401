@@ -13,13 +13,14 @@ namespace chernov {
     ellipses_t &ellipses;
     sets_t &sets;
     processes_t &processes;
+    calcs_t &calcs;
   };
 
   using cmd_t = std::function< void(std::istream &, std::ostream &, App &) >;
   struct CommandIO {
     std::ostream &output;
     const std::unordered_map< std::string, cmd_t > &cmds;
-    App & app;
+    App &app;
   };
 
   std::istream &operator>>(std::istream &input, const CommandIO &cmd_io);
@@ -33,6 +34,9 @@ namespace chernov {
   void cmdFrame(std::istream &, std::ostream &, App &);
   void cmdFrameSet(std::istream &, std::ostream &, App &);
   void cmdSpawn(std::istream &, std::ostream &, App &);
+  void cmdAreaOn(std::istream &, std::ostream &, App &);
+  void cmdStatus(std::istream &, std::ostream &, App &);
+  void cmdWait(std::istream &, std::ostream &, App &);
 }
 
 #endif

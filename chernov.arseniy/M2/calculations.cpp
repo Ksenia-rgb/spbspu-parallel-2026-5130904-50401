@@ -98,8 +98,8 @@ size_t chernov::calc(
     const std::vector< ellipse_t > &ellipses, const frame_t &frame, const size_t tests, const size_t seed)
 {
   std::default_random_engine gen(seed);
-  std::uniform_real_distribution<> dis_x(frame.left_bottom.x, frame.right_top.x);
-  std::uniform_real_distribution<> dis_y(frame.left_bottom.y, frame.right_top.y);
+  std::uniform_real_distribution dis_x(frame.left_bottom.x, frame.right_top.x);
+  std::uniform_real_distribution dis_y(frame.left_bottom.y, frame.right_top.y);
 
   size_t count = 0;
   for (size_t i = 0; i < tests; ++i) {

@@ -204,3 +204,48 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
         {process_name, process_t{pid, seed, {to_child[0], to_child[1]}, {to_parent[0], to_parent[1]}}});
   }
 }
+
+void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
+{
+  std::string process_name, calc_name, set_name;
+  long long threads, tries;
+  if (!(input >> process_name >> calc_name >> set_name >> threads >> tries)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.processes.find(process_name) == app.processes.end()) {
+    throw std::runtime_error("process name not found");
+  }
+
+  if (app.calcs.find(calc_name) != app.calcs.end()) {
+    throw std::runtime_error("calc name already exists");
+  }
+
+  if (app.sets.find(set_name) == app.sets.end()) {
+    throw std::runtime_error("set name not found");
+  }
+}
+
+void chernov::cmdStatus(std::istream &input, std::ostream &, App &app)
+{
+  std::string calc_name;
+  if (!(input >> calc_name)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.calcs.find(calc_name) == app.calcs.end()) {
+    throw std::runtime_error("calc name not found");
+  }
+}
+
+void chernov::cmdWait(std::istream & input, std::ostream &, App & app)
+{
+  std::string calc_name;
+  if (!(input >> calc_name)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.calcs.find(calc_name) == app.calcs.end()) {
+    throw std::runtime_error("calc name not found");
+  }
+}
