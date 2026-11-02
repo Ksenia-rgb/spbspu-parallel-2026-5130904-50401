@@ -79,6 +79,34 @@ bool donkeev::isValidCommandTemplate(const std::vector<std::string>& tokens)
   {
     return tokens.size() == 2;
   }
+  else if (cmd == "spawn")
+  {
+    return tokens.size() == 3 && isNumber(tokens[2]);
+  }
+  else if (cmd == "area-on")
+  {
+    return tokens.size() == 6 && isNumber(tokens[4]) && isNumber(tokens[5]);
+  }
+  else if (cmd == "status" || cmd == "wait")
+  {
+    return tokens.size() == 2;
+  }
 
   return false;
+}
+
+bool donkeev::isUnknownCommand(const std::string& cmdName)
+{
+  bool isCorrectCmd = cmdName == "circle";
+  isCorrectCmd = isCorrectCmd || cmdName == "set";
+  isCorrectCmd = isCorrectCmd || cmdName == "show";
+  isCorrectCmd = isCorrectCmd || cmdName == "showset";
+  isCorrectCmd = isCorrectCmd || cmdName == "frame";
+  isCorrectCmd = isCorrectCmd || cmdName == "frameset";
+  isCorrectCmd = isCorrectCmd || cmdName == "spawn";
+  isCorrectCmd = isCorrectCmd || cmdName == "area-on";
+  isCorrectCmd = isCorrectCmd || cmdName == "status";
+  isCorrectCmd = isCorrectCmd || cmdName == "wait";
+
+  return !isCorrectCmd;
 }

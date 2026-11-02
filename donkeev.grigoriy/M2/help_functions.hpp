@@ -7,8 +7,9 @@
 namespace donkeev
 {
   std::vector<std::string> splitIntoTokens(const std::string&);
-  bool donkeev::isNumber(const std::string&);
-  bool donkeev::isValidCommandTemplate(const std::vector<std::string>&);
+  bool isNumber(const std::string&);
+  bool isValidCommandTemplate(const std::vector<std::string>&);
+  bool isUnknownCommand(const std::string&);
 }
 
 #endif
