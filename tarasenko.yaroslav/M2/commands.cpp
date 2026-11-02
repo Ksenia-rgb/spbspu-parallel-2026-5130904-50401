@@ -15,6 +15,13 @@
 
 namespace tarasenko {
   namespace {
+    void checkWorker(const Worker& worker)
+    {
+      if (waitpid(worker.pid, nullptr, WNOHANG) != 0) {
+        throw std::runtime_error("Worker broken");
+      }
+    }
+
     template< class T >
     void readValue(std::istream& in, T& value)
     {
@@ -189,6 +196,7 @@ namespace tarasenko {
       throw std::invalid_argument("Invalid calculation");
     }
     const Worker& worker = data.processes.at(process_name);
+    checkWorker(worker);
     const CircleSet& set = data.sets.at(set_name);
     const std::string memory_name = worker.memory_name + '_' + std::to_string(worker.state->submitted);
     Calculation* const calculation
@@ -213,6 +221,9 @@ namespace tarasenko {
     std::string name;
     in >> name;
     const CalculationInfo& info = data.calculations.at(name);
+    if (info.calculation->state != CalculationState::done) {
+      checkWorker(data.processes.at(info.process_name));
+    }
     printStatus(info, out);
   }
 
@@ -222,6 +233,7 @@ namespace tarasenko {
     in >> name;
     const CalculationInfo& info = data.calculations.at(name);
     while (info.calculation->state != CalculationState::done) {
+      checkWorker(data.processes.at(info.process_name));
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     printStatus(info, out);
