@@ -1,15 +1,34 @@
 #include "commands.hpp"
+#include <chrono>
 #include <istream>
 #include <cstring>
 #include <iomanip>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <unistd.h>
 #include "data.hpp"
 #include "worker.hpp"
 
 namespace tarasenko {
+  namespace {
+    void printStatus(const CalculationInfo& info, std::ostream& out)
+    {
+      const Calculation& calculation = *info.calculation;
+      out << info.process_name << ' ';
+      if (calculation.state == CalculationState::done) {
+        const auto flags = out.flags();
+        const auto precision = out.precision();
+        out << std::fixed << std::setprecision(3) << calculation.milliseconds << ' ' << calculation.area << '\n';
+        out.flags(flags);
+        out.precision(precision);
+      } else {
+        out << "<IN PROGRESS>\n";
+      }
+    }
+  }
+
   void circle(Data& data, std::istream& in, std::ostream&)
   {
     std::string name;
@@ -126,19 +145,17 @@ namespace tarasenko {
     std::string name;
     in >> name;
     const CalculationInfo& info = data.calculations.at(name);
-    const Calculation& calculation = *info.calculation;
-    out << info.process_name << ' ';
-    if (calculation.state == CalculationState::done) {
-      const auto flags = out.flags();
-      const auto precision = out.precision();
-      out << std::fixed << std::setprecision(3) << calculation.milliseconds << ' ' << calculation.area << '\n';
-      out.flags(flags);
-      out.precision(precision);
-    } else {
-      out << "<IN PROGRESS>\n";
-    }
+    printStatus(info, out);
   }
 
-  void wait(Data&, std::istream&, std::ostream&)
-  {}
+  void wait(Data& data, std::istream& in, std::ostream& out)
+  {
+    std::string name;
+    in >> name;
+    const CalculationInfo& info = data.calculations.at(name);
+    while (info.calculation->state != CalculationState::done) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    printStatus(info, out);
+  }
 }

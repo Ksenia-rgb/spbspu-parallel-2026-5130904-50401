@@ -14,7 +14,7 @@ namespace tarasenko {
     size_t next = 0;
     while (!state->stopping || next < state->submitted) {
       if (next == state->submitted) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         continue;
       }
       const std::string calculation_name = std::string(memory_name) + '_' + std::to_string(next);
