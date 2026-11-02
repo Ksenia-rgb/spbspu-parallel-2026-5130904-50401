@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <cstdio>
 
 namespace studilova
 {
@@ -10,9 +11,77 @@ namespace studilova
     void skipSpaces(std::istream& in);
     std::string readArgument(std::istream& in);
     int readInteger(std::istream& in);
-    void requireLineEnd(std::istream& in);
+    void lineEnd(std::istream& in);
     bool isValidName(const std::string& name);
   }
+}
+
+void studilova::detail::skipSpaces(std::istream& in)
+{
+  while (in.peek() == ' ' || in.peek() == '\t' || in.peek() == '\r')
+  {
+    in.get();
+  }
+}
+
+std::string studilova::detail::readArgument(std::istream& in)
+{
+  skipSpaces(in);
+
+  if (in.peek() == '\n' || in.peek() == EOF)
+  {
+    throw std::invalid_argument("Missing argument");
+  }
+
+  std::string argument;
+  if (!(in >> argument))
+  {
+    throw std::invalid_argument("Cannot read argument");
+  }
+  return argument;
+}
+
+int studilova::detail::readInteger(std::istream& in)
+{
+  const std::string argument = readArgument(in);
+  std::size_t position = 0;
+  int value = 0;
+
+  try
+  {
+    value = std::stoi(argument, &position);
+  }
+  catch (const std::out_of_range&)
+  {
+    throw std::invalid_argument("Integer is out of range");
+  }
+
+  if (position != argument.size())
+  {
+    throw std::invalid_argument("Invalid integer");
+  }
+  return value;
+}
+
+void studilova::detail::lineEnd(std::istream& in)
+{
+  skipSpaces(in);
+
+  if (in.peek() != '\n' && in.peek() != EOF)
+  {
+    throw std::invalid_argument("Too many arguments");
+  }
+}
+
+bool studilova::detail::isValidName(const std::string& name)
+{
+  if (name.empty())
+  {
+    return false;
+  }
+
+  const char first = name.front();
+  return (first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z');
 }
 
 void studilova::createCircle(std::istream& in, circles_t& circles)
@@ -21,7 +90,7 @@ void studilova::createCircle(std::istream& in, circles_t& circles)
   const int radius = detail::readInteger(in);
   const int x = detail::readInteger(in);
   const int y = detail::readInteger(in);
-  detail::requireLineEnd(in);
+  detail::lineEnd(in);
 
   if (!detail::isValidName(name) || radius <= 0)
   {
@@ -40,7 +109,7 @@ void studilova::createCircle(std::istream& in, circles_t& circles)
 void studilova::showCircle(std::istream& in, std::ostream& out, const circles_t& circles)
 {
   const std::string name = detail::readArgument(in);
-  detail::requireLineEnd(in);
+  detail::lineEnd(in);
 
   const auto found = circles.find(name);
   if (found == circles.end())
