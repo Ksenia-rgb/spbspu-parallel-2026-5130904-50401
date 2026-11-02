@@ -9,6 +9,16 @@ namespace studilova
     int x;
     int y;
   };
+
+  struct rectangle_t
+  {
+    double minX;
+    double minY;
+    double maxX;
+    double maxY;
+  };
+
+  rectangle_t findFrame(const circle_t& circle);
 }
 
 #endif

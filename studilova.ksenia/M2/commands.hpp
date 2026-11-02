@@ -10,6 +10,7 @@ namespace studilova
   void showCircle(std::istream& in, std::ostream& out, const circles_t& circles);
   void createSet(std::istream& in, const circles_t& circles, sets_t& sets);
   void showSet(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets);
+  void showFrame(std::istream& in, std::ostream& out, const circles_t& circles);
 }
 
 #endif

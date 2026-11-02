@@ -1,8 +1,10 @@
 #include "commands.hpp"
+#include "geometry.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <cstdio>
+#include <iomanip>
 
 namespace studilova
 {
@@ -172,4 +174,28 @@ void studilova::showSet(std::istream& in, std::ostream& out, const circles_t& ci
     const circle_t& circle = circles.at(circleName);
     out << circle.radius << " (" << circle.x << ' ' << circle.y << ")\n";
   }
+}
+
+void studilova::showFrame(std::istream& in, std::ostream& out, const circles_t& circles)
+{
+  const std::string name = detail::readArgument(in);
+  detail::lineEnd(in);
+
+  const auto found = circles.find(name);
+  if (found == circles.end())
+  {
+    throw std::invalid_argument("Circle does not exist");
+  }
+
+  const rectangle_t frame = findFrame(found->second);
+
+  const std::ios_base::fmtflags oldFlags = out.flags();
+  const std::streamsize oldPrecision = out.precision();
+
+  out << std::fixed << std::setprecision(0);
+  out << '(' << frame.minX << ' ' << frame.minY << ") (";
+  out << frame.maxX << ' ' << frame.maxY << ")\n";
+
+  out.flags(oldFlags);
+  out.precision(oldPrecision);
 }
