@@ -47,7 +47,7 @@ namespace ulanova
     void open(const char* name, size_t size);
     void close();
 
-    void getPtr() const noexcept;
+    void* getPtr() const noexcept;
 
   private:
     void* ptr_;

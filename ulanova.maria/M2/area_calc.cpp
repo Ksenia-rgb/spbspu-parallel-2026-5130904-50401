@@ -17,7 +17,7 @@ namespace ulanova
   {
     if (b == e)
     {
-      return rect_t(0.0, 0.0, 0.0, 0.0);
+      return rect_t{0.0, 0.0, 0.0, 0.0};
     }
 
     double xmin = static_cast< double >((*b)->x - (*b)->r);
@@ -33,7 +33,7 @@ namespace ulanova
       ymax = std::max(ymax, static_cast< double >((*it)->y + (*it)->r));
     }
 
-    return rect_t(xmin, xmax, ymin, ymax);
+    return rect_t{xmin, xmax, ymin, ymax};
   }
 
   size_t calc(const circle_t* const* b, const circle_t* const* e, rect_t rect, size_t tests, size_t seed)

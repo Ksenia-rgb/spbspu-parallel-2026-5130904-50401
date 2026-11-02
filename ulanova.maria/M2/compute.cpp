@@ -23,7 +23,7 @@ namespace ulanova
 
       if (req.command == cmd_t::EXIT)
       {
-        runnig = false;
+        running = false;
         continue;
       }
 

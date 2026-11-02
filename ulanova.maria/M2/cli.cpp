@@ -290,7 +290,7 @@ namespace ulanova
     }
 
     const circle_t& c = ctx_.storage[idx];
-    const circle_t* arr = {&c};
+    const circle_t* arr[] = {&c};
     rect_t r = bounds(arr, arr + 1);
     std::cout << "(" << r.xmin << " " << r.ymin << ") (" << r.xmax << " " << r.ymax << ")\n";
   }
@@ -425,100 +425,100 @@ namespace ulanova
       ::close(pipeToChild[0]);
       ::close(pipeToParent[1]);
       std::exit(0);
-      else
-      {
-        ::close(pipeToChild[0]);
-        ::close(pipeToParent[1]);
-
-        parentWriteFd = pipeToChild[1];
-        parentReadFd = pipeToParent[0];
-      }
     }
-
-    void CLI::executeSystemAreaOn(CalcActive & calc)
+    else
     {
-      if (parentWriteFd == -1 || parentReadFd == -1)
-      {
-        std::cout << "<INVALID COMMAND>\n";
-        return;
-      }
+      ::close(pipeToChild[0]);
+      ::close(pipeToParent[1]);
 
-      ptrdiff_t setIdx = getSetIdx(calc.setName);
-      if (setIdx == -1)
-      {
-        return;
-      }
-
-      const NamedSet& s = ctx_.sets[setIdx];
-      size_t shapesCount = s.circleIndices.size();
-
-      request_t req{};
-      req.command = cmd_t::CALC;
-      req.shapesCount = shapesCount;
-      req.tests = calc.tries;
-      req.seed = 42;
-
-      std::vector< const circle_t* > ptrs;
-      for (size_t cIdx : s.circleIndices)
-      {
-        ptrs.push_back(&ctx_.storage[cIdx]);
-      }
-      req.rect = bounds(ptrs.data(), ptrs.data() + ptrs.size());
-
-      size_t shmSize = shapesCount * sizeof(circle_t);
-      Mapping shm;
-      shm.create(sharedMemoryName, shmSize);
-
-      circle_t* shmBuffer = static_cast< circle_t* >(shm.getPtr());
-      for (size_t i = 0; i < shapesCount; ++i)
-      {
-        shmBuffer[i] = ctx_.storage[s.circleIndices[i]];
-      }
-
-      try
-      {
-        sendAll(parentWriteFd, &req, sizeof(request_t));
-      }
-      catch (...)
-      {
-        std::cout << "<INVALID COMMAND>\n";
-      }
-    }
-
-    void CLI::executeSystemWait(CalcActive & calc)
-    {
-      if (parentReadFd == -1)
-      {
-        return;
-      }
-
-      response_t resp{};
-      auto startTime = std::chrono::steady_clock::now();
-
-      try
-      {
-        recvAll(parentReadFd, &resp, sizeof(response_t));
-        auto endTime = std::chrono::steady_clock::now();
-
-        if (resp.status == status_t::SUCCESS)
-        {
-          calc.isDone = true;
-          calc.durationMs = std::chrono::duration_cast< std::chrono::milliseconds >(endTime - startTime).count();
-          ptrdiff_t setIdx = getSetIdx(calc.setName);
-          std::vector< const circle_t* > ptrs;
-          for (size_t cIdx : ctx_.sets[setIdx].circleIndices)
-          {
-            ptrs.push_back(&ctx_.storage[cIdx]);
-          }
-          rect_t r = bounds(ptrs.data(), ptrs.data() + ptrs.size());
-          double boxArea = (r.xmax - r.xmin) * (r.ymax - r.ymin);
-
-          calc.areaResult = (static_cast< double >(resp.hits) / calc.tries) * boxArea;
-        }
-      }
-      catch (...)
-      {
-        std::cout << "<INVALID COMMAND>\n";
-      }
+      parentWriteFd = pipeToChild[1];
+      parentReadFd = pipeToParent[0];
     }
   }
+  void CLI::executeSystemAreaOn(CalcActive& calc)
+  {
+    if (parentWriteFd == -1 || parentReadFd == -1)
+    {
+      std::cout << "<INVALID COMMAND>\n";
+      return;
+    }
+
+    ptrdiff_t setIdx = getSetIdx(calc.setName);
+    if (setIdx == -1)
+    {
+      return;
+    }
+
+    const NamedSet& s = ctx_.sets[setIdx];
+    size_t shapesCount = s.circleIndices.size();
+
+    request_t req{};
+    req.command = cmd_t::CALC;
+    req.shapesCount = shapesCount;
+    req.tests = calc.tries;
+    req.seed = 42;
+
+    std::vector< const circle_t* > ptrs;
+    for (size_t cIdx : s.circleIndices)
+    {
+      ptrs.push_back(&ctx_.storage[cIdx]);
+    }
+    req.rect = bounds(ptrs.data(), ptrs.data() + ptrs.size());
+
+    size_t shmSize = shapesCount * sizeof(circle_t);
+    Mapping shm;
+    shm.create(sharedMemoryName, shmSize);
+
+    circle_t* shmBuffer = static_cast< circle_t* >(shm.getPtr());
+    for (size_t i = 0; i < shapesCount; ++i)
+    {
+      shmBuffer[i] = ctx_.storage[s.circleIndices[i]];
+    }
+
+    try
+    {
+      sendAll(parentWriteFd, &req, sizeof(request_t));
+    }
+    catch (...)
+    {
+      std::cout << "<INVALID COMMAND>\n";
+    }
+  }
+
+  void CLI::executeSystemWait(CalcActive& calc)
+  {
+    if (parentReadFd == -1)
+    {
+      return;
+    }
+
+    response_t resp{};
+    auto startTime = std::chrono::steady_clock::now();
+
+    try
+    {
+      recvAll(parentReadFd, &resp, sizeof(response_t));
+      auto endTime = std::chrono::steady_clock::now();
+
+      if (resp.status == status_t::SUCCESS)
+      {
+        calc.isDone = true;
+        calc.durationMs = std::chrono::duration_cast< std::chrono::milliseconds >(endTime - startTime).count();
+        ptrdiff_t setIdx = getSetIdx(calc.setName);
+        std::vector< const circle_t* > ptrs;
+        for (size_t cIdx : ctx_.sets[setIdx].circleIndices)
+        {
+          ptrs.push_back(&ctx_.storage[cIdx]);
+        }
+        rect_t r = bounds(ptrs.data(), ptrs.data() + ptrs.size());
+        double boxArea = (r.xmax - r.xmin) * (r.ymax - r.ymin);
+
+        calc.areaResult = (static_cast< double >(resp.hits) / calc.tries) * boxArea;
+      }
+    }
+    catch (...)
+    {
+      std::cout << "<INVALID COMMAND>\n";
+    }
+  }
+}
