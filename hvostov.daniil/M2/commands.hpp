@@ -6,9 +6,20 @@
 #include <unordered_map>
 #include <functional>
 #include <vector>
+#include <memory>
 #include <unistd.h>
+#include "shm.hpp"
 
 namespace hvostov {
+  struct process_t {
+    pid_t pid = -1;
+    int to_child = -1;
+    int from_child = -1;
+    std::shared_ptr< ShmGuard > shm;
+    std::vector< std::string > pending;
+    size_t seed = 0;
+  };
+
   struct info_t {
     std::unordered_map< std::string, shape_t > db;
     std::unordered_map< std::string, std::vector< shape_t > > set;
