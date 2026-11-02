@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "circle.hpp"
+#include "geometry.hpp"
 
 namespace studilova
 {

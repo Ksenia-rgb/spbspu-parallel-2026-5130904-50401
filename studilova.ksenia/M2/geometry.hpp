@@ -1,5 +1,5 @@
-#ifndef CIRCLE_HPP
-#define CIRCLE_HPP
+#ifndef GEOMETRY_HPP
+#define GEOMETRY_HPP
 
 namespace studilova
 {
