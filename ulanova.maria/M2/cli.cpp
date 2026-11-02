@@ -341,11 +341,22 @@ namespace ulanova
     size_t thrs = 0;
     size_t tries = 0;
 
-    if (p_name.empty() || c_name.empty() || set_name.empty()
-        || !readSize(line, pos, thrs) || !readSize(line, pos, tries)
-        || !checkEnd(line, pos) || getProcessIdx(p_name) == -1
-        || getSetIdx(set_name) == -1 || getCalcIdx(c_name) != -1
-        || thrs == 0 || tries == 0)
+    if (p_name.empty() || c_name.empty() || set_name.empty())
+    {
+      std::cout << "<INVALID COMMAND>\n";
+      return;
+    }
+    if (!readSize(line, pos, thrs) || !readSize(line, pos, tries) || !checkEnd(line, pos))
+    {
+      std::cout << "<INVALID COMMAND>\n";
+      return;
+    }
+    if (getProcessIdx(p_name) == -1 || getSetIdx(set_name) == -1 || getCalcIdx(c_name) != -1)
+    {
+      std::cout << "<INVALID COMMAND>\n";
+      return;
+    }
+    if (thrs == 0 || tries == 0)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
