@@ -154,3 +154,37 @@ void petrov::stopAllWorkers(Workers& workers)
     }
   }
 }
+
+bool petrov::writeAll(int fd, const void* data, size_t size)
+{
+  const char* bytes = static_cast< const char* >(data);
+  size_t done = 0;
+  while (done < size) {
+    const ssize_t result = write(fd, bytes + done, size - done);
+    if ((result == -1) && (errno == EINTR)) {
+      continue;
+    }
+    if (result <= 0) {
+      return false;
+    }
+    done += static_cast< size_t >(result);
+  }
+  return true;
+}
+
+bool petrov::readAll(int fd, void* data, size_t size)
+{
+  char* bytes = static_cast< char* >(data);
+  size_t done = 0;
+  while (done < size) {
+    const ssize_t result = read(fd, bytes + done, size - done);
+    if ((result == -1) && (errno == EINTR)) {
+      continue;
+    }
+    if (result <= 0) {
+      return false;
+    }
+    done += static_cast< size_t >(result);
+  }
+  return true;
+}
