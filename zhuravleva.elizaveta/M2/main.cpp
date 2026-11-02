@@ -1,5 +1,6 @@
 #include "commands.hpp"
 #include "parse.hpp"
+#include "process.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -7,6 +8,7 @@
 int main()
 {
   zhuravleva::Storage storage;
+  zhuravleva::ProcessStorage process_storage;
   std::string line;
 
   while (std::getline(std::cin, line))
@@ -49,6 +51,19 @@ int main()
     {
       valid = zhuravleva::showSetFrame(storage, args, std::cout);
     }
+    else if (args[0] == "spawn")
+    {
+      int seed = 0;
+      valid = args.size() == 3 && zhuravleva::parseInt(args[2], seed) && seed >= 0;
+      if (valid)
+      {
+        valid = zhuravleva::spawnProcess(process_storage, args[1], static_cast< unsigned int >(seed));
+      }
+    }
+    else if (args[0] == "kill")
+    {
+      valid = args.size() == 2 && zhuravleva::killProcess(process_storage, args[1]);
+    }
     else
     {
       std::cout << "<UNKNOWN COMMAND>\n";
@@ -59,6 +74,6 @@ int main()
       std::cout << "<INVALID COMMAND>\n";
     }
   }
-
+  zhuravleva::shutdownProcesses(process_storage);
   return 0;
 }
