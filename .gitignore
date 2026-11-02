@@ -15,5 +15,3 @@ out
 update-student-stats.sh
 generate-stats
 .github/cg/linters/format/.useless-old
-
-zubarev.arsenii/M2/tests
