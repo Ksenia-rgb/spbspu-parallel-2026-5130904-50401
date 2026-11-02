@@ -108,6 +108,36 @@ int main()
         std::cout << area << '\n';
       }
     }
+    else if (args[0] == "status")
+    {
+      valid = args.size() == 1;
+      if (valid)
+      {
+        zhuravleva::showStatus(process_storage, std::cout);
+      }
+    }
+    else if (args[0] == "timeout")
+    {
+      int milliseconds = 0;
+      valid = args.size() == 3 && zhuravleva::parseInt(args[2], milliseconds);
+      if (valid)
+      {
+        double area = 0.0;
+        bool finished = false;
+        valid = zhuravleva::timeoutCalculation(process_storage, args[1], milliseconds, area, finished);
+        if (valid)
+        {
+          if (finished)
+          {
+            std::cout << area << '\n';
+          }
+          else
+          {
+            std::cout << "timeout\n";
+          }
+        }
+      }
+    }
     else
     {
       std::cout << "<UNKNOWN COMMAND>\n";

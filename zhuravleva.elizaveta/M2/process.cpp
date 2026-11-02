@@ -5,6 +5,9 @@
 #include <cerrno>
 #include <csignal>
 #include <limits>
+#include <poll.h>
+#include <chrono>
+#include <ostream>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -237,4 +240,106 @@ bool zhuravleva::waitCalculation(ProcessStorage& storage, const std::string& cal
   }
   area = it->second.area;
   return true;
+}
+
+void zhuravleva::refreshCalculations(ProcessStorage& storage)
+{
+  for (const auto& item : storage.processes)
+  {
+    while (true)
+    {
+      pollfd fd{};
+      fd.fd = item.second.read_fd;
+      fd.events = POLLIN;
+      const int result = poll(&fd, 1, 0);
+      if (result == -1 && errno == EINTR)
+      {
+        continue;
+      }
+      if (result <= 0)
+      {
+        break;
+      }
+      if (fd.revents & POLLIN)
+      {
+        if (!collectResult(storage, item.first))
+        {
+          break;
+        }
+        continue;
+      }
+      if (fd.revents & (POLLHUP | POLLERR | POLLNVAL))
+      {
+        markFailed(storage, item.first);
+      }
+      break;
+    }
+  }
+}
+
+void zhuravleva::showStatus(ProcessStorage& storage, std::ostream& out)
+{
+  refreshCalculations(storage);
+  for (const auto& item : storage.calculations)
+  {
+    out << item.first << ' ';
+    switch (item.second.state)
+    {
+    case CalcState::pending:
+      out << "pending";
+      break;
+    case CalcState::done:
+      out << "done " << item.second.area;
+      break;
+    case CalcState::failed:
+      out << "failed";
+      break;
+    }
+    out << '\n';
+  }
+}
+
+bool zhuravleva::timeoutCalculation(
+    ProcessStorage& storage, const std::string& name, int milliseconds, double& area, bool& finished)
+{
+  finished = false;
+  const auto it = storage.calculations.find(name);
+  if (it == storage.calculations.end() || milliseconds < 0)
+  {
+    return false;
+  }
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(milliseconds);
+  while (true)
+  {
+    refreshCalculations(storage);
+    if (it->second.state == CalcState::done)
+    {
+      area = it->second.area;
+      finished = true;
+      return true;
+    }
+    if (it->second.state == CalcState::failed)
+    {
+      return false;
+    }
+    const auto process_it = storage.processes.find(it->second.process_name);
+    if (process_it == storage.processes.end())
+    {
+      return false;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (now >= deadline)
+    {
+      return true;
+    }
+    const auto remaining = std::chrono::duration_cast< std::chrono::milliseconds >(deadline - now);
+    pollfd fd{};
+    fd.fd = process_it->second.read_fd;
+    fd.events = POLLIN;
+    const int result = poll(&fd, 1, static_cast< int >(remaining.count()));
+    if (result == -1 && errno != EINTR)
+    {
+      return false;
+    }
+  }
 }

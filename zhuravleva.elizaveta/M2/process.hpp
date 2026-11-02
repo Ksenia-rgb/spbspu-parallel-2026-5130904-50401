@@ -3,6 +3,7 @@
 
 #include "shapes.hpp"
 #include <cstdint>
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
@@ -46,5 +47,9 @@ namespace zhuravleva
   bool submitArea(ProcessStorage& storage, const std::string& process_name, const std::string& calc_name,
       const std::vector< Shape >& shapes, std::size_t threads, std::size_t tries);
   bool waitCalculation(ProcessStorage& storage, const std::string& calc_name, double& area);
+  void refreshCalculations(ProcessStorage& storage);
+  void showStatus(ProcessStorage& storage, std::ostream& out);
+  bool timeoutCalculation(
+      ProcessStorage& storage, const std::string& name, int milliseconds, double& area, bool& finished);
 }
 #endif
