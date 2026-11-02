@@ -31,7 +31,7 @@ namespace tarasenko {
     size_t count = 0;
     in >> name >> count;
     const std::string memory_name = "/m2_" + std::to_string(data.sets.size());
-    Ellipse* ellipses = allocateSharedCircles(memory_name.c_str(), count);
+    Ellipse* const ellipses = allocateSharedCircles(memory_name.c_str(), count);
     for (size_t i = 0; i < count; ++i) {
       std::string ellipse_name;
       in >> ellipse_name;

@@ -3,6 +3,8 @@
 
 #include <string>
 #include <unordered_map>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "../common/geometry.hpp"
 #include "shared_memory.hpp"
 

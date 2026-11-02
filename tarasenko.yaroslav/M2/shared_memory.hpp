@@ -1,5 +1,5 @@
-#ifndef MEMORY_HPP
-#define MEMORY_HPP
+#ifndef SHARED_MEMORY_HPP
+#define SHARED_MEMORY_HPP
 
 #include <stddef.h>
 #include "../common/geometry.hpp"

@@ -18,7 +18,7 @@ namespace tarasenko {
       shm_unlink(name);
       throw std::runtime_error("Cannot resize shared memory");
     }
-    void* memory = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void* const memory = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     if (memory == MAP_FAILED) {
       shm_unlink(name);
