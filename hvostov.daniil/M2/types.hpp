@@ -7,11 +7,11 @@
 #include <string>
 
 namespace hvostov {
+
   class IOguard {
   public:
     explicit IOguard(std::basic_ios< char >& s);
     ~IOguard();
-
     IOguard(const IOguard&) = delete;
     IOguard& operator=(const IOguard&) = delete;
 
@@ -33,10 +33,10 @@ namespace hvostov {
   };
 
   struct frame_t {
-    double minX = 0.0;
-    double maxX = 0.0;
-    double minY = 0.0;
-    double maxY = 0.0;
+    double min_x = 0.0;
+    double max_x = 0.0;
+    double min_y = 0.0;
+    double max_y = 0.0;
   };
 
   struct calc_state_t {
@@ -51,6 +51,7 @@ namespace hvostov {
   std::ostream& operator<<(std::ostream& out, const shape_t& rhs);
   std::ostream& operator<<(std::ostream& out, const frame_t& rhs);
   std::ostream& operator<<(std::ostream& out, const calc_state_t& rhs);
+
 }
 
 #endif

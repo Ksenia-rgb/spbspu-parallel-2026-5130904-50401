@@ -39,7 +39,7 @@ public:
 
   int release() noexcept
   {
-    int t = fd_;
+    const int t = fd_;
     fd_ = -1;
     return t;
   }

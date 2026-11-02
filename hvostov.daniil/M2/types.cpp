@@ -19,7 +19,7 @@ hvostov::IOguard::~IOguard()
 
 std::istream& hvostov::operator>>(std::istream& in, shape_t& dest)
 {
-  std::istream::sentry sentry(in);
+  const std::istream::sentry sentry(in);
   if (!sentry) {
     return in;
   }
@@ -43,12 +43,12 @@ std::istream& hvostov::operator>>(std::istream& in, shape_t& dest)
 
 std::ostream& hvostov::operator<<(std::ostream& out, const shape_t& rhs)
 {
-  std::ostream::sentry sentry(out);
+  const std::ostream::sentry sentry(out);
   if (!sentry) {
     return out;
   }
 
-  IOguard guard(out);
+  const IOguard guard(out);
   if (!rhs.is_ellipse) {
     out << static_cast< long long >(rhs.rx) << " (" << static_cast< long long >(rhs.x) << " "
         << static_cast< long long >(rhs.y) << ")";
@@ -62,25 +62,25 @@ std::ostream& hvostov::operator<<(std::ostream& out, const shape_t& rhs)
 
 std::ostream& hvostov::operator<<(std::ostream& out, const frame_t& rhs)
 {
-  std::ostream::sentry sentry(out);
+  const std::ostream::sentry sentry(out);
   if (!sentry) {
     return out;
   }
 
-  IOguard guard(out);
-  out << "(" << static_cast< long long >(rhs.minX) << " " << static_cast< long long >(rhs.minY) << ") ("
-      << static_cast< long long >(rhs.maxX) << " " << static_cast< long long >(rhs.maxY) << ")";
+  const IOguard guard(out);
+  out << "(" << static_cast< long long >(rhs.min_x) << " " << static_cast< long long >(rhs.min_y) << ") ("
+      << static_cast< long long >(rhs.max_x) << " " << static_cast< long long >(rhs.max_y) << ")";
   return out;
 }
 
 std::ostream& hvostov::operator<<(std::ostream& out, const calc_state_t& rhs)
 {
-  std::ostream::sentry sentry(out);
+  const std::ostream::sentry sentry(out);
   if (!sentry) {
     return out;
   }
 
-  IOguard guard(out);
+  const IOguard guard(out);
   out << rhs.process_name << " ";
   if (rhs.canceled) {
     out << "<CANCELED>";
