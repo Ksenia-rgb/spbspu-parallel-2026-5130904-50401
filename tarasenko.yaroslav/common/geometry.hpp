@@ -3,19 +3,23 @@
 
 #include <stddef.h>
 
-namespace tarasenko {
-  struct RealPoint {
+namespace tarasenko
+{
+  struct RealPoint
+  {
     double x;
     double y;
   };
 
-  struct Ellipse {
+  struct Ellipse
+  {
     double rx;
     double ry;
     RealPoint center;
   };
 
-  struct Rectangle {
+  struct Rectangle
+  {
     RealPoint left_bottom;
     RealPoint right_top;
   };
