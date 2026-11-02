@@ -197,7 +197,7 @@ bool zhuravleva::killProcess(ProcessStorage& storage, const std::string& name)
     return false;
   }
   closeIfOpen(process.write_fd);
-  while(true)
+  while (true)
   {
     pollfd fd{};
     fd.fd = process.read_fd;

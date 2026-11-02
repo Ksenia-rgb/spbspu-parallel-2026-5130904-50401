@@ -1,6 +1,7 @@
 #include "commands.hpp"
 #include "parse.hpp"
 #include "monte_carlo.hpp"
+#include <cctype>
 #include <ostream>
 
 bool zhuravleva::addCircle(Storage& storage, const std::vector< std::string >& args)
@@ -13,7 +14,8 @@ bool zhuravleva::addCircle(Storage& storage, const std::vector< std::string >& a
   int radius = 0;
   int x = 0;
   int y = 0;
-  if (!parseInt(args[2], radius) || !parseInt(args[3], x) || !parseInt(args[4], y) || radius <= 0 || args[1].empty())
+  if (!parseInt(args[2], radius) || !parseInt(args[3], x) || !parseInt(args[4], y) || radius <= 0
+      || (args[1].empty() || !std::isalpha(static_cast< unsigned char >(args[1][0]))))
   {
     return false;
   }
@@ -35,7 +37,7 @@ bool zhuravleva::addEllipse(Storage& storage, const std::vector< std::string >& 
   int y = 0;
 
   if (!parseInt(args[2], rx) || !parseInt(args[3], ry) || !parseInt(args[4], x) || !parseInt(args[ellipse_y_index], y)
-      || rx <= 0 || ry <= 0 || args[1].empty())
+      || rx <= 0 || ry <= 0 || (args[1].empty() || !std::isalpha(static_cast< unsigned char >(args[1][0]))))
   {
     return false;
   }
@@ -98,35 +100,54 @@ bool zhuravleva::addSet(Storage& storage, const std::vector< std::string >& args
 
 bool zhuravleva::showShapes(const Storage& storage, const std::vector< std::string >& args, std::ostream& out)
 {
-  if (args.size() != 1)
+  if (args.size() != 2)
   {
     return false;
   }
-  for (const auto& item : storage.shapes)
+  const auto it = storage.shapes.find(args[1]);
+  if (it == storage.shapes.end())
   {
-    const Shape& shape = item.second;
-    out << item.first << ' ';
-    out << (shape.type == ShapeType::circle ? "circle" : "ellipse") << ' ';
-    out << shape.rx << ' ' << shape.ry << ' ';
-    out << shape.x << ' ' << shape.y << ' ' << shape.angle << '\n';
+    return false;
+  }
+  const Shape& shape = it->second;
+  if (shape.type == ShapeType::circle)
+  {
+    out << shape.rx << " (" << shape.x << ' ' << shape.y << ")\n";
+  }
+  else
+  {
+    out << shape.rx << ' ' << shape.ry << " (" << shape.x << ' ' << shape.y << ") " << shape.angle << '\n';
   }
   return true;
 }
 
 bool zhuravleva::showSets(const Storage& storage, const std::vector< std::string >& args, std::ostream& out)
 {
-  if (args.size() != 1)
+  if (args.size() != 2)
   {
     return false;
   }
-  for (const auto& item : storage.sets)
+  const auto it = storage.sets.find(args[1]);
+  if (it == storage.sets.end())
   {
-    out << item.first;
-    for (const std::string& name : item.second)
+    return false;
+  }
+  for (const std::string& name : it->second)
+  {
+    const auto shape_it = storage.shapes.find(name);
+    if (shape_it == storage.shapes.end())
     {
-      out << ' ' << name;
+      return false;
     }
-    out << '\n';
+    const Shape& shape = shape_it->second;
+    if (shape.type == ShapeType::circle)
+    {
+      out << shape.rx << " (" << shape.x << ' ' << shape.y << ")\n";
+    }
+    else
+    {
+      out << shape.rx << ' ' << shape.ry << " (" << shape.x << ' ' << shape.y << ") " << shape.angle << '\n';
+    }
   }
   return true;
 }
@@ -143,8 +164,8 @@ bool zhuravleva::showFrame(const Storage& storage, const std::vector< std::strin
     return false;
   }
   const Rectangle bounds = getBounds(it->second);
-  out << bounds.min_x << ' ' << bounds.min_y << ' ';
-  out << bounds.max_x << ' ' << bounds.max_y << '\n';
+  out << '(' << bounds.min_x << ' ' << bounds.min_y << ") (";
+  out << bounds.max_x << ' ' << bounds.max_y << ")\n";
   return true;
 }
 
@@ -171,7 +192,7 @@ bool zhuravleva::showSetFrame(const Storage& storage, const std::vector< std::st
     shapes.push_back(shape_it->second);
   }
   const Rectangle bounds = getSetBounds(shapes);
-  out << bounds.min_x << ' ' << bounds.min_y << ' ';
-  out << bounds.max_x << ' ' << bounds.max_y << '\n';
+  out << '(' << bounds.min_x << ' ' << bounds.min_y << ") (";
+  out << bounds.max_x << ' ' << bounds.max_y << ")\n";
   return true;
 }

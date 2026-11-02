@@ -45,12 +45,25 @@ std::size_t zhuravleva::calcMonte(
   std::uniform_real_distribution< double > dist_x(bounds.min_x, bounds.max_x);
   std::uniform_real_distribution< double > dist_y(bounds.min_y, bounds.max_y);
   std::size_t hits = 0;
-
+  const bool single_circle = shapes.size() == 1 && shapes.front().type == ShapeType::circle;
+  const double center_x = single_circle ? shapes.front().x : 0.0;
+  const double center_y = single_circle ? shapes.front().y : 0.0;
+  const double radius = single_circle ? shapes.front().rx : 0.0;
+  const double radius_squared = radius * radius;
   for (std::size_t i = 0; i < tries; ++i)
   {
     const double x = dist_x(generator);
     const double y = dist_y(generator);
-    if (checkPoint(shapes, x, y))
+    if (single_circle)
+    {
+      const double dx = x - center_x;
+      const double dy = y - center_y;
+      if (dx * dx + dy * dy <= radius_squared)
+      {
+        ++hits;
+      }
+    }
+    else if (checkPoint(shapes, x, y))
     {
       ++hits;
     }
