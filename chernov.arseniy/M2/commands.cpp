@@ -195,7 +195,10 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
     throw std::runtime_error("fork failed");
   }
   if (pid == 0) {
+    close(to_child[1]);
+    close(to_parent[0]);
 
+    calculationLoop(to_child[0], to_parent[1], seed, nullptr, 0);
   } else {
     app.processes.insert(
         {process_name, process_t{pid, seed, {to_child[0], to_child[1]}, {to_parent[0], to_parent[1]}}});
