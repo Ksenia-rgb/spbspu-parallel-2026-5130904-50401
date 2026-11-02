@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <unistd.h>
 #include "compute.hpp"
 
@@ -367,7 +368,7 @@ namespace ulanova
     const CalcActive& c = ctx_.calculations[idx];
     if (c.isDone)
     {
-      std::cout << c.processName << " " << c.durationMs << " " << c.areaResult << "\n";
+      std::cout << c.processName << " " << c.durationMs << " " << std::fixed << std::setprecision(3) << c.areaResult << "\n";
     }
     else
     {
@@ -391,7 +392,7 @@ namespace ulanova
     {
       executeSystemWait(c);
     }
-    std::cout << c.processName << " " << c.durationMs << " " << c.areaResult << "\n";
+    std::cout << c.processName << " " << c.durationMs << " " << std::fixed << std::setprecision(3) << c.areaResult << "\n";
   }
 
   void CLI::executeSystemSpawn(const std::string&, unsigned int)
@@ -467,19 +468,17 @@ namespace ulanova
     }
     req.rect = bounds(ptrs.data(), ptrs.data() + ptrs.size());
 
-    const size_t shmSize = shapesCount * sizeof(circle_t);
-    Mapping shm;
-    shm.create(shared_memory_name, shmSize);
-
-    circle_t* const shmBuffer = static_cast< circle_t* >(shm.getPtr());
-    for (size_t i = 0; i < shapesCount; ++i)
+    std::vector< circle_t > shapes;
+    shapes.reserve(shapesCount);
+    for (size_t cIdx : s.circleIndices)
     {
-      shmBuffer[i] = ctx_.storage[s.circleIndices[i]];
+      shapes.push_back(ctx_.storage[cIdx]);
     }
 
     try
     {
       sendAll(parent_write_fd, &req, sizeof(request_t));
+      sendAll(parent_write_fd, shapes.data(), shapes.size() * sizeof(circle_t));
     }
     catch (...)
     {

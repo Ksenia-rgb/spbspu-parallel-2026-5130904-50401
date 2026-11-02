@@ -5,7 +5,7 @@
 
 namespace ulanova
 {
-  void computeProcess(int readFd, int writeFd, const char* shmName)
+  void computeProcess(int readFd, int writeFd, const char*)
   {
     bool running = true;
 
@@ -32,12 +32,8 @@ namespace ulanova
         response_t resp{};
         try
         {
-          const size_t shmSize = req.shapes_count * sizeof(circle_t);
-
-          Mapping shm;
-          shm.open(shmName, shmSize);
-
-          const circle_t* shapesData = static_cast< const circle_t* >(shm.getPtr());
+          std::vector< circle_t > shapesData(req.shapes_count);
+          recvAll(readFd, shapesData.data(), shapesData.size() * sizeof(circle_t));
           std::vector< const circle_t* > shapesPtrs(req.shapes_count);
           for (size_t i = 0; i < req.shapes_count; ++i)
           {
