@@ -82,3 +82,22 @@ bool petrov::isInside(const Shape& shape, double x, double y)
   const double part_y = turned_y / radius_y;
   return (part_x * part_x + part_y * part_y) <= 1.0;
 }
+
+void petrov::printShape(std::ostream& out, const Shape& shape)
+{
+  out << shape.radius_x;
+  if (shape.is_ellipse) {
+    out << ' ' << shape.radius_y;
+  }
+  out << " (" << shape.x << ' ' << shape.y << ')';
+  if (shape.is_ellipse) {
+    out << ' ' << std::fixed << std::setprecision(angle_precision) << shape.angle;
+  }
+  out << '\n';
+}
+
+void petrov::printFrame(std::ostream& out, const Frame& frame)
+{
+  out << '(' << frame.left << ' ' << frame.bottom << ") ";
+  out << '(' << frame.right << ' ' << frame.top << ")\n";
+}
