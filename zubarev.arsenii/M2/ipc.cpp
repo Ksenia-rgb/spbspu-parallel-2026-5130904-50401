@@ -4,24 +4,25 @@
 #include <unistd.h>
 #include <utility>
 
-size_t send(int& err, int wr, const char* b, size_t k)
+size_t zubarev::send(int& err, int wr, const char* b, size_t k)
 {
   size_t r = 0;
   while (r < k) {
     err = write(wr, b + r, k - r);
-    if (err < 0)
+    if (err < 0) {
       break;
+    }
     r += err;
   }
   return r;
 }
 
-size_t recv(int& err, int rd, char* b, size_t k)
+size_t zubarev::recv(int& err, int rd, char* b, size_t k)
 {
   size_t r = 0;
   while (r < k) {
     err = read(rd, b + r, k - r);
-    if (err < 0) {
+    if (err <= 0) {
       break;
     }
     r += err;
@@ -63,14 +64,38 @@ zubarev::Pipe& zubarev::Pipe::operator=(Pipe&& other) noexcept
   return *this;
 }
 
+int zubarev::Pipe::readFd() const noexcept
+{
+  return fds_[0];
+}
+
+int zubarev::Pipe::writeFd() const noexcept
+{
+  return fds_[1];
+}
+
+int zubarev::Pipe::getReadFd() const noexcept
+{
+  return fds_[0];
+}
+
 int zubarev::Pipe::gerReadFd() const noexcept
 {
   return fds_[0];
 }
 
-int zubarev::Pipe::getWriteFd() const noexcept
+int zubarev::Pipe::releaseRead() noexcept
 {
-  return fds_[1];
+  int fd = fds_[0];
+  fds_[0] = -1;
+  return fd;
+}
+
+int zubarev::Pipe::releaseWrite() noexcept
+{
+  int fd = fds_[1];
+  fds_[1] = -1;
+  return fd;
 }
 
 void zubarev::Pipe::closeRead() noexcept

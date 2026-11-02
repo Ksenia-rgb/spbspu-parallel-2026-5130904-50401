@@ -8,6 +8,8 @@
 #include "shapes.hpp"
 
 namespace zubarev {
+  struct CalcTable;
+
   struct ShapesTable {
     std::map< std::string, Circle > circles;
     std::map< std::string, std::vector< std::string > > sets;
@@ -23,6 +25,8 @@ namespace zubarev {
   void cmd_showset(std::istream& in, std::ostream& out, ShapesTable& shapes);
   void cmd_frame(std::istream& in, std::ostream& out, ShapesTable& shapes);
   void cmd_frameset(std::istream& in, std::ostream& out, ShapesTable& shapes);
+
+  void processCommand(const std::string& line, ShapesTable& shapes, CalcTable& calcs, std::ostream& out);
 }
 
 #endif

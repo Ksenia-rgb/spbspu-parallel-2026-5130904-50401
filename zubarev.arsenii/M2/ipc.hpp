@@ -36,8 +36,13 @@ namespace zubarev
     Pipe(Pipe&& other) noexcept;
     Pipe& operator=(Pipe&& other) noexcept;
 
+    int readFd() const noexcept;
+    int writeFd() const noexcept;
+    int getReadFd() const noexcept;
     int gerReadFd() const noexcept;
-    int getWriteFd() const noexcept;
+
+    int releaseRead() noexcept;
+    int releaseWrite() noexcept;
 
     void closeRead() noexcept;
     void closeWrite() noexcept;
