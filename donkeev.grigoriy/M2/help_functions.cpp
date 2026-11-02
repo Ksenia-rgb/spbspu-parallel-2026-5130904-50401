@@ -1,8 +1,8 @@
 #include "help_functions.hpp"
 
-std::vector<std::string> donkeev::splitIntoTokens(const std::string& line)
+std::vector< std::string > donkeev::splitIntoTokens(const std::string& line)
 {
-  std::vector<std::string> tokens;
+  std::vector< std::string > tokens;
   size_t start = 0;
   size_t end = 0;
 
@@ -32,12 +32,15 @@ bool donkeev::isNumber(const std::string& str)
   size_t start = 0;
   if (str[0] == '-' || str[0] == '+')
   {
-    if (str.length() == 1) return false;
+    if (str.length() == 1)
+    {
+      return false;
+    }
     start = 1;
   }
   for (size_t i = start; i < str.length(); ++i)
   {
-    if (!std::isdigit(static_cast<unsigned char>(str[i])))
+    if (!std::isdigit(static_cast< unsigned char >(str[i])))
     {
       return false;
     }
@@ -47,10 +50,16 @@ bool donkeev::isNumber(const std::string& str)
 
 bool donkeev::isPositiveNumber(const std::string& str)
 {
-  if (str.empty()) return false;
+  if (str.empty())
+  {
+    return false;
+  }
   for (char ch : str)
   {
-    if (!std::isdigit(static_cast<unsigned char>(ch))) return false;
+    if (!std::isdigit(static_cast< unsigned char >(ch)))
+    {
+      return false;
+    }
   }
   try
   {
@@ -65,7 +74,10 @@ bool donkeev::isPositiveNumber(const std::string& str)
 
 bool donkeev::isValidName(const std::string& str)
 {
-  if (str.empty()) return false;
+  if (str.empty())
+  {
+    return false;
+  }
   char first = str[0];
   if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z')))
   {

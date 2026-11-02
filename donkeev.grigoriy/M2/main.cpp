@@ -3,33 +3,39 @@
 #include <vector>
 #include <map>
 #include "shape_manager.hpp"
+#include "process_manager.hpp"
 #include "help_functions.hpp"
 #include "commands.hpp"
 
 int main()
 {
-  donkeev::ShapeManager manager;
+  donkeev::ShapeManager shapeManager;
+  donkeev::ProcessManager procManager;
 
-  std::map<std::string, donkeev::Command> commandMap = {
-    {"circle",   {donkeev::validateCircle,    donkeev::executeCircle}},
-    {"set",      {donkeev::validateSet,       donkeev::executeSet}},
-    {"show",     {donkeev::validateTwoTokens, donkeev::executeShow}},
-    {"showset",  {donkeev::validateTwoTokens, donkeev::executeShowSet}},
-    {"frame",    {donkeev::validateTwoTokens, donkeev::executeFrame}},
-    {"frameset", {donkeev::validateTwoTokens, donkeev::executeFrameSet}},
-    {"spawn",    {donkeev::validateSpawn,     donkeev::executeSpawn}},
-    {"area-on",  {donkeev::validateAreaOn,    donkeev::executeAreaOn}},
-    {"status",   {donkeev::validateTwoTokens, donkeev::executeStatus}},
-    {"wait",     {donkeev::validateTwoTokens, donkeev::executeWait}}
-  };
+  std::map< std::string, donkeev::Command > commandMap = {{"circle", {donkeev::validateCircle, donkeev::executeCircle}},
+      {"set", {donkeev::validateSet, donkeev::executeSet}},
+      {"show", {donkeev::validateTwoTokens, donkeev::executeShow}},
+      {"showset", {donkeev::validateTwoTokens, donkeev::executeShowSet}},
+      {"frame", {donkeev::validateTwoTokens, donkeev::executeFrame}},
+      {"frameset", {donkeev::validateTwoTokens, donkeev::executeFrameSet}},
+      {"spawn", {donkeev::validateSpawn, donkeev::executeSpawn}},
+      {"area-on", {donkeev::validateAreaOn, donkeev::executeAreaOn}},
+      {"status", {donkeev::validateTwoTokens, donkeev::executeStatus}},
+      {"wait", {donkeev::validateTwoTokens, donkeev::executeWait}}};
 
   std::string line;
   while (std::getline(std::cin, line))
   {
-    if (line.empty()) continue;
+    if (line.empty())
+    {
+      continue;
+    }
 
     auto tokens = donkeev::splitIntoTokens(line);
-    if (tokens.empty()) continue;
+    if (tokens.empty())
+    {
+      continue;
+    }
 
     const std::string& cmdName = tokens[0];
     auto it = commandMap.find(cmdName);
@@ -48,7 +54,7 @@ int main()
 
     try
     {
-      it->second.execute(manager, tokens);
+      it->second.execute(shapeManager, procManager, tokens);
     }
     catch (...)
     {

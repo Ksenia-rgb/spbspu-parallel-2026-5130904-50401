@@ -6,10 +6,10 @@
 
 namespace donkeev
 {
-  std::vector<std::string> splitIntoTokens(const std::string&);
-  bool isNumber(const std::string&);
-  bool isPositiveNumber(const std::string&);
-  bool isValidName(const std::string&);
+  std::vector< std::string > splitIntoTokens(const std::string &);
+  bool isNumber(const std::string &);
+  bool isPositiveNumber(const std::string &);
+  bool isValidName(const std::string &);
 }
 
 #endif
