@@ -36,3 +36,18 @@ void studilova::createCircle(std::istream& in, circles_t& circles)
   const circle_t circle{radius, x, y};
   circles.emplace(name, circle);
 }
+
+void studilova::showCircle(std::istream& in, std::ostream& out, const circles_t& circles)
+{
+  const std::string name = detail::readArgument(in);
+  detail::requireLineEnd(in);
+
+  const auto found = circles.find(name);
+  if (found == circles.end())
+  {
+    throw std::invalid_argument("Circle does not exist");
+  }
+
+  const circle_t& circle = found->second;
+  out << circle.radius << " (" << circle.x << ' ' << circle.y << ")\n";
+}
