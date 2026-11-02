@@ -4,8 +4,7 @@
 #include <stdexcept>
 #include "calc_manager.hpp"
 
-namespace
-{
+namespace {
   bool parseLongLong(const std::string& s, long long& out)
   {
     if (s.empty()) {
@@ -240,8 +239,7 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
 
   const std::string& cmd = tokens[0];
 
-  try
-  {
+  try {
     if (cmd == "circle") {
       if (tokens.size() != 5) {
         throw std::logic_error("invalid circle arguments count");
@@ -258,8 +256,7 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
         throw std::logic_error("circle radius must be positive");
       }
       shapes.circles[name] = Circle(static_cast< double >(x), static_cast< double >(y), static_cast< double >(r));
-    }
-    else if (cmd == "set") {
+    } else if (cmd == "set") {
       if (tokens.size() < 3) {
         throw std::logic_error("invalid set arguments count");
       }
@@ -284,8 +281,7 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
         set_shapes.push_back(shape_name);
       }
       shapes.sets[name] = std::move(set_shapes);
-    }
-    else if (cmd == "show") {
+    } else if (cmd == "show") {
       if (tokens.size() != 2) {
         throw std::logic_error("invalid show arguments count");
       }
@@ -294,9 +290,9 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
         throw std::logic_error("shape not found: " + tokens[1]);
       }
       const Circle& c = it->second;
-      out << static_cast< long long >(c.r) << " (" << static_cast< long long >(c.x) << " " << static_cast< long long >(c.y) << ")\n";
-    }
-    else if (cmd == "showset") {
+      out << static_cast< long long >(c.r) << " (" << static_cast< long long >(c.x) << " "
+          << static_cast< long long >(c.y) << ")\n";
+    } else if (cmd == "showset") {
       if (tokens.size() != 2) {
         throw std::logic_error("invalid showset arguments count");
       }
@@ -310,10 +306,10 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
           throw std::logic_error("shape not found in set: " + shape_name);
         }
         const Circle& c = shape_it->second;
-        out << static_cast< long long >(c.r) << " (" << static_cast< long long >(c.x) << " " << static_cast< long long >(c.y) << ")\n";
+        out << static_cast< long long >(c.r) << " (" << static_cast< long long >(c.x) << " "
+            << static_cast< long long >(c.y) << ")\n";
       }
-    }
-    else if (cmd == "frame") {
+    } else if (cmd == "frame") {
       if (tokens.size() != 2) {
         throw std::logic_error("invalid frame arguments count");
       }
@@ -324,8 +320,7 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
       Frame f = frame(it->second);
       out << "(" << static_cast< long long >(f.min_x) << " " << static_cast< long long >(f.min_y) << ") ("
           << static_cast< long long >(f.max_x) << " " << static_cast< long long >(f.max_y) << ")\n";
-    }
-    else if (cmd == "frameset") {
+    } else if (cmd == "frameset") {
       if (tokens.size() != 2) {
         throw std::logic_error("invalid frameset arguments count");
       }
@@ -345,8 +340,7 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
       Frame f = frame(set_circles);
       out << "(" << static_cast< long long >(f.min_x) << " " << static_cast< long long >(f.min_y) << ") ("
           << static_cast< long long >(f.max_x) << " " << static_cast< long long >(f.max_y) << ")\n";
-    }
-    else if (cmd == "spawn") {
+    } else if (cmd == "spawn") {
       if (tokens.size() != 3) {
         throw std::logic_error("invalid spawn arguments count");
       }
@@ -356,8 +350,7 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
         throw std::logic_error("invalid seed");
       }
       spawn(calcs, process_name, static_cast< size_t >(seed));
-    }
-    else if (cmd == "area-on") {
+    } else if (cmd == "area-on") {
       if (tokens.size() != 6) {
         throw std::logic_error("invalid area-on arguments count");
       }
@@ -387,25 +380,20 @@ void zubarev::processCommand(const std::string& line, ShapesTable& shapes, CalcT
       }
       uint64_t actual_threads = (threads == 0) ? 1 : static_cast< uint64_t >(threads);
       areaOn(calcs, process_name, calc_name, set_circles, actual_threads, static_cast< uint64_t >(tries));
-    }
-    else if (cmd == "status") {
+    } else if (cmd == "status") {
       if (tokens.size() != 2) {
         throw std::logic_error("invalid status arguments count");
       }
       status(calcs, tokens[1], out);
-    }
-    else if (cmd == "wait") {
+    } else if (cmd == "wait") {
       if (tokens.size() != 2) {
         throw std::logic_error("invalid wait arguments count");
       }
       wait(calcs, tokens[1], out);
-    }
-    else {
+    } else {
       out << "<UNKNOWN COMMAND>\n";
     }
-  }
-  catch (const std::exception&)
-  {
+  } catch (const std::exception&) {
     out << "<INVALID COMMAND>\n";
   }
 }

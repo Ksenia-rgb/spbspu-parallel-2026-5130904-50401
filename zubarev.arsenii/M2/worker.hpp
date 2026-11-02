@@ -3,8 +3,7 @@
 
 #include <cstddef>
 
-namespace zubarev
-{
+namespace zubarev {
   void run_worker(int req_fd, int resp_fd, size_t seed);
 }
 

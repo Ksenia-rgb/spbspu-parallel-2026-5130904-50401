@@ -10,8 +10,7 @@ int main()
   zubarev::CalcTable calcs;
 
   std::string line;
-  while (std::getline(std::cin, line))
-  {
+  while (std::getline(std::cin, line)) {
     zubarev::processCommand(line, shapes, calcs, std::cout);
   }
 

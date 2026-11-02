@@ -4,18 +4,15 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace zubarev
-{
-  struct RequestHeader
-  {
+namespace zubarev {
+  struct RequestHeader {
     char name[32];
     uint64_t threads;
     uint64_t tries;
     uint64_t count;
   };
 
-  struct Response
-  {
+  struct Response {
     char name[32];
     double ms;
     double area;
@@ -24,8 +21,7 @@ namespace zubarev
   size_t send(int& err, int wr, const char* b, size_t k);
   size_t recv(int& err, int rd, char* b, size_t k);
 
-  class Pipe
-  {
+  class Pipe {
   public:
     Pipe();
     ~Pipe();

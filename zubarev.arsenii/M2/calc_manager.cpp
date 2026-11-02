@@ -12,23 +12,18 @@
 #include "ipc.hpp"
 #include "worker.hpp"
 
-namespace
-{
+namespace {
   bool isValidIdentifier(const std::string& name)
   {
-    if (name.empty())
-    {
+    if (name.empty()) {
       return false;
     }
     unsigned char first = static_cast< unsigned char >(name[0]);
-    if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z')))
-    {
+    if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z'))) {
       return false;
     }
-    for (char ch : name)
-    {
-      if (std::isspace(static_cast< unsigned char >(ch)))
-      {
+    for (char ch : name) {
+      if (std::isspace(static_cast< unsigned char >(ch))) {
         return false;
       }
     }
@@ -39,10 +34,8 @@ namespace
   {
     std::vector< struct pollfd > pfds;
 
-    for (const auto& pair : table.processes)
-    {
-      if (pair.second.resp_rd != -1)
-      {
+    for (const auto& pair : table.processes) {
+      if (pair.second.resp_rd != -1) {
         struct pollfd pfd{};
         pfd.fd = pair.second.resp_rd;
         pfd.events = POLLIN;
@@ -50,31 +43,25 @@ namespace
       }
     }
 
-    if (pfds.empty())
-    {
+    if (pfds.empty()) {
       return;
     }
 
     int ret = ::poll(pfds.data(), pfds.size(), timeout_ms);
-    if (ret <= 0)
-    {
+    if (ret <= 0) {
       return;
     }
 
-    for (size_t i = 0; i < pfds.size(); ++i)
-    {
-      if (pfds[i].revents & POLLIN)
-      {
+    for (size_t i = 0; i < pfds.size(); ++i) {
+      if (pfds[i].revents & POLLIN) {
         zubarev::Response resp{};
         int err = 0;
         size_t rec = zubarev::recv(err, pfds[i].fd, reinterpret_cast< char* >(&resp), sizeof(resp));
-        if (rec == sizeof(resp) && err >= 0)
-        {
+        if (rec == sizeof(resp) && err >= 0) {
           resp.name[sizeof(resp.name) - 1] = '\0';
           std::string name(resp.name);
           auto it = table.calcs.find(name);
-          if (it != table.calcs.end())
-          {
+          if (it != table.calcs.end()) {
             it->second.status = zubarev::CalcStatus::COMPLETED;
             it->second.ms = resp.ms;
             it->second.area = resp.area;
@@ -96,33 +83,27 @@ void zubarev::setupSignals()
   sa.sa_handler = SIG_IGN;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  if (::sigaction(SIGPIPE, &sa, nullptr) == -1)
-  {
+  if (::sigaction(SIGPIPE, &sa, nullptr) == -1) {
     throw std::system_error(errno, std::generic_category(), "sigaction SIGPIPE failed");
   }
 }
 
 void zubarev::cleanup(CalcTable& table)
 {
-  for (auto& pair : table.processes)
-  {
-    if (pair.second.req_wr != -1)
-    {
+  for (auto& pair : table.processes) {
+    if (pair.second.req_wr != -1) {
       ::close(pair.second.req_wr);
       pair.second.req_wr = -1;
     }
   }
 
-  for (auto& pair : table.processes)
-  {
-    if (pair.second.pid > 0)
-    {
+  for (auto& pair : table.processes) {
+    if (pair.second.pid > 0) {
       int status = 0;
       ::waitpid(pair.second.pid, &status, 0);
       pair.second.pid = -1;
     }
-    if (pair.second.resp_rd != -1)
-    {
+    if (pair.second.resp_rd != -1) {
       ::close(pair.second.resp_rd);
       pair.second.resp_rd = -1;
     }
@@ -131,12 +112,10 @@ void zubarev::cleanup(CalcTable& table)
 
 void zubarev::spawn(CalcTable& table, const std::string& process_name, size_t seed)
 {
-  if (!isValidIdentifier(process_name))
-  {
+  if (!isValidIdentifier(process_name)) {
     throw std::logic_error("invalid process name");
   }
-  if (table.used_processes.find(process_name) != table.used_processes.end())
-  {
+  if (table.used_processes.find(process_name) != table.used_processes.end()) {
     throw std::logic_error("process name already used");
   }
 
@@ -144,27 +123,22 @@ void zubarev::spawn(CalcTable& table, const std::string& process_name, size_t se
   Pipe resp_pipe;
 
   pid_t pid = ::fork();
-  if (pid < 0)
-  {
+  if (pid < 0) {
     throw std::system_error(errno, std::generic_category(), "fork failed");
   }
 
-  if (pid == 0)
-  {
+  if (pid == 0) {
     int req_fd = req_pipe.readFd();
     int resp_fd = resp_pipe.writeFd();
 
     req_pipe.closeWrite();
     resp_pipe.closeRead();
 
-    for (const auto& pair : table.processes)
-    {
-      if (pair.second.req_wr != -1)
-      {
+    for (const auto& pair : table.processes) {
+      if (pair.second.req_wr != -1) {
         ::close(pair.second.req_wr);
       }
-      if (pair.second.resp_rd != -1)
-      {
+      if (pair.second.resp_rd != -1) {
         ::close(pair.second.resp_rd);
       }
     }
@@ -195,24 +169,17 @@ bool zubarev::hasProcess(const CalcTable& table, const std::string& process_name
   return table.processes.find(process_name) != table.processes.end();
 }
 
-void zubarev::areaOn(CalcTable& table,
-                     const std::string& process_name,
-                     const std::string& calc_name,
-                     const std::vector< Circle >& circles,
-                     uint64_t threads,
-                     uint64_t tries)
+void zubarev::areaOn(CalcTable& table, const std::string& process_name, const std::string& calc_name,
+    const std::vector< Circle >& circles, uint64_t threads, uint64_t tries)
 {
-  if (!isValidIdentifier(calc_name) || hasCalc(table, calc_name))
-  {
+  if (!isValidIdentifier(calc_name) || hasCalc(table, calc_name)) {
     throw std::logic_error("invalid or duplicate calc name");
   }
   auto proc_it = table.processes.find(process_name);
-  if (proc_it == table.processes.end())
-  {
+  if (proc_it == table.processes.end()) {
     throw std::logic_error("process not found");
   }
-  if (tries == 0)
-  {
+  if (tries == 0) {
     throw std::logic_error("tries must be positive");
   }
 
@@ -225,17 +192,14 @@ void zubarev::areaOn(CalcTable& table,
 
   int err = 0;
   size_t sent = send(err, proc_it->second.req_wr, reinterpret_cast< const char* >(&req), sizeof(req));
-  if (sent < sizeof(req) || err < 0)
-  {
+  if (sent < sizeof(req) || err < 0) {
     throw std::runtime_error("failed to send request header");
   }
 
-  if (req.count > 0)
-  {
+  if (req.count > 0) {
     size_t circles_bytes = req.count * sizeof(Circle);
     sent = send(err, proc_it->second.req_wr, reinterpret_cast< const char* >(circles.data()), circles_bytes);
-    if (sent < circles_bytes || err < 0)
-    {
+    if (sent < circles_bytes || err < 0) {
       throw std::runtime_error("failed to send circles data");
     }
   }
@@ -257,37 +221,29 @@ bool zubarev::hasCalc(const CalcTable& table, const std::string& calc_name)
 
 void zubarev::status(CalcTable& table, const std::string& calc_name, std::ostream& out)
 {
-  if (!hasCalc(table, calc_name))
-  {
+  if (!hasCalc(table, calc_name)) {
     throw std::logic_error("calc not found");
   }
 
   updateResponses(table, 0);
 
   const auto& c = table.calcs[calc_name];
-  if (c.status == CalcStatus::COMPLETED)
-  {
+  if (c.status == CalcStatus::COMPLETED) {
     out << c.process_name << " " << std::fixed << std::setprecision(3) << c.ms << " " << c.area << "\n";
-  }
-  else if (c.status == CalcStatus::CANCELED)
-  {
+  } else if (c.status == CalcStatus::CANCELED) {
     out << c.process_name << " <CANCELED>\n";
-  }
-  else
-  {
+  } else {
     out << c.process_name << " <IN PROGRESS>\n";
   }
 }
 
 void zubarev::wait(CalcTable& table, const std::string& calc_name, std::ostream& out)
 {
-  if (!hasCalc(table, calc_name))
-  {
+  if (!hasCalc(table, calc_name)) {
     throw std::logic_error("calc not found");
   }
 
-  while (table.calcs[calc_name].status == CalcStatus::IN_PROGRESS)
-  {
+  while (table.calcs[calc_name].status == CalcStatus::IN_PROGRESS) {
     updateResponses(table, -1);
   }
 

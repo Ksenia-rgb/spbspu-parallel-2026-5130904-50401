@@ -33,8 +33,7 @@ size_t zubarev::recv(int& err, int rd, char* b, size_t k)
 zubarev::Pipe::Pipe():
   fds_{-1, -1}
 {
-  if (::pipe(fds_) == -1)
-  {
+  if (::pipe(fds_) == -1) {
     throw std::system_error(errno, std::generic_category(), "pipe failed");
   }
 }
@@ -53,8 +52,7 @@ zubarev::Pipe::Pipe(Pipe&& other) noexcept:
 
 zubarev::Pipe& zubarev::Pipe::operator=(Pipe&& other) noexcept
 {
-  if (this != &other)
-  {
+  if (this != &other) {
     closeAll();
     fds_[0] = other.fds_[0];
     fds_[1] = other.fds_[1];
@@ -100,8 +98,7 @@ int zubarev::Pipe::releaseWrite() noexcept
 
 void zubarev::Pipe::closeRead() noexcept
 {
-  if (fds_[0] != -1)
-  {
+  if (fds_[0] != -1) {
     ::close(fds_[0]);
     fds_[0] = -1;
   }
@@ -109,8 +106,7 @@ void zubarev::Pipe::closeRead() noexcept
 
 void zubarev::Pipe::closeWrite() noexcept
 {
-  if (fds_[1] != -1)
-  {
+  if (fds_[1] != -1) {
     ::close(fds_[1]);
     fds_[1] = -1;
   }

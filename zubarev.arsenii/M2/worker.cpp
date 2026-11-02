@@ -8,28 +8,23 @@
 
 void zubarev::run_worker(int req_fd, int resp_fd, size_t seed)
 {
-  while (true)
-  {
+  while (true) {
     RequestHeader req{};
     int err = 0;
     size_t rec = recv(err, req_fd, reinterpret_cast< char* >(&req), sizeof(req));
 
-    if (rec == 0 && err == 0)
-    {
+    if (rec == 0 && err == 0) {
       break;
     }
-    if (rec < sizeof(req) || err < 0)
-    {
+    if (rec < sizeof(req) || err < 0) {
       break;
     }
 
     std::vector< Circle > circles(req.count);
-    if (req.count > 0)
-    {
+    if (req.count > 0) {
       size_t circles_bytes = req.count * sizeof(Circle);
       rec = recv(err, req_fd, reinterpret_cast< char* >(circles.data()), circles_bytes);
-      if (rec < circles_bytes || err < 0)
-      {
+      if (rec < circles_bytes || err < 0) {
         break;
       }
     }
@@ -47,8 +42,7 @@ void zubarev::run_worker(int req_fd, int resp_fd, size_t seed)
     resp.area = calculated_area;
 
     size_t sent = send(err, resp_fd, reinterpret_cast< const char* >(&resp), sizeof(resp));
-    if (sent < sizeof(resp) || err < 0)
-    {
+    if (sent < sizeof(resp) || err < 0) {
       break;
     }
   }
