@@ -1,8 +1,11 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
+#include "shapes.hpp"
+#include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 #include <sys/types.h>
 
 namespace zhuravleva
@@ -15,14 +18,33 @@ namespace zhuravleva
     unsigned int seed;
   };
 
+  enum class CalcState
+  {
+    pending,
+    done,
+    failed
+  };
+
+  struct Calculation
+  {
+    std::uint64_t id;
+    std::string process_name;
+    CalcState state;
+    double area;
+  };
+
   struct ProcessStorage
   {
     std::map< std::string, Process > processes;
+    std::map< std::string, Calculation > calculations;
+    std::uint64_t next_id = 1;
   };
 
   bool spawnProcess(ProcessStorage& storage, const std::string& name, unsigned int seed);
   bool killProcess(ProcessStorage& storage, const std::string& name);
   void shutdownProcesses(ProcessStorage& storage);
+  bool submitArea(ProcessStorage& storage, const std::string& process_name, const std::string& calc_name,
+      const std::vector< Shape >& shapes, std::size_t threads, std::size_t tries);
+  bool waitCalculation(ProcessStorage& storage, const std::string& calc_name, double& area);
 }
-
 #endif
