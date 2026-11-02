@@ -14,6 +14,7 @@ namespace chernov {
     sets_t &sets;
     processes_t &processes;
     calcs_t &calcs;
+    size_t id_counter = 0;
   };
 
   using cmd_t = std::function< void(std::istream &, std::ostream &, App &) >;

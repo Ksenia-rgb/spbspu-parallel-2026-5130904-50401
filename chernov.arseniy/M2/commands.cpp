@@ -254,6 +254,42 @@ void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
   if (app.sets.find(set_name) == app.sets.end()) {
     throw std::runtime_error("set name not found");
   }
+
+  if (threads <= 0) {
+    throw std::runtime_error("threads must be positive");
+  }
+
+  if (tries <= 0) {
+    throw std::runtime_error("tries must be positive");
+  }
+
+  process_t &process = app.processes.at(process_name);
+  if (process.state != ProcessState::Active) {
+    throw std::runtime_error("process state must be active");
+  }
+
+  if (app.id_counter == std::numeric_limits< size_t >::max()) {
+    throw std::runtime_error("calculation id limit reached");
+  }
+
+  std::vector< ellipse_t > ellipses;
+  ellipses.reserve(app.sets.at(set_name).size());
+  for (const std::string &ellipse_name : app.sets.at(set_name)) {
+    ellipses.push_back(app.ellipses.at(ellipse_name));
+  }
+
+  calc_t calc{process_name, TaskState::Pending, 0, 0, app.id_counter, std::move(ellipses), static_cast< size_t >(threads),
+      static_cast< size_t >(tries)};
+
+  app.calcs.insert({calc_name, std::move(calc)});
+  try {
+    process.pending_calcs.push_back(calc_name);
+  } catch (...) {
+    app.calcs.erase(calc_name);
+    throw;
+  }
+
+  ++app.id_counter;
 }
 
 void chernov::cmdStatus(std::istream &input, std::ostream &, App &app)
