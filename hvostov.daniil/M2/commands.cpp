@@ -347,6 +347,7 @@ void hvostov::areaOn(std::ostream&, const Args& args, info_t& info)
     throw std::logic_error("bad shape count");
   }
 
+  ShmLayout* const layout = reinterpret_cast< ShmLayout* >(p.shm->get());
   const size_t slot_idx = layout->write_idx % MAX_SLOTS;
   ShmSlot& slot = layout->slots[slot_idx];
 
