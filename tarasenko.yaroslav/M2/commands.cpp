@@ -1,5 +1,7 @@
 #include "commands.hpp"
 #include <chrono>
+#include <cctype>
+#include <cstdio>
 #include <istream>
 #include <cstring>
 #include <iomanip>
@@ -13,6 +15,38 @@
 
 namespace tarasenko {
   namespace {
+    template< class T >
+    void readValue(std::istream& in, T& value)
+    {
+      while (in.peek() != '\n' && std::isspace(in.peek())) {
+        in.get();
+      }
+      if (in.peek() == '\n' || !(in >> value)) {
+        throw std::invalid_argument("Missing or invalid argument");
+      }
+    }
+
+    std::string readName(std::istream& in)
+    {
+      std::string name;
+      readValue(in, name);
+      const char first = name.front();
+      if (!((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z'))) {
+        throw std::invalid_argument("Invalid name");
+      }
+      return name;
+    }
+
+    void checkEnd(std::istream& in)
+    {
+      while (in.peek() != '\n' && std::isspace(in.peek())) {
+        in.get();
+      }
+      if (in.peek() != '\n' && in.peek() != EOF) {
+        throw std::invalid_argument("Unexpected argument");
+      }
+    }
+
     void printStatus(const CalculationInfo& info, std::ostream& out)
     {
       const Calculation& calculation = *info.calculation;
@@ -31,10 +65,22 @@ namespace tarasenko {
 
   void circle(Data& data, std::istream& in, std::ostream&)
   {
-    std::string name;
+    const std::string name = readName(in);
+    long radius = 0;
+    long x = 0;
+    long y = 0;
+    readValue(in, radius);
+    readValue(in, x);
+    readValue(in, y);
+    checkEnd(in);
+    if (radius <= 0 || data.ellipses.count(name)) {
+      throw std::invalid_argument("Invalid circle");
+    }
     Ellipse shape{};
-    in >> name >> shape.rx >> shape.center.x >> shape.center.y;
-    shape.ry = shape.rx;
+    shape.rx = radius;
+    shape.ry = radius;
+    shape.center.x = x;
+    shape.center.y = y;
     data.ellipses.emplace(name, shape);
   }
 
@@ -48,17 +94,26 @@ namespace tarasenko {
 
   void set(Data& data, std::istream& in, std::ostream&)
   {
-    std::string name;
-    size_t count = 0;
-    in >> name >> count;
-    const std::string memory_name = "/m2_" + std::to_string(data.sets.size());
-    Ellipse* const ellipses = allocateSharedCircles(memory_name.c_str(), count);
-    for (size_t i = 0; i < count; ++i) {
-      std::string ellipse_name;
-      in >> ellipse_name;
-      ellipses[i] = data.ellipses.at(ellipse_name);
+    const std::string name = readName(in);
+    long count = 0;
+    readValue(in, count);
+    if (count <= 0 || data.sets.count(name)) {
+      throw std::invalid_argument("Invalid set");
     }
-    data.sets.emplace(name, CircleSet{memory_name, ellipses, count});
+    const size_t set_size = count;
+    const std::string memory_name = "/m2_" + std::to_string(data.sets.size());
+    Ellipse* const ellipses = allocateSharedCircles(memory_name.c_str(), set_size);
+    try {
+      for (size_t i = 0; i < set_size; ++i) {
+        const std::string ellipse_name = readName(in);
+        ellipses[i] = data.ellipses.at(ellipse_name);
+      }
+      checkEnd(in);
+      data.sets.emplace(name, CircleSet{memory_name, ellipses, set_size});
+    } catch (...) {
+      freeSharedCircles(memory_name.c_str(), ellipses, set_size);
+      throw;
+    }
   }
 
   void showSet(Data& data, std::istream& in, std::ostream& out)
@@ -97,6 +152,9 @@ namespace tarasenko {
     std::string name;
     unsigned long seed = 0;
     in >> name >> seed;
+    if (data.processes.count(name)) {
+      throw std::invalid_argument("Process already exists");
+    }
     const std::string memory_name = "/worker_" + std::to_string(data.processes.size());
     WorkerState* const state
         = static_cast< WorkerState* >(allocateSharedMemory(memory_name.c_str(), sizeof(WorkerState)));
@@ -119,12 +177,17 @@ namespace tarasenko {
 
   void areaOn(Data& data, std::istream& in, std::ostream&)
   {
-    std::string process_name;
-    std::string calculation_name;
-    std::string set_name;
+    const std::string process_name = readName(in);
+    const std::string calculation_name = readName(in);
+    const std::string set_name = readName(in);
     long threads = 0;
     long tries = 0;
-    in >> process_name >> calculation_name >> set_name >> threads >> tries;
+    readValue(in, threads);
+    readValue(in, tries);
+    checkEnd(in);
+    if (threads < 0 || tries <= 0 || data.calculations.count(calculation_name)) {
+      throw std::invalid_argument("Invalid calculation");
+    }
     const Worker& worker = data.processes.at(process_name);
     const CircleSet& set = data.sets.at(set_name);
     const std::string memory_name = worker.memory_name + '_' + std::to_string(worker.state->submitted);
@@ -136,7 +199,12 @@ namespace tarasenko {
     calculation->threads = threads == 0 ? 1 : threads;
     calculation->tries = tries;
     calculation->state = CalculationState::ready;
-    data.calculations.emplace(calculation_name, CalculationInfo{process_name, memory_name, calculation});
+    try {
+      data.calculations.emplace(calculation_name, CalculationInfo{process_name, memory_name, calculation});
+    } catch (...) {
+      freeSharedMemory(memory_name.c_str(), calculation, sizeof(Calculation));
+      throw;
+    }
     ++worker.state->submitted;
   }
 
