@@ -1,12 +1,12 @@
-#ifndef TARASENKO_YAROSLAV_M2_SHARED_MEMORY_HPP
-#define TARASENKO_YAROSLAV_M2_SHARED_MEMORY_HPP
+#ifndef MEMORY_HPP
+#define MEMORY_HPP
 
 #include <stddef.h>
-#include "geometry.hpp"
+#include "../common/geometry.hpp"
 
 namespace tarasenko {
-  Circle* allocateSharedCircles(const char* name, size_t count);
-  void freeSharedCircles(const char* name, Circle* circles, size_t count);
+  Ellipse* allocateSharedCircles(const char* name, size_t count);
+  void freeSharedCircles(const char* name, Ellipse* ellipses, size_t count);
 }
 
 #endif

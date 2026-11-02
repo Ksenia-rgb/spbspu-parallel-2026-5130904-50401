@@ -6,13 +6,13 @@
 #include <unistd.h>
 
 namespace tarasenko {
-  Circle* allocateSharedCircles(const char* name, size_t count)
+  Ellipse* allocateSharedCircles(const char* name, size_t count)
   {
     const int fd = shm_open(name, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd == -1) {
       throw std::runtime_error("Cannot create shared memory");
     }
-    const size_t bytes = count * sizeof(Circle);
+    const size_t bytes = count * sizeof(Ellipse);
     if (ftruncate(fd, bytes) == -1) {
       close(fd);
       shm_unlink(name);
@@ -24,12 +24,12 @@ namespace tarasenko {
       shm_unlink(name);
       throw std::runtime_error("Cannot map shared memory");
     }
-    return static_cast< Circle* >(memory);
+    return static_cast< Ellipse* >(memory);
   }
 
-  void freeSharedCircles(const char* name, Circle* circles, size_t count)
+  void freeSharedCircles(const char* name, Ellipse* ellipses, size_t count)
   {
-    munmap(circles, count * sizeof(Circle));
+    munmap(ellipses, count * sizeof(Ellipse));
     shm_unlink(name);
   }
 }

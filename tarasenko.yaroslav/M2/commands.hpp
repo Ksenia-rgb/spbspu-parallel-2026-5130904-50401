@@ -1,5 +1,5 @@
-#ifndef TARASENKO_YAROSLAV_M2_COMMANDS_HPP
-#define TARASENKO_YAROSLAV_M2_COMMANDS_HPP
+#ifndef COMMANDS_HPP
+#define COMMANDS_HPP
 
 #include <iosfwd>
 #include "Data.hpp"

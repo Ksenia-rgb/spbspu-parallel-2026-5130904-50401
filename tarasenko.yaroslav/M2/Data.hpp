@@ -1,24 +1,22 @@
-#ifndef TARASENKO_YAROSLAV_M2_DATA_HPP
-#define TARASENKO_YAROSLAV_M2_DATA_HPP
+#ifndef DATA_HPP
+#define DATA_HPP
 
 #include <string>
 #include <unordered_map>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include "geometry.hpp"
+#include "../common/geometry.hpp"
 #include "shared_memory.hpp"
 
 namespace tarasenko {
   struct CircleSet
   {
     std::string memory_name;
-    Circle* circles;
+    Ellipse* ellipses;
     size_t count;
   };
 
   struct Data
   {
-    std::unordered_map< std::string, Circle > circles;
+    std::unordered_map< std::string, Ellipse > ellipses;
     std::unordered_map< std::string, CircleSet > sets;
     std::unordered_map< std::string, pid_t > processes;
 
@@ -29,7 +27,7 @@ namespace tarasenko {
       }
       for (const auto& item: sets) {
         const CircleSet& set = item.second;
-        freeSharedCircles(set.memory_name.c_str(), set.circles, set.count);
+        freeSharedCircles(set.memory_name.c_str(), set.ellipses, set.count);
       }
     }
   };
