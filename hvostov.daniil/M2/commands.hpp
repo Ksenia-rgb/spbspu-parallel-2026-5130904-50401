@@ -18,6 +18,7 @@ namespace hvostov {
     std::shared_ptr< ShmGuard > shm;
     std::vector< std::string > pending;
     size_t seed = 0;
+    size_t res_idx = 0;
   };
 
   struct info_t {

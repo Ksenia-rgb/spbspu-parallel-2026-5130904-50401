@@ -8,7 +8,6 @@ int main()
 {
   std::unordered_map< std::string, hvostov::cmd_t > cmds;
   hvostov::info_t info;
-
   cmds["circle"] = hvostov::addCircle;
   cmds["ellipse"] = hvostov::addEllipse;
   cmds["rotate"] = hvostov::rotate;
@@ -31,12 +30,12 @@ int main()
       try {
         it->second(std::cin, std::cout, info);
       } catch (...) {
-        std::cerr << "<INVALID COMMAND>\n";
+        std::cout << "<INVALID COMMAND>\n";
         std::cin.clear();
         std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
       }
     } else {
-      std::cerr << "<UNKNOWN COMMAND>\n";
+      std::cout << "<UNKNOWN COMMAND>\n";
       std::cin.clear();
       std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
     }

@@ -9,6 +9,9 @@ namespace hvostov {
   size_t send(int& err, int wr, const char* b, size_t k);
   size_t recv(int& err, int rd, char* b, size_t k);
 
+  constexpr size_t MAX_SHAPES = 4096;
+  constexpr size_t MAX_SLOTS = 16;
+
   struct AreaRequestHeader {
     char calc_name[64];
     int threads;
@@ -23,12 +26,16 @@ namespace hvostov {
     double time_ms;
   };
 
-  constexpr size_t MAX_SHAPES = 4096;
+  struct ShmSlot {
+    AreaRequestHeader req;
+    AreaResultHeader res;
+    shape_t shapes[MAX_SHAPES];
+  };
 
   struct ShmLayout {
-    AreaRequestHeader req;
-    shape_t shapes[MAX_SHAPES];
-    AreaResultHeader res;
+    ShmSlot slots[MAX_SLOTS];
+    size_t write_idx;
+    size_t read_idx;
   };
 
 }
