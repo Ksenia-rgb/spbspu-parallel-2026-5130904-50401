@@ -59,6 +59,7 @@ namespace chernov {
   void calculationLoop(int task_fd, int result_fd, size_t seed);
   void startNextCalculation(App &app, process_t &process);
   void receiveAvailableResult(App &, process_t &);
+  void checkProcesses(App &app);
 
   bool isInside(double x, double y, const ellipse_t &ellipse);
   bool isInsideAny(point_t point, const std::vector< ellipse_t > &ellipses);

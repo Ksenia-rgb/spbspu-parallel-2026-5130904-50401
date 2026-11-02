@@ -14,6 +14,7 @@
 #include <future>
 #include <random>
 #include <unistd.h>
+#include <sys/wait.h>
 
 size_t chernov::recvAll(int &err, int rd, char *b, size_t k)
 {
@@ -185,7 +186,10 @@ void chernov::receiveAvailableResult(App &app, process_t &process)
       }
     }
     for (const std::string &name : process.pending_calcs) {
-      app.calcs.at(name).state = TaskState::Failed;
+      calc_t &calc = app.calcs.at(name);
+      if (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
+        calc.state = TaskState::Failed;
+      }
     }
     process.pending_calcs.clear();
     process.current_calc_name.clear();
@@ -238,6 +242,58 @@ void chernov::receiveAvailableResult(App &app, process_t &process)
   calc.state = TaskState::Completed;
   process.buffer.clear();
   process.current_calc_name.clear();
+}
+
+void chernov::checkProcesses(App &app)
+{
+  int wait_error = 0;
+  for (auto &entry : app.processes) {
+    process_t &process = entry.second;
+    if (process.state == ProcessState::Stopped) {
+      continue;
+    }
+
+    pid_t result;
+    do {
+      result = waitpid(process.pid, nullptr, WNOHANG);
+    } while (result == -1 && errno == EINTR);
+    if (result == 0) {
+      continue;
+    }
+    if (result == -1 && errno != ECHILD) {
+      wait_error = errno;
+      continue;
+    }
+
+    if (result == process.pid && process.result_fd >= 0) {
+      try {
+        receiveAvailableResult(app, process);
+      } catch (...) {
+      }
+    }
+
+    for (auto &calc_entry : app.calcs) {
+      calc_t &calc = calc_entry.second;
+      if (calc.process_name == entry.first && (calc.state == TaskState::Pending || calc.state == TaskState::Running)) {
+        calc.state = TaskState::Failed;
+      }
+    }
+    if (process.task_fd >= 0) {
+      close(process.task_fd);
+    }
+    if (process.result_fd >= 0) {
+      close(process.result_fd);
+    }
+    process.task_fd = -1;
+    process.result_fd = -1;
+    process.buffer.clear();
+    process.pending_calcs.clear();
+    process.current_calc_name.clear();
+    process.state = ProcessState::Stopped;
+  }
+  if (wait_error != 0) {
+    throw std::runtime_error(std::strerror(wait_error));
+  }
 }
 
 bool chernov::isInside(const double x, const double y, const ellipse_t &ellipse)
