@@ -48,7 +48,7 @@ namespace {
       return false;
     }
 
-    const hvostov::ShmLayout* layout = reinterpret_cast< const hvostov::ShmLayout* >(p.shm->get());
+    const hvostov::ShmLayout* const layout = reinterpret_cast< const hvostov::ShmLayout* >(p.shm->get());
     const size_t idx = p.res_idx % hvostov::MAX_SLOTS;
     const hvostov::ShmSlot& slot = layout->slots[idx];
 
@@ -68,7 +68,6 @@ namespace {
     }
     return true;
   }
-
 }
 
 hvostov::Args hvostov::splitLine(const std::string& line)
@@ -94,7 +93,8 @@ hvostov::Args hvostov::splitLine(const std::string& line)
 
 void hvostov::addCircle(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() != 5) {
+  constexpr size_t arg_count = 5;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   const std::string& name = args[1];
@@ -122,7 +122,8 @@ void hvostov::addCircle(std::ostream&, const Args& args, info_t& info)
 
 void hvostov::addEllipse(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() != 6) {
+  constexpr size_t arg_count = 6;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   const std::string& name = args[1];
@@ -151,7 +152,8 @@ void hvostov::addEllipse(std::ostream&, const Args& args, info_t& info)
 
 void hvostov::rotate(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() != 3) {
+  constexpr size_t arg_count = 3;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   const std::string& name = args[1];
@@ -169,7 +171,8 @@ void hvostov::rotate(std::ostream&, const Args& args, info_t& info)
 
 void hvostov::show(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.db.find(args[1]);
@@ -181,7 +184,8 @@ void hvostov::show(std::ostream& out, const Args& args, info_t& info)
 
 void hvostov::set(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() < 3) {
+  constexpr size_t min_args = 3;
+  if (args.size() < min_args) {
     throw std::logic_error("bad args count");
   }
   const std::string& name = args[1];
@@ -192,14 +196,14 @@ void hvostov::set(std::ostream&, const Args& args, info_t& info)
     throw std::logic_error("name exists");
   }
   const long long size_ll = parseNumber(args[2]);
-  if (size_ll <= 0 || static_cast< size_t >(size_ll) != args.size() - 3) {
+  if (size_ll <= 0 || static_cast< size_t >(size_ll) != args.size() - min_args) {
     throw std::logic_error("bad set size");
   }
   const size_t size = static_cast< size_t >(size_ll);
   std::vector< shape_t > v;
   v.reserve(size);
   for (size_t i = 0; i < size; ++i) {
-    auto it = info.db.find(args[3 + i]);
+    auto it = info.db.find(args[min_args + i]);
     if (it == info.db.end()) {
       throw std::logic_error("shape not found");
     }
@@ -210,7 +214,8 @@ void hvostov::set(std::ostream&, const Args& args, info_t& info)
 
 void hvostov::showSet(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.set.find(args[1]);
@@ -224,7 +229,8 @@ void hvostov::showSet(std::ostream& out, const Args& args, info_t& info)
 
 void hvostov::getFrame(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.db.find(args[1]);
@@ -236,7 +242,8 @@ void hvostov::getFrame(std::ostream& out, const Args& args, info_t& info)
 
 void hvostov::getFrameSet(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.set.find(args[1]);
@@ -248,7 +255,8 @@ void hvostov::getFrameSet(std::ostream& out, const Args& args, info_t& info)
 
 void hvostov::spawnProcess(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() != 3) {
+  constexpr size_t arg_count = 3;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   const std::string& name = args[1];
@@ -304,7 +312,8 @@ void hvostov::spawnProcess(std::ostream&, const Args& args, info_t& info)
 
 void hvostov::areaOn(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() != 6) {
+  constexpr size_t arg_count = 6;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   const std::string& proc_name = args[1];
@@ -338,7 +347,7 @@ void hvostov::areaOn(std::ostream&, const Args& args, info_t& info)
     throw std::logic_error("bad shape count");
   }
 
-  ShmLayout* layout = reinterpret_cast< ShmLayout* >(p.shm->get());
+  ShmLayout* const layout = reinterpret_cast< ShmLayout* >(p.shm->get()); // NOLINT(misc-const-correctness)
   const size_t slot_idx = layout->write_idx % MAX_SLOTS;
   ShmSlot& slot = layout->slots[slot_idx];
 
@@ -362,44 +371,46 @@ void hvostov::areaOn(std::ostream&, const Args& args, info_t& info)
 
 void hvostov::status(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.calc.find(args[1]);
   if (it == info.calc.end()) {
     throw std::logic_error("calc not found");
   }
-  calc_state_t& st = it->second;
+  const calc_state_t& st = it->second;
   if (!st.done && !st.canceled) {
-    auto procIt = info.procs.find(st.process_name);
-    if (procIt != info.procs.end()) {
-      tryReadResult(info, procIt->second);
+    auto proc_it = info.procs.find(st.process_name);
+    if (proc_it != info.procs.end()) {
+      tryReadResult(info, proc_it->second);
     }
   }
-  out << it->second << "\n";
+  out << info.calc[args[1]] << "\n";
 }
 
 void hvostov::wait(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.calc.find(args[1]);
   if (it == info.calc.end()) {
     throw std::logic_error("calc not found");
   }
-  calc_state_t& st = it->second;
+  const calc_state_t& st = it->second;
   if (st.canceled) {
     out << st << "\n";
     return;
   }
   if (!st.done) {
-    auto procIt = info.procs.find(st.process_name);
-    if (procIt == info.procs.end()) {
+    auto proc_it = info.procs.find(st.process_name);
+    if (proc_it == info.procs.end()) {
       throw std::logic_error("process not found");
     }
-    process_t& p = procIt->second;
-    while (!st.done) {
+    process_t& p = proc_it->second;
+    while (!info.calc[args[1]].done) {
       if (p.pending.empty()) {
         throw std::logic_error("calc not pending");
       }
@@ -411,7 +422,7 @@ void hvostov::wait(std::ostream& out, const Args& args, info_t& info)
       if (recv(err, p.from_child, &sig, 1) != 1) {
         throw std::runtime_error("read failed");
       }
-      const ShmLayout* layout = reinterpret_cast< const ShmLayout* >(p.shm->get());
+      const ShmLayout* const layout = reinterpret_cast< const ShmLayout* >(p.shm->get());
       const size_t idx = p.res_idx % MAX_SLOTS;
       const ShmSlot& slot = layout->slots[idx];
       const std::string cn(slot.res.calc_name, strnlen(slot.res.calc_name, sizeof(slot.res.calc_name)));
@@ -428,12 +439,13 @@ void hvostov::wait(std::ostream& out, const Args& args, info_t& info)
       }
     }
   }
-  out << it->second << "\n";
+  out << info.calc[args[1]] << "\n";
 }
 
 void hvostov::timeout(std::ostream& out, const Args& args, info_t& info)
 {
-  if (args.size() != 3) {
+  constexpr size_t arg_count = 3;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.calc.find(args[1]);
@@ -444,21 +456,21 @@ void hvostov::timeout(std::ostream& out, const Args& args, info_t& info)
   if (ms_ll < 0) {
     throw std::logic_error("bad timeout");
   }
-  calc_state_t& st = it->second;
+  const calc_state_t& st = it->second;
   if (st.canceled) {
     out << st << "\n";
     return;
   }
   if (!st.done) {
-    auto procIt = info.procs.find(st.process_name);
-    if (procIt != info.procs.end()) {
-      process_t& p = procIt->second;
+    auto proc_it = info.procs.find(st.process_name);
+    if (proc_it != info.procs.end()) {
+      process_t& p = proc_it->second;
       struct pollfd pfd = {p.from_child, POLLIN, 0};
       if (poll(&pfd, 1, static_cast< int >(ms_ll)) > 0) {
         char sig = 0;
         int err = 0;
         if (recv(err, p.from_child, &sig, 1) == 1) {
-          const ShmLayout* layout = reinterpret_cast< const ShmLayout* >(p.shm->get());
+          const ShmLayout* const layout = reinterpret_cast< const ShmLayout* >(p.shm->get());
           const size_t idx = p.res_idx % MAX_SLOTS;
           const ShmSlot& slot = layout->slots[idx];
           const std::string cn(slot.res.calc_name, strnlen(slot.res.calc_name, sizeof(slot.res.calc_name)));
@@ -477,12 +489,13 @@ void hvostov::timeout(std::ostream& out, const Args& args, info_t& info)
       }
     }
   }
-  out << it->second << "\n";
+  out << info.calc[args[1]] << "\n";
 }
 
 void hvostov::killProcess(std::ostream&, const Args& args, info_t& info)
 {
-  if (args.size() != 2) {
+  constexpr size_t arg_count = 2;
+  if (args.size() != arg_count) {
     throw std::logic_error("bad args count");
   }
   auto it = info.procs.find(args[1]);
