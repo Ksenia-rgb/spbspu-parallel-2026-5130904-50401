@@ -2,7 +2,7 @@
 #define COMMANDS_HPP
 
 #include <iosfwd>
-#include "Data.hpp"
+#include "data.hpp"
 
 namespace tarasenko {
   void circle(Data& data, std::istream& in, std::ostream& out);
