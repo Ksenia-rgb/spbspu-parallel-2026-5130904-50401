@@ -1,5 +1,7 @@
 #include "calculations.hpp"
 
+#include "commands.hpp"
+
 #include "geometry.hpp"
 
 #include <algorithm>
@@ -57,7 +59,7 @@ size_t chernov::sendAll(int &err, int wr, const char *b, size_t k)
   return sent;
 }
 
-[[noreturn]] void chernov::calculationLoop(int task_fd, int result_fd, size_t seed)
+void chernov::calculationLoop(int task_fd, int result_fd, size_t seed)
 {
   int exit_code = 0;
   try {
@@ -75,6 +77,7 @@ size_t chernov::sendAll(int &err, int wr, const char *b, size_t k)
       int err = 0;
       const size_t received = recvAll(err, task_fd, reinterpret_cast< char * >(&task), sizeof(task));
       if (received == 0 && err == 0) {
+        break;
       }
       if (err != 0 || received != sizeof(task) || task.count == 0 || task.threads == 0 || task.tries == 0) {
         exit_code = 1;
@@ -116,6 +119,49 @@ size_t chernov::sendAll(int &err, int wr, const char *b, size_t k)
   close(result_fd);
   _exit(exit_code);
 }
+
+void chernov::startNextCalculation(App & app, process_t & process)
+{
+  if (process.state != ProcessState::Active || process.current_calc_name != "" || process.pending_calcs.empty()) {
+    return;
+  }
+  std::string calc_name = process.pending_calcs.front();
+  calc_t & calc = app.calcs.at(calc_name);
+
+  Task task{calc.id, calc.ellipses.size(), calc.threads, calc.tries};
+  if (task.count > calc.ellipses.max_size() || task.count > std::numeric_limits< size_t >::max() / sizeof(ellipse_t)) {
+    throw std::runtime_error("overload");
+  }
+
+  process.current_calc_name = calc_name;
+  int err;
+  const size_t sent = sendAll(err, process.task_fd, reinterpret_cast< const char * >(&task), sizeof(task));
+  bool failed = err != 0 || sent != sizeof(task);
+  if (!failed) {
+    const size_t bytes = task.count * sizeof(ellipse_t);
+    const size_t body_sent = sendAll(err, process.task_fd,
+        reinterpret_cast< const char * >(calc.ellipses.data()), bytes);
+    failed = err != 0 || body_sent != bytes;
+  }
+  if (failed) {
+    if (process.task_fd >= 0) {
+      close(process.task_fd);
+    }
+    process.task_fd = -1;
+    process.state = ProcessState::Stopping;
+    calc.state = TaskState::Failed;
+    for (std::string pending_calc_name : process.pending_calcs) {
+      app.calcs.at(pending_calc_name).state = TaskState::Failed;
+    }
+    process.pending_calcs.clear();
+    process.current_calc_name.clear();
+    return;
+  }
+
+  calc.state = TaskState::Running;
+  process.pending_calcs.pop_front();
+}
+
 
 bool chernov::isInside(const double x, const double y, const ellipse_t &ellipse)
 {

@@ -51,8 +51,8 @@ std::ostream& chernov::operator<<(std::ostream& output, const ellipse_t& ellipse
 chernov::frame_t chernov::getFrame(const ellipse_t& ellipse)
 {
   return {
-      .left_bottom = {ellipse.center.x - ellipse.horizontal_radius, ellipse.center.y - ellipse.vertical_radius},
-      .right_top = {ellipse.center.x + ellipse.horizontal_radius, ellipse.center.y + ellipse.vertical_radius},
+      {ellipse.center.x - ellipse.horizontal_radius, ellipse.center.y - ellipse.vertical_radius},
+      {ellipse.center.x + ellipse.horizontal_radius, ellipse.center.y + ellipse.vertical_radius},
   };
 }
 
@@ -85,7 +85,7 @@ chernov::frame_t chernov::getFrame(const std::vector< ellipse_t >& ellipses)
   const double max_x = it_max_x->center.x + it_max_x->horizontal_radius;
   const double max_y = it_max_y->center.y + it_max_y->vertical_radius;
 
-  const frame_t frame{.left_bottom = {.x = min_x, .y = min_y}, .right_top = {.x = max_x, .y = max_y}};
+  const frame_t frame{{min_x, min_y}, {max_x, max_y}};
   return frame;
 }
 

@@ -1,6 +1,5 @@
 #include "commands.hpp"
 
-#include <filesystem>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -63,7 +62,7 @@ void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
   }
 
   app.ellipses.insert(
-      {name, ellipse_t{.center = point_t{.x = x, .y = y}, .horizontal_radius = r, .vertical_radius = r, .ksi = 0}});
+      {name, ellipse_t{point_t{x, y}, r, r, 0}});
 }
 
 void chernov::cmdSet(std::istream &input, std::ostream &, App &app)

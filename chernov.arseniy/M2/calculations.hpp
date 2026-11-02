@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 namespace chernov {
+  struct App;
   enum class ProcessState { Active, Stopping, Stopped };
 
   struct process_t {
@@ -54,7 +55,8 @@ namespace chernov {
 
   size_t recvAll(int &err, int rd, char *b, size_t k);
   size_t sendAll(int &err, int wr, const char *b, size_t k);
-  [[noreturn]] void calculationLoop(int task_fd, int result_fd, size_t seed);
+  void calculationLoop(int task_fd, int result_fd, size_t seed);
+  void startNextCalculation(App & app, process_t & process);
 
   bool isInside(double x, double y, const ellipse_t &ellipse);
   bool isInsideAny(point_t point, const std::vector< ellipse_t > &ellipses);
