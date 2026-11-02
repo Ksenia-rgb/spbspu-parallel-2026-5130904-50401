@@ -1,9 +1,12 @@
 #include "commands.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <istream>
 #include <limits>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <cerrno>
 
 std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 {
@@ -192,16 +195,43 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
   const pid_t pid = fork();
 
   if (pid == -1) {
+    close(to_child[0]);
+    close(to_child[1]);
+    close(to_parent[0]);
+    close(to_parent[1]);
     throw std::runtime_error("fork failed");
   }
   if (pid == 0) {
     close(to_child[1]);
     close(to_parent[0]);
+    for (const auto &process : app.processes) {
+      if (process.second.result_fd >= 0) {
+        close(process.second.result_fd);
+      }
+      if (process.second.task_fd >= 0) {
+        close(process.second.task_fd);
+      }
+    }
 
-    calculationLoop(to_child[0], to_parent[1], seed, nullptr, 0);
+    calculationLoop(to_child[0], to_parent[1], seed);
   } else {
-    app.processes.insert(
-        {process_name, process_t{pid, seed, {to_child[0], to_child[1]}, {to_parent[0], to_parent[1]}}});
+    close(to_child[0]);
+    close(to_parent[1]);
+
+    process_t process{pid, seed, to_child[1], to_parent[0], ProcessState::Active, "", {}};
+
+    try {
+      app.processes.insert({process_name, std::move(process)});
+    } catch (...) {
+      close(to_child[1]);
+      close(to_parent[0]);
+
+      int result;
+      do {
+        result = waitpid(pid, nullptr, 0);
+      } while (result == -1 && errno == EINTR);
+      throw;
+    }
   }
 }
 
@@ -238,7 +268,7 @@ void chernov::cmdStatus(std::istream &input, std::ostream &, App &app)
   }
 }
 
-void chernov::cmdWait(std::istream & input, std::ostream &, App & app)
+void chernov::cmdWait(std::istream &input, std::ostream &, App &app)
 {
   std::string calc_name;
   if (!(input >> calc_name)) {
