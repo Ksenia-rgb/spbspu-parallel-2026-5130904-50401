@@ -6,16 +6,18 @@
 
 namespace donkeev
 {
-  struct circle_t
+  class circle_t
   {
+  public:
+    circle_t();
     circle_t(int, int, int);
 
     int getRadius() const;
     point_t getCenter() const;
-
     rectangle_t getBoundingBox() const;
+
   private:
-    int radius_;
+    int r_;
     point_t center_;
   };
 }
