@@ -20,3 +20,11 @@ int donkeev::circle_t::getRadius() const
 {
   return radius_;
 }
+
+donkeev::rectangle_t donkeev::circle_t::getBoundingBox() const
+{
+  point_t bottom_left{center_.x_ - radius_, center_.y_ - radius_};
+  point_t top_right{center_.x_ + radius_, center_.y_ + radius_};
+  
+  return {bottom_left, top_right};
+}

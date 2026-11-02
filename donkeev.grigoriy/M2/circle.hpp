@@ -2,6 +2,7 @@
 #define CIRCLE_HPP
 
 #include "point.hpp"
+#include "rectangle.hpp"
 
 namespace donkeev
 {
@@ -12,6 +13,7 @@ namespace donkeev
     int getRadius() const;
     point_t getCenter() const;
 
+    rectangle_t getBoundingBox() const;
   private:
     int radius_;
     point_t center_;
