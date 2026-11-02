@@ -40,4 +40,28 @@ namespace {
       fd = no_fd;
     }
   }
+
+  void workerLoop(int request_fd, int response_fd, size_t seed)
+  {
+    using Clock = std::chrono::steady_clock;
+    using Milliseconds = std::chrono::milliseconds;
+    while (stop_requested == 0) {
+      petrov::Request request{};
+      if (!petrov::readAll(request_fd, &request, sizeof(request))) {
+        return;
+      }
+      std::vector< petrov::Shape > shapes(request.shape_count);
+      if (!petrov::readAll(request_fd, shapes.data(), sizeof(petrov::Shape) * shapes.size())) {
+        return;
+      }
+      const Clock::time_point start = Clock::now();
+      const double area = petrov::countArea(shapes, request.threads, request.tries, seed);
+      const Clock::time_point finish = Clock::now();
+      const long long time_ms = std::chrono::duration_cast< Milliseconds >(finish - start).count();
+      const petrov::Response response{request.calc_id, time_ms, area};
+      if (!petrov::writeAll(response_fd, &response, sizeof(response))) {
+        return;
+      }
+    }
+  }
 }
