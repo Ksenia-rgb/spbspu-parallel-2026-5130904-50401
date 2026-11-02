@@ -68,9 +68,9 @@ namespace ulanova
     }
 
     const rect_t rect = bounds(b, e);
-    const double boxArea = (rect.xmax - rect.xmin) * (rect.ymax - rect.ymin);
+    const double box_area = (rect.xmax - rect.xmin) * (rect.ymax - rect.ymin);
 
-    const size_t testsPerThread = tests / thrds;
+    const size_t tests_per_thread = tests / thrds;
     const size_t remainder = tests % thrds;
 
     std::vector< std::future< size_t > > futures;
@@ -78,18 +78,18 @@ namespace ulanova
 
     for (size_t i = 0; i < thrds; ++i)
     {
-      const size_t currentTests = testsPerThread + (i == 0 ? remainder : 0);
-      const size_t currentSeed = seed + i;
+      const size_t current_tests = tests_per_thread + (i == 0 ? remainder : 0);
+      const size_t current_seed = seed + i;
 
-      futures.push_back(std::async(std::launch::async, calc, b, e, rect, currentTests, currentSeed));
+      futures.push_back(std::async(std::launch::async, calc, b, e, rect, current_tests, current_seed));
     }
 
-    size_t totalHits = 0;
+    size_t total_hits = 0;
     for (auto& f : futures)
     {
-      totalHits += f.get();
+      total_hits += f.get();
     }
 
-    return (static_cast< double >(totalHits) / static_cast< double >(tests)) * boxArea;
+    return (static_cast< double >(total_hits) / static_cast< double >(tests)) * box_area;
   }
 }

@@ -120,33 +120,33 @@ namespace ulanova
 
   void sendAll(int fd, const void* buf, size_t size)
   {
-    size_t totalWritten = 0;
+    size_t total_written = 0;
     const char* const ptr = static_cast< const char* >(buf);
 
-    while (totalWritten < size)
+    while (total_written < size)
     {
-      const ssize_t written = write(fd, ptr + totalWritten, size - totalWritten);
+      const ssize_t written = write(fd, ptr + total_written, size - total_written);
       if (written <= 0)
       {
         throw std::runtime_error("Failed to write to pipe");
       }
-      totalWritten += static_cast< size_t >(written);
+      total_written += static_cast< size_t >(written);
     }
   }
 
   void recvAll(int fd, void* buf, size_t size)
   {
-    size_t totalRead = 0;
+    size_t total_read = 0;
     char* const ptr = static_cast< char* >(buf);
 
-    while (totalRead < size)
+    while (total_read < size)
     {
-      const ssize_t bytesRead = read(fd, ptr + totalRead, size - totalRead);
-      if (bytesRead <= 0)
+      const ssize_t bytes_read = read(fd, ptr + total_read, size - total_read);
+      if (bytes_read <= 0)
       {
         throw std::runtime_error("Failed to read from pipe");
       }
-      totalRead += static_cast< size_t >(bytesRead);
+      total_read += static_cast< size_t >(bytes_read);
     }
   }
 }

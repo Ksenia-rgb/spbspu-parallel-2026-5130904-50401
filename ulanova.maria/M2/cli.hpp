@@ -12,19 +12,19 @@ namespace ulanova
   struct NamedSet
   {
     std::string name;
-    std::vector< size_t > circleIndices;
+    std::vector< size_t > circle_indices;
   };
 
   struct CalcActive
   {
-    std::string calcName;
-    std::string processName;
-    std::string setName;
+    std::string calc_name;
+    std::string process_name;
+    std::string set_name;
     size_t threads;
     size_t tries;
-    bool isDone;
-    double areaResult;
-    long long durationMs;
+    bool is_done;
+    double area_result;
+    long long duration_ms;
   };
 
   struct CliContext
@@ -32,7 +32,7 @@ namespace ulanova
     std::vector< circle_t > storage;
     std::vector< std::string > names;
     std::vector< NamedSet > sets;
-    std::vector< std::string > activeProcesses;
+    std::vector< std::string > active_processes;
     std::vector< CalcActive > calculations;
   };
 
@@ -70,7 +70,7 @@ namespace ulanova
     ptrdiff_t getProcessIdx(const std::string& name) const;
     ptrdiff_t getCalcIdx(const std::string& name) const;
 
-    void executeSystemSpawn(const std::string& processName, unsigned int seed);
+    void executeSystemSpawn(const std::string& process_name, unsigned int seed);
     void executeSystemAreaOn(CalcActive& calc);
     void executeSystemWait(CalcActive& calc);
   };

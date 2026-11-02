@@ -107,19 +107,19 @@ namespace ulanova
 
   ptrdiff_t CLI::getProcessIdx(const std::string& name) const
   {
-    const auto it = std::find(ctx_.activeProcesses.cbegin(), ctx_.activeProcesses.cend(), name);
-    if (it == ctx_.activeProcesses.cend())
+    const auto it = std::find(ctx_.active_processes.cbegin(), ctx_.active_processes.cend(), name);
+    if (it == ctx_.active_processes.cend())
     {
       return -1;
     }
-    return std::distance(ctx_.activeProcesses.cbegin(), it);
+    return std::distance(ctx_.active_processes.cbegin(), it);
   }
 
   ptrdiff_t CLI::getCalcIdx(const std::string& name) const
   {
     for (size_t i = 0; i < ctx_.calculations.size(); ++i)
     {
-      if (ctx_.calculations[i].calcName == name)
+      if (ctx_.calculations[i].calc_name == name)
       {
         return static_cast< ptrdiff_t >(i);
       }
@@ -216,25 +216,25 @@ namespace ulanova
   void CLI::parseSet(const std::string& line, std::string::size_type& pos)
   {
     const std::string name = readName(line, pos);
-    size_t expectedSize = 0;
+    size_t expected_size = 0;
 
-    if (name.empty() || !readSize(line, pos, expectedSize) || getCircleIdx(name) != -1 || getSetIdx(name) != -1)
+    if (name.empty() || !readSize(line, pos, expected_size) || getCircleIdx(name) != -1 || getSetIdx(name) != -1)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
 
-    NamedSet newSet{name, {}};
-    for (size_t i = 0; i < expectedSize; ++i)
+    NamedSet new_set{name, {}};
+    for (size_t i = 0; i < expected_size; ++i)
     {
-      const std::string shapeName = readName(line, pos);
-      const ptrdiff_t idx = getCircleIdx(shapeName);
-      if (shapeName.empty() || idx == -1)
+      const std::string shape_name = readName(line, pos);
+      const ptrdiff_t idx = getCircleIdx(shape_name);
+      if (shape_name.empty() || idx == -1)
       {
         std::cout << "<INVALID COMMAND>\n";
         return;
       }
-      newSet.circleIndices.push_back(static_cast< size_t >(idx));
+      new_set.circle_indices.push_back(static_cast< size_t >(idx));
     }
 
     if (!checkEnd(line, pos))
@@ -242,7 +242,7 @@ namespace ulanova
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
-    ctx_.sets.push_back(newSet);
+    ctx_.sets.push_back(new_set);
   }
 
   void CLI::parseShow(const std::string& line, std::string::size_type& pos)
@@ -272,9 +272,9 @@ namespace ulanova
     }
 
     const NamedSet& s = ctx_.sets[idx];
-    for (size_t cIdx : s.circleIndices)
+    for (size_t c_idx : s.circle_indices)
     {
-      const circle_t& c = ctx_.storage[cIdx];
+      const circle_t& c = ctx_.storage[c_idx];
       std::cout << c.r << " (" << c.x << " " << c.y << ")\n";
     }
   }
@@ -309,9 +309,9 @@ namespace ulanova
 
     const NamedSet& s = ctx_.sets[idx];
     std::vector< const circle_t* > ptrs;
-    for (size_t cIdx : s.circleIndices)
+    for (size_t c_idx : s.circle_indices)
     {
-      ptrs.push_back(&ctx_.storage[cIdx]);
+      ptrs.push_back(&ctx_.storage[c_idx]);
     }
 
     const rect_t r = bounds(ptrs.data(), ptrs.data() + ptrs.size());
@@ -320,87 +320,87 @@ namespace ulanova
 
   void CLI::parseSpawn(const std::string& line, std::string::size_type& pos)
   {
-    const std::string pName = readName(line, pos);
-    size_t seedVal = 0;
+    const std::string p_name = readName(line, pos);
+    size_t seed_val = 0;
 
-    if (pName.empty() || !readSize(line, pos, seedVal) || !checkEnd(line, pos) || getProcessIdx(pName) != -1)
+    if (p_name.empty() || !readSize(line, pos, seed_val) || !checkEnd(line, pos) || getProcessIdx(p_name) != -1)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
 
-    ctx_.activeProcesses.push_back(pName);
-    executeSystemSpawn(pName, static_cast< unsigned int >(seedVal));
+    ctx_.active_processes.push_back(p_name);
+    executeSystemSpawn(p_name, static_cast< unsigned int >(seed_val));
   }
 
   void CLI::parseAreaOn(const std::string& line, std::string::size_type& pos)
   {
-    const std::string pName = readName(line, pos);
-    const std::string cName = readName(line, pos);
-    const std::string setName = readName(line, pos);
+    const std::string p_name = readName(line, pos);
+    const std::string c_name = readName(line, pos);
+    const std::string set_name = readName(line, pos);
     size_t thrs = 0;
     size_t tries = 0;
 
-    if (pName.empty() || cName.empty() || setName.empty() || !readSize(line, pos, thrs) || !readSize(line, pos, tries)
-        || !checkEnd(line, pos) || getProcessIdx(pName) == -1 || getSetIdx(setName) == -1 || getCalcIdx(cName) != -1
+    if (p_name.empty() || c_name.empty() || set_name.empty() || !readSize(line, pos, thrs) || !readSize(line, pos, tries)
+        || !checkEnd(line, pos) || getProcessIdx(p_name) == -1 || getSetIdx(set_name) == -1 || getCalcIdx(c_name) != -1
         || thrs == 0 || tries == 0)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
 
-    CalcActive newCalc{cName, pName, setName, thrs, tries, false, 0.0, 0};
-    ctx_.calculations.push_back(newCalc);
+    CalcActive new_calc{c_name, p_name, set_name, thrs, tries, false, 0.0, 0};
+    ctx_.calculations.push_back(new_calc);
     executeSystemAreaOn(ctx_.calculations.back());
   }
 
   void CLI::parseStatus(const std::string& line, std::string::size_type& pos)
   {
-    const std::string cName = readName(line, pos);
-    const ptrdiff_t idx = getCalcIdx(cName);
+    const std::string c_name = readName(line, pos);
+    const ptrdiff_t idx = getCalcIdx(c_name);
 
-    if (cName.empty() || !checkEnd(line, pos) || idx == -1)
+    if (c_name.empty() || !checkEnd(line, pos) || idx == -1)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
 
     const CalcActive& c = ctx_.calculations[idx];
-    if (c.isDone)
+    if (c.is_done)
     {
-      std::cout << c.processName << " " << c.durationMs << " " << std::fixed << std::setprecision(3) << c.areaResult << "\n";
+      std::cout << c.process_name << " " << c.duration_ms << " " << std::fixed << std::setprecision(3) << c.area_result << "\n";
     }
     else
     {
-      std::cout << c.processName << " <IN PROGRESS>\n";
+      std::cout << c.process_name << " <IN PROGRESS>\n";
     }
   }
 
   void CLI::parseWait(const std::string& line, std::string::size_type& pos)
   {
-    const std::string cName = readName(line, pos);
-    const ptrdiff_t idx = getCalcIdx(cName);
+    const std::string c_name = readName(line, pos);
+    const ptrdiff_t idx = getCalcIdx(c_name);
 
-    if (cName.empty() || !checkEnd(line, pos) || idx == -1)
+    if (c_name.empty() || !checkEnd(line, pos) || idx == -1)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
 
     CalcActive& c = ctx_.calculations[idx];
-    if (!c.isDone)
+    if (!c.is_done)
     {
       executeSystemWait(c);
     }
-    std::cout << c.processName << " " << c.durationMs << " " << std::fixed << std::setprecision(3) << c.areaResult << "\n";
+    std::cout << c.process_name << " " << c.duration_ms << " " << std::fixed << std::setprecision(3) << c.area_result << "\n";
   }
 
   void CLI::executeSystemSpawn(const std::string&, unsigned int)
   {
-    int pipeToChild[2]{};
-    int pipeToParent[2]{};
+    int pipe_to_child[2]{};
+    int pipe_to_parent[2]{};
 
-    if (pipe(pipeToChild) == -1 || pipe(pipeToParent) == -1)
+    if (pipe(pipe_to_child) == -1 || pipe(pipe_to_parent) == -1)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
@@ -410,31 +410,31 @@ namespace ulanova
     if (pid == -1)
     {
       std::cout << "<INVALID COMMAND>\n";
-      ::close(pipeToChild[0]);
-      ::close(pipeToChild[1]);
-      ::close(pipeToParent[0]);
-      ::close(pipeToParent[1]);
+      ::close(pipe_to_child[0]);
+      ::close(pipe_to_child[1]);
+      ::close(pipe_to_parent[0]);
+      ::close(pipe_to_parent[1]);
       return;
     }
 
     if (pid == 0)
     {
-      ::close(pipeToChild[1]);
-      ::close(pipeToParent[0]);
+      ::close(pipe_to_child[1]);
+      ::close(pipe_to_parent[0]);
 
-      computeProcess(pipeToChild[0], pipeToParent[1], shared_memory_name);
+      computeProcess(pipe_to_child[0], pipe_to_parent[1], shared_memory_name);
 
-      ::close(pipeToChild[0]);
-      ::close(pipeToParent[1]);
+      ::close(pipe_to_child[0]);
+      ::close(pipe_to_parent[1]);
       std::exit(0);
     }
     else
     {
-      ::close(pipeToChild[0]);
-      ::close(pipeToParent[1]);
+      ::close(pipe_to_child[0]);
+      ::close(pipe_to_parent[1]);
 
-      parent_write_fd = pipeToChild[1];
-      parent_read_fd = pipeToParent[0];
+      parent_write_fd = pipe_to_child[1];
+      parent_read_fd = pipe_to_parent[0];
     }
   }
   void CLI::executeSystemAreaOn(CalcActive& calc)
@@ -445,34 +445,34 @@ namespace ulanova
       return;
     }
 
-    const ptrdiff_t setIdx = getSetIdx(calc.setName);
-    if (setIdx == -1)
+    const ptrdiff_t set_idx = getSetIdx(calc.set_name);
+    if (set_idx == -1)
     {
       return;
     }
 
-    const NamedSet& s = ctx_.sets[setIdx];
-    const size_t shapesCount = s.circleIndices.size();
+    const NamedSet& s = ctx_.sets[set_idx];
+    const size_t shapes_count = s.circle_indices.size();
 
     request_t req{};
     req.command = cmd_t::CALC;
-    req.shapes_count = shapesCount;
+    req.shapes_count = shapes_count;
     req.tests = calc.tries;
     req.seed = 42;
     req.thrds = calc.threads;
 
     std::vector< const circle_t* > ptrs;
-    for (size_t cIdx : s.circleIndices)
+    for (size_t c_idx : s.circle_indices)
     {
-      ptrs.push_back(&ctx_.storage[cIdx]);
+      ptrs.push_back(&ctx_.storage[c_idx]);
     }
     req.rect = bounds(ptrs.data(), ptrs.data() + ptrs.size());
 
     std::vector< circle_t > shapes;
-    shapes.reserve(shapesCount);
-    for (size_t cIdx : s.circleIndices)
+    shapes.reserve(shapes_count);
+    for (size_t c_idx : s.circle_indices)
     {
-      shapes.push_back(ctx_.storage[cIdx]);
+      shapes.push_back(ctx_.storage[c_idx]);
     }
 
     try
@@ -494,27 +494,27 @@ namespace ulanova
     }
 
     response_t resp{};
-    const auto startTime = std::chrono::steady_clock::now();
+    const auto start_time = std::chrono::steady_clock::now();
 
     try
     {
       recvAll(parent_read_fd, &resp, sizeof(response_t));
-      const auto endTime = std::chrono::steady_clock::now();
+      const auto end_time = std::chrono::steady_clock::now();
 
       if (resp.status == status_t::SUCCESS)
       {
-        calc.isDone = true;
-        calc.durationMs = std::chrono::duration_cast< std::chrono::milliseconds >(endTime - startTime).count();
-        const ptrdiff_t setIdx = getSetIdx(calc.setName);
+        calc.is_done = true;
+        calc.duration_ms = std::chrono::duration_cast< std::chrono::milliseconds >(end_time - start_time).count();
+        const ptrdiff_t set_idx = getSetIdx(calc.set_name);
         std::vector< const circle_t* > ptrs;
-        for (size_t cIdx : ctx_.sets[setIdx].circleIndices)
+        for (size_t c_idx : ctx_.sets[set_idx].circle_indices)
         {
-          ptrs.push_back(&ctx_.storage[cIdx]);
+          ptrs.push_back(&ctx_.storage[c_idx]);
         }
         const rect_t r = bounds(ptrs.data(), ptrs.data() + ptrs.size());
-        const double boxArea = (r.xmax - r.xmin) * (r.ymax - r.ymin);
+        const double box_area = (r.xmax - r.xmin) * (r.ymax - r.ymin);
 
-        calc.areaResult = (static_cast< double >(resp.hits) / calc.tries) * boxArea;
+        calc.area_result = (static_cast< double >(resp.hits) / calc.tries) * box_area;
       }
     }
     catch (...)

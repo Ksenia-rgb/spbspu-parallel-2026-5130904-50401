@@ -3,7 +3,7 @@
 
 namespace ulanova
 {
-  void computeProcess(int readFd, int writeFd, const char* shmName);
+  void computeProcess(int read_fd, int write_fd, const char* shm_name);
 }
 
 #endif
