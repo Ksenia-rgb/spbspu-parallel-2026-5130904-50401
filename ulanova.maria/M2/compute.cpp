@@ -40,7 +40,8 @@ namespace ulanova
             shapes_ptrs[i] = &shapes_data[i];
           }
 
-          const size_t hits = calc(shapes_ptrs.data(), shapes_ptrs.data() + req.shapes_count, req.rect, req.tests, req.seed);
+          const auto shapes_end = shapes_ptrs.data() + req.shapes_count;
+          const size_t hits = calc(shapes_ptrs.data(), shapes_end, req.rect, req.tests, req.seed);
 
           resp.status = status_t::SUCCESS;
           resp.hits = hits;

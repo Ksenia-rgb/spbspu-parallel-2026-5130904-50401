@@ -272,7 +272,7 @@ namespace ulanova
     }
 
     const NamedSet& s = ctx_.sets[idx];
-    for (size_t c_idx : s.circle_indices)
+    for (const size_t c_idx : s.circle_indices)
     {
       const circle_t& c = ctx_.storage[c_idx];
       std::cout << c.r << " (" << c.x << " " << c.y << ")\n";
@@ -309,7 +309,7 @@ namespace ulanova
 
     const NamedSet& s = ctx_.sets[idx];
     std::vector< const circle_t* > ptrs;
-    for (size_t c_idx : s.circle_indices)
+    for (const size_t c_idx : s.circle_indices)
     {
       ptrs.push_back(&ctx_.storage[c_idx]);
     }
@@ -341,15 +341,17 @@ namespace ulanova
     size_t thrs = 0;
     size_t tries = 0;
 
-    if (p_name.empty() || c_name.empty() || set_name.empty() || !readSize(line, pos, thrs) || !readSize(line, pos, tries)
-        || !checkEnd(line, pos) || getProcessIdx(p_name) == -1 || getSetIdx(set_name) == -1 || getCalcIdx(c_name) != -1
+    if (p_name.empty() || c_name.empty() || set_name.empty()
+        || !readSize(line, pos, thrs) || !readSize(line, pos, tries)
+        || !checkEnd(line, pos) || getProcessIdx(p_name) == -1
+        || getSetIdx(set_name) == -1 || getCalcIdx(c_name) != -1
         || thrs == 0 || tries == 0)
     {
       std::cout << "<INVALID COMMAND>\n";
       return;
     }
 
-    CalcActive new_calc{c_name, p_name, set_name, thrs, tries, false, 0.0, 0};
+    const CalcActive new_calc{c_name, p_name, set_name, thrs, tries, false, 0.0, 0};
     ctx_.calculations.push_back(new_calc);
     executeSystemAreaOn(ctx_.calculations.back());
   }
@@ -368,7 +370,8 @@ namespace ulanova
     const CalcActive& c = ctx_.calculations[idx];
     if (c.is_done)
     {
-      std::cout << c.process_name << " " << c.duration_ms << " " << std::fixed << std::setprecision(3) << c.area_result << "\n";
+      std::cout << c.process_name << " " << c.duration_ms << " ";
+      std::cout << std::fixed << std::setprecision(3) << c.area_result << "\n";
     }
     else
     {
@@ -392,7 +395,8 @@ namespace ulanova
     {
       executeSystemWait(c);
     }
-    std::cout << c.process_name << " " << c.duration_ms << " " << std::fixed << std::setprecision(3) << c.area_result << "\n";
+    std::cout << c.process_name << " " << c.duration_ms << " ";
+    std::cout << std::fixed << std::setprecision(3) << c.area_result << "\n";
   }
 
   void CLI::executeSystemSpawn(const std::string&, unsigned int)
@@ -458,11 +462,12 @@ namespace ulanova
     req.command = cmd_t::CALC;
     req.shapes_count = shapes_count;
     req.tests = calc.tries;
-    req.seed = 42;
+    constexpr unsigned int default_seed = 42;
+    req.seed = default_seed;
     req.thrds = calc.threads;
 
     std::vector< const circle_t* > ptrs;
-    for (size_t c_idx : s.circle_indices)
+    for (const size_t c_idx : s.circle_indices)
     {
       ptrs.push_back(&ctx_.storage[c_idx]);
     }
@@ -470,7 +475,7 @@ namespace ulanova
 
     std::vector< circle_t > shapes;
     shapes.reserve(shapes_count);
-    for (size_t c_idx : s.circle_indices)
+    for (const size_t c_idx : s.circle_indices)
     {
       shapes.push_back(ctx_.storage[c_idx]);
     }
@@ -507,7 +512,7 @@ namespace ulanova
         calc.duration_ms = std::chrono::duration_cast< std::chrono::milliseconds >(end_time - start_time).count();
         const ptrdiff_t set_idx = getSetIdx(calc.set_name);
         std::vector< const circle_t* > ptrs;
-        for (size_t c_idx : ctx_.sets[set_idx].circle_indices)
+        for (const size_t c_idx : ctx_.sets[set_idx].circle_indices)
         {
           ptrs.push_back(&ctx_.storage[c_idx]);
         }
