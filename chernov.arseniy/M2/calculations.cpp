@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
+#include <cstring>
 #include <limits>
 #include <functional>
 #include <future>
@@ -120,13 +121,13 @@ void chernov::calculationLoop(int task_fd, int result_fd, size_t seed)
   _exit(exit_code);
 }
 
-void chernov::startNextCalculation(App & app, process_t & process)
+void chernov::startNextCalculation(App &app, process_t &process)
 {
   if (process.state != ProcessState::Active || process.current_calc_name != "" || process.pending_calcs.empty()) {
     return;
   }
   std::string calc_name = process.pending_calcs.front();
-  calc_t & calc = app.calcs.at(calc_name);
+  calc_t &calc = app.calcs.at(calc_name);
 
   Task task{calc.id, calc.ellipses.size(), calc.threads, calc.tries};
   if (task.count > calc.ellipses.max_size() || task.count > std::numeric_limits< size_t >::max() / sizeof(ellipse_t)) {
@@ -139,8 +140,8 @@ void chernov::startNextCalculation(App & app, process_t & process)
   bool failed = err != 0 || sent != sizeof(task);
   if (!failed) {
     const size_t bytes = task.count * sizeof(ellipse_t);
-    const size_t body_sent = sendAll(err, process.task_fd,
-        reinterpret_cast< const char * >(calc.ellipses.data()), bytes);
+    const size_t body_sent
+        = sendAll(err, process.task_fd, reinterpret_cast< const char * >(calc.ellipses.data()), bytes);
     failed = err != 0 || body_sent != bytes;
   }
   if (failed) {
@@ -162,6 +163,82 @@ void chernov::startNextCalculation(App & app, process_t & process)
   process.pending_calcs.pop_front();
 }
 
+void chernov::receiveAvailableResult(App &app, process_t &process)
+{
+  if (process.result_fd < 0) {
+    return;
+  }
+
+  auto close_channels = [&]()
+  {
+    if (process.task_fd >= 0) {
+      close(process.task_fd);
+      process.task_fd = -1;
+    }
+    close(process.result_fd);
+    process.result_fd = -1;
+    process.state = ProcessState::Stopping;
+    if (!process.current_calc_name.empty()) {
+      calc_t &calc = app.calcs.at(process.current_calc_name);
+      if (calc.state == TaskState::Running) {
+        calc.state = TaskState::Failed;
+      }
+    }
+    for (const std::string &name : process.pending_calcs) {
+      app.calcs.at(name).state = TaskState::Failed;
+    }
+    process.pending_calcs.clear();
+    process.current_calc_name.clear();
+    process.buffer.clear();
+  };
+
+  const size_t k = sizeof(Result);
+  if (process.buffer.size() > k) {
+    close_channels();
+    throw std::runtime_error("invalid result buffer size");
+  }
+
+  process.buffer.reserve(k);
+  while (process.buffer.size() < k) {
+    char buffer[sizeof(Result)];
+    const ssize_t n = read(process.result_fd, buffer, k - process.buffer.size());
+    if (n > 0) {
+      process.buffer.insert(process.buffer.end(), buffer, buffer + n);
+    } else if (n == 0) {
+      const bool incomplete = !process.buffer.empty() || !process.current_calc_name.empty();
+      close_channels();
+      if (incomplete) {
+        throw std::runtime_error("result pipe closed before result received");
+      }
+      return;
+    } else if (errno == EINTR) {
+      continue;
+    } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      return;
+    } else {
+      close_channels();
+      throw std::runtime_error("result read failed");
+    }
+  }
+
+  Result result{};
+  std::memcpy(&result, process.buffer.data(), sizeof(result));
+  if (process.current_calc_name.empty()) {
+    close_channels();
+    throw std::runtime_error("unexpected result");
+  }
+  calc_t &calc = app.calcs.at(process.current_calc_name);
+  if (calc.state != TaskState::Running || calc.id != result.calc_id) {
+    close_channels();
+    throw std::runtime_error("result does not match current calculation");
+  }
+
+  calc.milliseconds = result.milliseconds;
+  calc.result = result.area;
+  calc.state = TaskState::Completed;
+  process.buffer.clear();
+  process.current_calc_name.clear();
+}
 
 bool chernov::isInside(const double x, const double y, const ellipse_t &ellipse)
 {

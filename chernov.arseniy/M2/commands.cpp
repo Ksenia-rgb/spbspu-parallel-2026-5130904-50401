@@ -1,5 +1,6 @@
 #include "commands.hpp"
 
+#include <fcntl.h>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -61,8 +62,7 @@ void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
     throw std::runtime_error("ellipse radius must be greater than zero");
   }
 
-  app.ellipses.insert(
-      {name, ellipse_t{point_t{x, y}, r, r, 0}});
+  app.ellipses.insert({name, ellipse_t{point_t{x, y}, r, r, 0}});
 }
 
 void chernov::cmdSet(std::istream &input, std::ostream &, App &app)
@@ -217,6 +217,19 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
     close(to_child[0]);
     close(to_parent[1]);
 
+    const int flags = fcntl(to_parent[0], F_GETFL);
+
+    if (flags == -1 || fcntl(to_parent[0], F_SETFL, flags | O_NONBLOCK) == -1) {
+      close(to_child[1]);
+      close(to_parent[0]);
+      pid_t result;
+      do {
+        result = waitpid(pid, nullptr, 0);
+      } while (result == -1 && errno == EINTR);
+
+      throw std::runtime_error("fcntl failed");
+    }
+
     process_t process{pid, seed, to_child[1], to_parent[0], ProcessState::Active, "", {}};
 
     try {
@@ -277,8 +290,8 @@ void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
     ellipses.push_back(app.ellipses.at(ellipse_name));
   }
 
-  calc_t calc{process_name, TaskState::Pending, 0, 0, app.id_counter, std::move(ellipses), static_cast< size_t >(threads),
-      static_cast< size_t >(tries)};
+  calc_t calc{process_name, TaskState::Pending, 0, 0, app.id_counter, std::move(ellipses),
+      static_cast< size_t >(threads), static_cast< size_t >(tries)};
 
   app.calcs.insert({calc_name, std::move(calc)});
   try {

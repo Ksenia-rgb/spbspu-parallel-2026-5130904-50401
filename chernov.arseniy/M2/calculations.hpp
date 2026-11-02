@@ -22,6 +22,7 @@ namespace chernov {
     ProcessState state;
     std::string current_calc_name;
     std::deque< std::string > pending_calcs;
+    std::vector< char > buffer{};
   };
 
   enum class TaskState { Pending, Running, Completed, Cancelled, Failed };
@@ -56,7 +57,8 @@ namespace chernov {
   size_t recvAll(int &err, int rd, char *b, size_t k);
   size_t sendAll(int &err, int wr, const char *b, size_t k);
   void calculationLoop(int task_fd, int result_fd, size_t seed);
-  void startNextCalculation(App & app, process_t & process);
+  void startNextCalculation(App &app, process_t &process);
+  void receiveAvailableResult(App &, process_t &);
 
   bool isInside(double x, double y, const ellipse_t &ellipse);
   bool isInsideAny(point_t point, const std::vector< ellipse_t > &ellipses);
