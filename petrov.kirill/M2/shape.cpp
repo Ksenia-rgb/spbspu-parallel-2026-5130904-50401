@@ -51,3 +51,34 @@ petrov::Frame petrov::getFrame(const Shape& shape)
   frame.top = shape.y + half_height;
   return frame;
 }
+
+petrov::Frame petrov::getFrame(const std::vector< Shape >& shapes)
+{
+  Frame result = getFrame(shapes[0]);
+  for (size_t i = 1; i < shapes.size(); ++i) {
+    const Frame frame = getFrame(shapes[i]);
+    result.left = std::min(result.left, frame.left);
+    result.bottom = std::min(result.bottom, frame.bottom);
+    result.right = std::max(result.right, frame.right);
+    result.top = std::max(result.top, frame.top);
+  }
+  return result;
+}
+
+bool petrov::isInside(const Shape& shape, double x, double y)
+{
+  const double dx = x - static_cast< double >(shape.x);
+  const double dy = y - static_cast< double >(shape.y);
+  const double radius_x = static_cast< double >(shape.radius_x);
+  const double radius_y = static_cast< double >(shape.radius_y);
+  if (!shape.is_ellipse) {
+    return (dx * dx + dy * dy) <= (radius_x * radius_x);
+  }
+  const double cos_angle = std::cos(shape.angle);
+  const double sin_angle = std::sin(shape.angle);
+  const double turned_x = dx * cos_angle + dy * sin_angle;
+  const double turned_y = dy * cos_angle - dx * sin_angle;
+  const double part_x = turned_x / radius_x;
+  const double part_y = turned_y / radius_y;
+  return (part_x * part_x + part_y * part_y) <= 1.0;
+}
