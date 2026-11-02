@@ -8,8 +8,8 @@ namespace donkeev
 {
   std::vector<std::string> splitIntoTokens(const std::string&);
   bool isNumber(const std::string&);
-  bool isValidCommandTemplate(const std::vector<std::string>&);
-  bool isUnknownCommand(const std::string&);
+  bool isPositiveNumber(const std::string&);
+  bool isValidName(const std::string&);
 }
 
 #endif

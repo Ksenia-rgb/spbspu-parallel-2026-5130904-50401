@@ -3,18 +3,18 @@
 
 void donkeev::ShapeManager::addCircle(const std::string& name, int r, int x, int y)
 {
-  if (circles_.count(name) > 0 || sets_.count(name) > 0)
+  if (circles_.count(name) > 0)
   {
-    throw std::invalid_argument("Shape with this name already exists");
+    throw std::invalid_argument("Circle with this name already exists");
   }
   circles_.emplace(name, circle_t(r, x, y));
 }
 
 void donkeev::ShapeManager::addSet(const std::string& name, const std::vector<std::string>& shapeNames)
 {
-  if (circles_.count(name) > 0 || sets_.count(name) > 0)
+  if (sets_.count(name) > 0)
   {
-    throw std::invalid_argument("Set or shape with this name already exists");
+    throw std::invalid_argument("Set with this name already exists");
   }
 
   for (const auto& shapeName : shapeNames)
