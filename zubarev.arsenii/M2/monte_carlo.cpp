@@ -9,10 +9,8 @@ size_t zubarev::calc(const std::vector< Circle >& circles, size_t tests, size_t 
   }
 
   std::mt19937 gen(seed);
-  const double min_x = f.min_x;
-  const double min_y = f.min_y;
-  const double factor_x = (f.max_x - min_x) / 4294967296.0;
-  const double factor_y = (f.max_y - min_y) / 4294967296.0;
+  std::uniform_real_distribution< double > dist_x(f.min_x, f.max_x);
+  std::uniform_real_distribution< double > dist_y(f.min_y, f.max_y);
 
   size_t hits = 0;
 
@@ -22,10 +20,10 @@ size_t zubarev::calc(const std::vector< Circle >& circles, size_t tests, size_t 
     const double r2 = circles[0].r * circles[0].r;
 
     for (size_t j = 0; j < tests; ++j) {
-      const double x = min_x + gen() * factor_x;
-      const double y = min_y + gen() * factor_y;
-      const double dx = x - cx;
-      const double dy = y - cy;
+      double x = dist_x(gen);
+      double y = dist_y(gen);
+      double dx = x - cx;
+      double dy = y - cy;
       if (dx * dx + dy * dy <= r2) {
         hits++;
       }
@@ -40,11 +38,11 @@ size_t zubarev::calc(const std::vector< Circle >& circles, size_t tests, size_t 
   }
 
   for (size_t j = 0; j < tests; ++j) {
-    const double x = min_x + gen() * factor_x;
-    const double y = min_y + gen() * factor_y;
+    double x = dist_x(gen);
+    double y = dist_y(gen);
     for (size_t i = 0; i < n; ++i) {
-      const double dx = x - circles[i].x;
-      const double dy = y - circles[i].y;
+      double dx = x - circles[i].x;
+      double dy = y - circles[i].y;
       if (dx * dx + dy * dy <= r2[i]) {
         hits++;
         break;
