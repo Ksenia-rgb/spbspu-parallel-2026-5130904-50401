@@ -26,6 +26,18 @@ namespace petrov {
     int request_fd;
     int response_fd;
   };
+
+  using Workers = std::map< std::string, Worker >;
+
+  bool startWorker(size_t seed, const Workers& others, Worker& worker);
+  bool isRunning(const Worker& worker);
+  bool acceptsRequests(const Worker& worker);
+  bool hasResponse(const Worker& worker, int wait_ms);
+  void stopWorker(Worker& worker);
+  void finishWorker(Worker& worker);
+  void stopAllWorkers(Workers& workers);
+  bool writeAll(int fd, const void* data, size_t size);
+  bool readAll(int fd, void* data, size_t size);
 }
 
 #endif
