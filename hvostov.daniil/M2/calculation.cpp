@@ -50,7 +50,7 @@ bool hvostov::isInside(double px, double py, const shape_t& s)
   const double dy = py - s.y;
 
   if (!s.is_ellipse) {
-    return dx * dx + dy * dy <= s.rx * s.rx;
+    return dx * dx + dy * dy <= static_cast< double >(s.rx) * s.rx;
   }
 
   const double c = std::cos(-s.angle);
@@ -63,7 +63,8 @@ bool hvostov::isInside(double px, double py, const shape_t& s)
   return nx * nx + ny * ny <= 1.0;
 }
 
-double hvostov::calcArea(const std::vector< shape_t >& shapes, size_t threads, size_t tries, size_t seed, double& time_ms)
+double hvostov::calcArea(
+    const std::vector< shape_t >& shapes, size_t threads, size_t tries, size_t seed, double& time_ms)
 {
   if (shapes.empty() || tries == 0) {
     time_ms = 0.0;
@@ -95,27 +96,26 @@ double hvostov::calcArea(const std::vector< shape_t >& shapes, size_t threads, s
     const size_t thread_seed = seed + t;
     size_t& hits_ref = local_hits[t];
 
-    workers.emplace_back([&, local_tries, thread_seed]() {
-      std::default_random_engine eng(static_cast< unsigned >(thread_seed));
-      const double eng_min = static_cast< double >(eng.min());
-      const double eng_max = static_cast< double >(eng.max());
-      const double range = eng_max - eng_min;
-      const double kx = (frame.max_x - frame.min_x) / range;
-      const double ky = (frame.max_y - frame.min_y) / range;
+    workers.emplace_back(
+        [&, local_tries, thread_seed]()
+        {
+          std::mt19937_64 rng(thread_seed);
+          std::uniform_real_distribution< double > dx(frame.min_x, frame.max_x);
+          std::uniform_real_distribution< double > dy(frame.min_y, frame.max_y);
 
-      size_t count = 0;
-      for (size_t i = 0; i < local_tries; ++i) {
-        const double px = frame.min_x + (static_cast< double >(eng()) - eng_min) * kx;
-        const double py = frame.min_y + (static_cast< double >(eng()) - eng_min) * ky;
-        for (const shape_t& s : shapes) {
-          if (isInside(px, py, s)) {
-            ++count;
-            break;
+          size_t count = 0;
+          for (size_t i = 0; i < local_tries; ++i) {
+            const double px = dx(rng);
+            const double py = dy(rng);
+            for (const shape_t& s : shapes) {
+              if (isInside(px, py, s)) {
+                ++count;
+                break;
+              }
+            }
           }
-        }
-      }
-      hits_ref = count;
-    });
+          hits_ref = count;
+        });
   }
 
   for (size_t i = 0; i < workers.size(); ++i) {

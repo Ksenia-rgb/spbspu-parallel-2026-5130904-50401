@@ -1,6 +1,5 @@
 #include "commands.hpp"
 #include <iostream>
-#include <limits>
 #include <string>
 #include <unordered_map>
 
@@ -23,21 +22,21 @@ int main()
   cmds["timeout"] = hvostov::timeout;
   cmds["kill"] = hvostov::killProcess;
 
-  std::string cmd;
-  while (std::cin >> cmd) {
-    auto it = cmds.find(cmd);
-    if (it != cmds.end()) {
-      try {
-        it->second(std::cin, std::cout, info);
-      } catch (...) {
-        std::cout << "<INVALID COMMAND>\n";
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
-      }
-    } else {
-      std::cout << "<UNKNOWN COMMAND>\n";
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
+  std::string line;
+  while (std::getline(std::cin, line)) {
+    const hvostov::Args args = hvostov::splitLine(line);
+    if (args.empty()) {
+      continue;
+    }
+    auto it = cmds.find(args[0]);
+    if (it == cmds.end()) {
+      std::cerr << "<UNKNOWN COMMAND>\n";
+      continue;
+    }
+    try {
+      it->second(std::cout, args, info);
+    } catch (...) {
+      std::cerr << "<INVALID COMMAND>\n";
     }
   }
   return 0;

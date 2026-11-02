@@ -24,10 +24,10 @@ std::istream& hvostov::operator>>(std::istream& in, shape_t& dest)
     return in;
   }
 
-  double rx = 0.0;
-  double ry = 0.0;
-  double x = 0.0;
-  double y = 0.0;
+  int rx = 0;
+  int ry = 0;
+  int x = 0;
+  int y = 0;
 
   in >> rx >> ry >> x >> y;
   if (in) {
@@ -36,7 +36,7 @@ std::istream& hvostov::operator>>(std::istream& in, shape_t& dest)
     dest.x = x;
     dest.y = y;
     dest.angle = 0.0;
-    dest.is_ellipse = (ry != 0.0);
+    dest.is_ellipse = (ry != 0);
   }
   return in;
 }
@@ -50,12 +50,10 @@ std::ostream& hvostov::operator<<(std::ostream& out, const shape_t& rhs)
 
   const IOguard guard(out);
   if (!rhs.is_ellipse) {
-    out << static_cast< long long >(rhs.rx) << " (" << static_cast< long long >(rhs.x) << " "
-        << static_cast< long long >(rhs.y) << ")";
+    out << rhs.rx << " (" << rhs.x << " " << rhs.y << ")";
   } else {
-    out << static_cast< long long >(rhs.rx) << " " << static_cast< long long >(rhs.ry) << " ("
-        << static_cast< long long >(rhs.x) << " " << static_cast< long long >(rhs.y) << ") " << std::fixed
-        << std::setprecision(3) << rhs.angle;
+    out << rhs.rx << " " << rhs.ry << " (" << rhs.x << " " << rhs.y << ") " << std::fixed << std::setprecision(3)
+        << rhs.angle;
   }
   return out;
 }

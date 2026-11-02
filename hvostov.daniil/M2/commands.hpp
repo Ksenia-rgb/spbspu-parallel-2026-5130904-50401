@@ -2,15 +2,17 @@
 #define COMMANDS_HPP
 
 #include "types.hpp"
+#include "shm.hpp"
 #include <string>
 #include <unordered_map>
 #include <functional>
 #include <vector>
 #include <memory>
 #include <unistd.h>
-#include "shm.hpp"
 
 namespace hvostov {
+  using Args = std::vector< std::string >;
+
   struct process_t {
     pid_t pid = -1;
     int to_child = -1;
@@ -28,22 +30,24 @@ namespace hvostov {
     std::unordered_map< std::string, calc_state_t > calc;
   };
 
-  using cmd_t = std::function< void(std::istream&, std::ostream&, info_t&) >;
+  using cmd_t = std::function< void(std::ostream&, const Args&, info_t&) >;
 
-  void addCircle(std::istream& in, std::ostream& out, info_t& info);
-  void addEllipse(std::istream& in, std::ostream& out, info_t& info);
-  void rotate(std::istream& in, std::ostream& out, info_t& info);
-  void show(std::istream& in, std::ostream& out, info_t& info);
-  void set(std::istream& in, std::ostream& out, info_t& info);
-  void showSet(std::istream& in, std::ostream& out, info_t& info);
-  void getFrame(std::istream& in, std::ostream& out, info_t& info);
-  void getFrameSet(std::istream& in, std::ostream& out, info_t& info);
-  void spawnProcess(std::istream& in, std::ostream& out, info_t& info);
-  void areaOn(std::istream& in, std::ostream& out, info_t& info);
-  void status(std::istream& in, std::ostream& out, info_t& info);
-  void wait(std::istream& in, std::ostream& out, info_t& info);
-  void timeout(std::istream& in, std::ostream& out, info_t& info);
-  void killProcess(std::istream& in, std::ostream& out, info_t& info);
+  Args splitLine(const std::string& line);
+
+  void addCircle(std::ostream& out, const Args& args, info_t& info);
+  void addEllipse(std::ostream& out, const Args& args, info_t& info);
+  void rotate(std::ostream& out, const Args& args, info_t& info);
+  void show(std::ostream& out, const Args& args, info_t& info);
+  void set(std::ostream& out, const Args& args, info_t& info);
+  void showSet(std::ostream& out, const Args& args, info_t& info);
+  void getFrame(std::ostream& out, const Args& args, info_t& info);
+  void getFrameSet(std::ostream& out, const Args& args, info_t& info);
+  void spawnProcess(std::ostream& out, const Args& args, info_t& info);
+  void areaOn(std::ostream& out, const Args& args, info_t& info);
+  void status(std::ostream& out, const Args& args, info_t& info);
+  void wait(std::ostream& out, const Args& args, info_t& info);
+  void timeout(std::ostream& out, const Args& args, info_t& info);
+  void killProcess(std::ostream& out, const Args& args, info_t& info);
 }
 
 #endif

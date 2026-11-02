@@ -24,10 +24,10 @@ namespace hvostov {
   };
 
   struct shape_t {
-    double rx = 0.0;
-    double ry = 0.0;
-    double x = 0.0;
-    double y = 0.0;
+    int rx = 0;
+    int ry = 0;
+    int x = 0;
+    int y = 0;
     double angle = 0.0;
     bool is_ellipse = false;
   };
