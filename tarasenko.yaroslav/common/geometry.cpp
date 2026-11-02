@@ -1,6 +1,7 @@
 #include "geometry.hpp"
 
-namespace tarasenko {
+namespace tarasenko
+{
   bool isInside(RealPoint point, Ellipse ellipse)
   {
     point.x -= ellipse.center.x;
@@ -15,18 +16,23 @@ namespace tarasenko {
     double left_bound = first.center.x - first.rx;
     double top_bound = first.center.y + first.ry;
     double bottom_bound = first.center.y - first.ry;
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < count; ++i)
+    {
       const Ellipse& cur = ellipses[i];
-      if (right_bound < cur.center.x + cur.rx) {
+      if (right_bound < cur.center.x + cur.rx)
+      {
         right_bound = cur.center.x + cur.rx;
       }
-      if (left_bound > cur.center.x - cur.rx) {
+      if (left_bound > cur.center.x - cur.rx)
+      {
         left_bound = cur.center.x - cur.rx;
       }
-      if (top_bound < cur.center.y + cur.ry) {
+      if (top_bound < cur.center.y + cur.ry)
+      {
         top_bound = cur.center.y + cur.ry;
       }
-      if (bottom_bound > cur.center.y - cur.ry) {
+      if (bottom_bound > cur.center.y - cur.ry)
+      {
         bottom_bound = cur.center.y - cur.ry;
       }
     }
