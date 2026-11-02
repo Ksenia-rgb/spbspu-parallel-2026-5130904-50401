@@ -23,7 +23,8 @@ namespace zhuravleva
   {
     pending,
     done,
-    failed
+    failed,
+    canceled
   };
 
   struct Calculation

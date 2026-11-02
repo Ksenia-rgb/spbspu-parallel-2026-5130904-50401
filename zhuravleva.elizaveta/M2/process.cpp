@@ -14,6 +14,13 @@
 
 namespace
 {
+  volatile std::sig_atomic_t stop_requested = 0;
+
+  void requestStop(int)
+  {
+    stop_requested = 1;
+  }
+
   void closeIfOpen(int fd)
   {
     if (fd >= 0)
@@ -48,7 +55,7 @@ namespace
   void childLoop(int read_fd, int write_fd, unsigned int seed)
   {
     constexpr std::uint64_t max_shapes = 1000000;
-    while (true)
+    while (!stop_requested)
     {
       zhuravleva::AreaRequest request{};
       if (!zhuravleva::readAll(read_fd, &request, sizeof(request)))
@@ -151,10 +158,25 @@ bool zhuravleva::spawnProcess(ProcessStorage& storage, const std::string& name, 
       closeIfOpen(item.second.write_fd);
       closeIfOpen(item.second.read_fd);
     }
+    stop_requested = 0;
+    std::signal(SIGUSR1, requestStop);
+    const char ready = 1;
+    if (!writeAll(from_child[1], &ready, sizeof(ready)))
+    {
+      _exit(1);
+    }
     childLoop(to_child[0], from_child[1], seed);
     closeIfOpen(to_child[0]);
     closeIfOpen(from_child[1]);
     _exit(0);
+  }
+  char ready = 0;
+  if (!readAll(from_child[0], &ready, sizeof(ready)) || ready != 1)
+  {
+    closeIfOpen(to_child[1]);
+    closeIfOpen(from_child[0]);
+    waitForChild(pid);
+    return false;
   }
   closeIfOpen(to_child[0]);
   closeIfOpen(from_child[1]);
@@ -170,14 +192,44 @@ bool zhuravleva::killProcess(ProcessStorage& storage, const std::string& name)
     return false;
   }
   const Process process = it->second;
-  if (kill(process.pid, SIGTERM) == -1 && errno != ESRCH)
+  if (kill(process.pid, SIGUSR1) == -1 && errno != ESRCH)
   {
     return false;
   }
   closeIfOpen(process.write_fd);
+  while(true)
+  {
+    pollfd fd{};
+    fd.fd = process.read_fd;
+    fd.events = POLLIN;
+    const int result = poll(&fd, 1, -1);
+    if (result == -1 && errno == EINTR)
+    {
+      continue;
+    }
+    if (result <= 0)
+    {
+      break;
+    }
+    if (fd.revents & POLLIN)
+    {
+      if (!collectResult(storage, name))
+      {
+        break;
+      }
+      continue;
+    }
+    break;
+  }
   closeIfOpen(process.read_fd);
   waitForChild(process.pid);
-  markFailed(storage, name);
+  for (auto& item : storage.calculations)
+  {
+    if (item.second.process_name == name && item.second.state == CalcState::pending)
+    {
+      item.second.state = CalcState::canceled;
+    }
+  }
   storage.processes.erase(it);
   return true;
 }
@@ -304,6 +356,10 @@ bool zhuravleva::showStatus(ProcessStorage& storage, const std::string& name, st
     out.flags(flags);
     out.precision(precision);
   }
+  else if (calc.state == CalcState::canceled)
+  {
+    out << "<CANCELED>\n";
+  }
   else
   {
     out << "<FAILED>\n";
@@ -330,9 +386,9 @@ bool zhuravleva::timeoutCalculation(
       finished = true;
       return true;
     }
-    if (it->second.state == CalcState::failed)
+    if (it->second.state == CalcState::canceled)
     {
-      return false;
+      return true;
     }
     const auto process_it = storage.processes.find(it->second.process_name);
     if (process_it == storage.processes.end())

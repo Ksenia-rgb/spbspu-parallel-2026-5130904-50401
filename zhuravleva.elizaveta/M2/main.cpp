@@ -119,7 +119,7 @@ int main()
     else if (args[0] == "timeout")
     {
       int milliseconds = 0;
-      valid = args.size() == 3 && zhuravleva::parseInt(args[2], milliseconds);
+      valid = args.size() == 3 && zhuravleva::parseInt(args[2], milliseconds) && milliseconds >= 0;
       if (valid)
       {
         double area = 0.0;
@@ -127,14 +127,7 @@ int main()
         valid = zhuravleva::timeoutCalculation(process_storage, args[1], milliseconds, area, finished);
         if (valid)
         {
-          if (finished)
-          {
-            std::cout << area << '\n';
-          }
-          else
-          {
-            std::cout << "timeout\n";
-          }
+          valid = zhuravleva::showStatus(process_storage, args[1], std::cout);
         }
       }
     }
