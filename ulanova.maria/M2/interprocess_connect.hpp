@@ -21,7 +21,7 @@ namespace ulanova
   struct request_t
   {
     cmd_t command;
-    size_t shapesCount;
+    size_t shapes_count;
     rect_t rect;
     size_t thrds;
     size_t tests;
@@ -53,7 +53,7 @@ namespace ulanova
     void* ptr_;
     size_t size_;
     int fd_;
-    bool isOwner_;
+    bool is_owner_;
   };
 
   void sendAll(int fd, const void* buf, size_t size);

@@ -32,19 +32,19 @@ namespace ulanova
         response_t resp{};
         try
         {
-          size_t shmSize = req.shapesCount * sizeof(circle_t);
+          size_t shmSize = req.shapes_count * sizeof(circle_t);
 
           Mapping shm;
           shm.open(shmName, shmSize);
 
           const circle_t* shapesData = static_cast< const circle_t* >(shm.getPtr());
-          std::vector< const circle_t* > shapesPtrs(req.shapesCount);
-          for (size_t i = 0; i < req.shapesCount; ++i)
+          std::vector< const circle_t* > shapesPtrs(req.shapes_count);
+          for (size_t i = 0; i < req.shapes_count; ++i)
           {
             shapesPtrs[i] = &shapesData[i];
           }
 
-          size_t hits = calc(shapesPtrs.data(), shapesPtrs.data() + req.shapesCount, req.rect, req.tests, req.seed);
+          size_t hits = calc(shapesPtrs.data(), shapesPtrs.data() + req.shapes_count, req.rect, req.tests, req.seed);
 
           resp.status = status_t::SUCCESS;
           resp.hits = hits;

@@ -450,11 +450,11 @@ namespace ulanova
     }
 
     const NamedSet& s = ctx_.sets[setIdx];
-    size_t shapesCount = s.circleIndices.size();
+    size_t shapes_count = s.circleIndices.size();
 
     request_t req{};
     req.command = cmd_t::CALC;
-    req.shapesCount = shapesCount;
+    req.shapes_count = shapes_count;
     req.tests = calc.tries;
     req.seed = 42;
 
@@ -465,12 +465,12 @@ namespace ulanova
     }
     req.rect = bounds(ptrs.data(), ptrs.data() + ptrs.size());
 
-    size_t shmSize = shapesCount * sizeof(circle_t);
+    size_t shmSize = shapes_count * sizeof(circle_t);
     Mapping shm;
     shm.create(sharedMemoryName, shmSize);
 
     circle_t* shmBuffer = static_cast< circle_t* >(shm.getPtr());
-    for (size_t i = 0; i < shapesCount; ++i)
+    for (size_t i = 0; i < shapes_count; ++i)
     {
       shmBuffer[i] = ctx_.storage[s.circleIndices[i]];
     }

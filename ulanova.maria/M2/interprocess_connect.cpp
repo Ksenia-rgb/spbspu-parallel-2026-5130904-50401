@@ -11,19 +11,19 @@ namespace ulanova
     ptr_(nullptr),
     size_(0),
     fd_(-1),
-    isOwner_(false)
+    is_owner_(false)
   {}
 
   Mapping::Mapping(Mapping&& other) noexcept:
     ptr_(other.ptr_),
     size_(other.size_),
     fd_(other.fd_),
-    isOwner_(other.isOwner_)
+    is_owner_(other.is_owner_)
   {
     other.ptr_ = nullptr;
     other.size_ = 0;
     other.fd_ = -1;
-    other.isOwner_ = false;
+    other.is_owner_ = false;
   }
 
   Mapping& Mapping::operator=(Mapping&& other) noexcept
@@ -34,12 +34,12 @@ namespace ulanova
       ptr_ = other.ptr_;
       size_ = other.size_;
       fd_ = other.fd_;
-      isOwner_ = other.isOwner_;
+      is_owner_ = other.is_owner_;
 
       other.ptr_ = nullptr;
       other.size_ = 0;
       other.fd_ = -1;
-      other.isOwner_ = false;
+      other.is_owner_ = false;
     }
     return *this;
   }
@@ -53,7 +53,7 @@ namespace ulanova
   {
     close();
     size_ = size;
-    isOwner_ = true;
+    is_owner_ = true;
 
     fd_ = shm_open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd_ == -1)
@@ -81,7 +81,7 @@ namespace ulanova
   {
     close();
     size_ = size;
-    isOwner_ = false;
+    is_owner_ = false;
 
     fd_ = shm_open(name, O_RDONLY, 0);
     if (fd_ == -1)
@@ -110,7 +110,7 @@ namespace ulanova
     ptr_ = nullptr;
     fd_ = -1;
     size_ = 0;
-    isOwner_ = false;
+    is_owner_ = false;
   }
 
   void* Mapping::getPtr() const noexcept
@@ -121,11 +121,11 @@ namespace ulanova
   void sendAll(int fd, const void* buf, size_t size)
   {
     size_t totalWritten = 0;
-    const char* ptr = static_cast< const char* >(buf);
+    const char* const ptr = static_cast< const char* >(buf);
 
     while (totalWritten < size)
     {
-      ssize_t written = write(fd, ptr + totalWritten, size - totalWritten);
+      const size_t written = write(fd, ptr + totalWritten, size - totalWritten);
       if (written <= 0)
       {
         throw std::runtime_error("Failed to write to pipe");
@@ -136,17 +136,17 @@ namespace ulanova
 
   void recvAll(int fd, void* buf, size_t size)
   {
-    size_t totalRead = 0;
-    char* ptr = static_cast< char* >(buf);
+    size_t total_read = 0;
+    char* const ptr = static_cast< char* >(buf);
 
-    while (totalRead < size)
+    while (total_read < size)
     {
-      ssize_t bytesRead = read(fd, ptr + totalRead, size - totalRead);
-      if (bytesRead <= 0)
+      ssize_t bytes_read = read(fd, ptr + total_read, size - total_read);
+      if (bytes_read <= 0)
       {
         throw std::runtime_error("Failed to read from pipe");
       }
-      totalRead += static_cast< size_t >(bytesRead);
+      total_read += static_cast< size_t >(bytes_read);
     }
   }
 }
