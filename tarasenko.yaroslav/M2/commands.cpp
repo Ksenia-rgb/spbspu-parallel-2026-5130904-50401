@@ -2,8 +2,11 @@
 #include <algorithm>
 #include <istream>
 #include <ostream>
+#include <stdexcept>
 #include <string>
+#include <unistd.h>
 #include "Data.hpp"
+#include "worker.hpp"
 
 namespace tarasenko {
   void circle(Data& data, std::istream& in, std::ostream&)
@@ -78,8 +81,21 @@ namespace tarasenko {
         << rectangle.right_top.x << ' ' << rectangle.right_top.y << ")\n";
   }
 
-  void spawn(Data&, std::istream&, std::ostream&)
-  {}
+  void spawn(Data& data, std::istream& in, std::ostream&)
+  {
+    std::string name;
+    unsigned long seed = 0;
+    in >> name >> seed;
+    const pid_t pid = fork();
+    if (pid == -1) {
+      throw std::runtime_error("Cannot create process");
+    }
+    if (pid == 0) {
+      runWorker(seed);
+      _exit(0);
+    }
+    data.processes.emplace(name, pid);
+  }
 
   void areaOn(Data&, std::istream&, std::ostream&)
   {}
