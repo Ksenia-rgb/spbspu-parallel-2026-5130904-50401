@@ -30,13 +30,13 @@ int main()
     }
     auto it = cmds.find(args[0]);
     if (it == cmds.end()) {
-      std::cerr << "<UNKNOWN COMMAND>\n";
+      std::cout << "<UNKNOWN COMMAND>\n";
       continue;
     }
     try {
       it->second(std::cout, args, info);
     } catch (...) {
-      std::cerr << "<INVALID COMMAND>\n";
+      std::cout << "<INVALID COMMAND>\n";
     }
   }
   return 0;
