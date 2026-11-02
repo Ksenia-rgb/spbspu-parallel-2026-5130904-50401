@@ -42,8 +42,9 @@ std::size_t zhuravleva::calcMonte(
     const std::vector< Shape >& shapes, const Rectangle& bounds, std::size_t tries, std::size_t seed)
 {
   std::default_random_engine generator(seed);
-  std::uniform_real_distribution< double > dist_x(bounds.min_x, bounds.max_x);
-  std::uniform_real_distribution< double > dist_y(bounds.min_y, bounds.max_y);
+  const double range = static_cast< double >(generator.max()) - generator.min() + 1.0;
+  const double scale_x = (bounds.max_x - bounds.min_x) / range;
+  const double scale_y = (bounds.max_y - bounds.min_y) / range;
   std::size_t hits = 0;
   const bool single_circle = shapes.size() == 1 && shapes.front().type == ShapeType::circle;
   const double center_x = single_circle ? shapes.front().x : 0.0;
@@ -52,8 +53,8 @@ std::size_t zhuravleva::calcMonte(
   const double radius_squared = radius * radius;
   for (std::size_t i = 0; i < tries; ++i)
   {
-    const double x = dist_x(generator);
-    const double y = dist_y(generator);
+    const double x = bounds.min_x + (generator() - generator.min()) * scale_x;
+    const double y = bounds.min_y + (generator() - generator.min()) * scale_y;
     if (single_circle)
     {
       const double dx = x - center_x;
