@@ -1,22 +1,15 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
-#include "calculations.hpp"
 #include "geometry.hpp"
+#include "processes.hpp"
 
 #include <functional>
-#include <ios>
 #include <iosfwd>
+#include <streambuf>
+#include <string>
 #include <unordered_map>
 
 namespace chernov {
-  struct App {
-    ellipses_t &ellipses;
-    sets_t &sets;
-    processes_t &processes;
-    calcs_t &calcs;
-    size_t id_counter = 0;
-  };
-
   using cmd_t = std::function< void(std::istream &, std::ostream &, App &) >;
   struct CommandIO {
     std::ostream &output;
@@ -44,7 +37,14 @@ namespace chernov {
   void cmdKill(std::istream &, std::ostream &, App &);
 
   namespace detail {
+    class CommandBuffer: public std::streambuf {
+    public:
+      explicit CommandBuffer(std::string &line);
+    };
+
     void printCalcStatus(std::ostream &output, const calc_t &calc);
+    bool isValidName(const std::string &name);
+    void requireEnd(std::istream &input);
   }
 }
 

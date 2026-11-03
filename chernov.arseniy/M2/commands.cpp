@@ -1,48 +1,9 @@
 #include "commands.hpp"
 
-#include <algorithm>
-#include <chrono>
-#include <fcntl.h>
 #include <iomanip>
 #include <iostream>
 #include <istream>
 #include <limits>
-#include <poll.h>
-#include <streambuf>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <cerrno>
-
-namespace chernov {
-  namespace detail {
-    class CommandBuffer: public std::streambuf {
-    public:
-      explicit CommandBuffer(std::string &line)
-      {
-        if (line.empty()) {
-          setg(nullptr, nullptr, nullptr);
-        } else {
-          char *begin = &line[0];
-          setg(begin, begin, begin + line.size());
-        }
-      }
-    };
-
-    bool isValidName(const std::string &name)
-    {
-      return !name.empty()
-          && ((name.front() >= 'a' && name.front() <= 'z') || (name.front() >= 'A' && name.front() <= 'Z'));
-    }
-
-    void requireEnd(std::istream &input)
-    {
-      input >> std::ws;
-      if (!input.eof()) {
-        throw std::runtime_error("extra arguments");
-      }
-    }
-  }
-}
 
 std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 {
@@ -259,74 +220,7 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
   if (app.processes.find(process_name) != app.processes.end()) {
     throw std::runtime_error("process name already exists");
   }
-
-  int to_child[2];
-  int to_parent[2];
-
-  if (pipe(to_child) == -1) {
-    throw std::runtime_error("pipe error");
-  }
-
-  if (pipe(to_parent) == -1) {
-    close(to_child[0]);
-    close(to_child[1]);
-    throw std::runtime_error("pipe error");
-  }
-
-  const pid_t pid = fork();
-
-  if (pid == -1) {
-    close(to_child[0]);
-    close(to_child[1]);
-    close(to_parent[0]);
-    close(to_parent[1]);
-    throw std::runtime_error("fork failed");
-  }
-  if (pid == 0) {
-    close(to_child[1]);
-    close(to_parent[0]);
-    for (const auto &process : app.processes) {
-      if (process.second.result_fd >= 0) {
-        close(process.second.result_fd);
-      }
-      if (process.second.task_fd >= 0) {
-        close(process.second.task_fd);
-      }
-    }
-
-    calculationLoop(to_child[0], to_parent[1], static_cast< size_t >(seed));
-  } else {
-    close(to_child[0]);
-    close(to_parent[1]);
-
-    const int flags = fcntl(to_parent[0], F_GETFL);
-
-    if (flags == -1 || fcntl(to_parent[0], F_SETFL, flags | O_NONBLOCK) == -1) {
-      close(to_child[1]);
-      close(to_parent[0]);
-      pid_t result;
-      do {
-        result = waitpid(pid, nullptr, 0);
-      } while (result == -1 && errno == EINTR);
-
-      throw std::runtime_error("fcntl failed");
-    }
-
-    process_t process{pid, static_cast< size_t >(seed), to_child[1], to_parent[0], ProcessState::Active, "", {}};
-
-    try {
-      app.processes.insert({process_name, std::move(process)});
-    } catch (...) {
-      close(to_child[1]);
-      close(to_parent[0]);
-
-      int result;
-      do {
-        result = waitpid(pid, nullptr, 0);
-      } while (result == -1 && errno == EINTR);
-      throw;
-    }
-  }
+  spawnProcess(app, process_name, static_cast< size_t >(seed));
 }
 
 void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
@@ -420,26 +314,8 @@ void chernov::cmdWait(std::istream &input, std::ostream &output, App &app)
     throw std::runtime_error("calc name not found");
   }
 
-  checkProcesses(app);
   calc_t &calc = app.calcs.at(calc_name);
-  while (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
-    process_t &process = app.processes.at(calc.process_name);
-    if (process.result_fd < 0) {
-      throw std::runtime_error("result pipe is closed");
-    }
-
-    pollfd descriptor{process.result_fd, POLLIN, 0};
-    int result;
-    do {
-      result = poll(&descriptor, 1, -1);
-    } while (result == -1 && errno == EINTR);
-    if (result == -1) {
-      throw std::runtime_error("poll failed");
-    }
-
-    checkProcesses(app);
-  }
-
+  waitCalculation(app, calc);
   detail::printCalcStatus(output, calc);
 }
 
@@ -459,36 +335,8 @@ void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
     throw std::runtime_error("timeout must not be negative");
   }
 
-  checkProcesses(app);
   calc_t &calc = app.calcs.at(calc_name);
-  const auto start = std::chrono::steady_clock::now();
-  while (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
-    const auto elapsed
-        = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::steady_clock::now() - start);
-    if (elapsed.count() >= timeout_ms) {
-      break;
-    }
-
-    process_t &process = app.processes.at(calc.process_name);
-    if (process.result_fd < 0) {
-      throw std::runtime_error("result pipe is closed");
-    }
-
-    const long long remaining = timeout_ms - elapsed.count();
-    const int poll_timeout
-        = static_cast< int >(std::min(remaining, static_cast< long long >(std::numeric_limits< int >::max())));
-    pollfd descriptor{process.result_fd, POLLIN, 0};
-    const int result = poll(&descriptor, 1, poll_timeout);
-    if (result == -1) {
-      if (errno == EINTR) {
-        continue;
-      }
-      throw std::runtime_error("poll failed");
-    }
-
-    checkProcesses(app);
-  }
-
+  waitCalculation(app, calc, timeout_ms);
   detail::printCalcStatus(output, calc);
 }
 
@@ -509,46 +357,17 @@ void chernov::cmdKill(std::istream &input, std::ostream &, App &app)
     throw std::runtime_error("process state must be active");
   }
 
-  process.state = ProcessState::Stopping;
-  for (const std::string &calc_name : process.pending_calcs) {
-    calc_t &calc = app.calcs.at(calc_name);
-    if (calc.state == TaskState::Pending) {
-      calc.state = TaskState::Cancelled;
-    }
-  }
-  process.pending_calcs.clear();
-  if (process.task_fd >= 0) {
-    close(process.task_fd);
-    process.task_fd = -1;
-  }
+  killProcess(app, process);
+}
 
-  pid_t result;
-  do {
-    result = waitpid(process.pid, nullptr, 0);
-  } while (result == -1 && errno == EINTR);
-  if (result == -1 && errno != ECHILD) {
-    throw std::runtime_error("waitpid failed");
+chernov::detail::CommandBuffer::CommandBuffer(std::string &line)
+{
+  if (line.empty()) {
+    setg(nullptr, nullptr, nullptr);
+  } else {
+    char *begin = &line[0];
+    setg(begin, begin, begin + line.size());
   }
-
-  if (process.result_fd >= 0) {
-    try {
-      receiveAvailableResult(app, process);
-    } catch (...) {
-    }
-  }
-  if (!process.current_calc_name.empty()) {
-    calc_t &calc = app.calcs.at(process.current_calc_name);
-    if (calc.state == TaskState::Running) {
-      calc.state = TaskState::Failed;
-    }
-  }
-  if (process.result_fd >= 0) {
-    close(process.result_fd);
-  }
-  process.result_fd = -1;
-  process.buffer.clear();
-  process.current_calc_name.clear();
-  process.state = ProcessState::Stopped;
 }
 
 void chernov::detail::printCalcStatus(std::ostream &output, const calc_t &calc)
@@ -565,4 +384,18 @@ void chernov::detail::printCalcStatus(std::ostream &output, const calc_t &calc)
     output << "<IN PROGRESS>";
   }
   output << "\n";
+}
+
+bool chernov::detail::isValidName(const std::string &name)
+{
+  return !name.empty()
+      && ((name.front() >= 'a' && name.front() <= 'z') || (name.front() >= 'A' && name.front() <= 'Z'));
+}
+
+void chernov::detail::requireEnd(std::istream &input)
+{
+  input >> std::ws;
+  if (!input.eof()) {
+    throw std::runtime_error("extra arguments");
+  }
 }
