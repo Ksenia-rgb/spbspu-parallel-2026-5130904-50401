@@ -5,6 +5,7 @@
 #include <iostream>
 #include <istream>
 #include <limits>
+#include <poll.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cerrno>
@@ -321,7 +322,7 @@ void chernov::cmdStatus(std::istream &input, std::ostream &output, App &app)
   detail::printCalcStatus(output, app.calcs.at(calc_name));
 }
 
-void chernov::cmdWait(std::istream &input, std::ostream &, App &app)
+void chernov::cmdWait(std::istream &input, std::ostream &output, App &app)
 {
   std::string calc_name;
   if (!(input >> calc_name)) {
@@ -331,6 +332,28 @@ void chernov::cmdWait(std::istream &input, std::ostream &, App &app)
   if (app.calcs.find(calc_name) == app.calcs.end()) {
     throw std::runtime_error("calc name not found");
   }
+
+  checkProcesses(app);
+  calc_t &calc = app.calcs.at(calc_name);
+  while (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
+    process_t &process = app.processes.at(calc.process_name);
+    if (process.result_fd < 0) {
+      throw std::runtime_error("result pipe is closed");
+    }
+
+    pollfd descriptor{process.result_fd, POLLIN, 0};
+    int result;
+    do {
+      result = poll(&descriptor, 1, -1);
+    } while (result == -1 && errno == EINTR);
+    if (result == -1) {
+      throw std::runtime_error("poll failed");
+    }
+
+    checkProcesses(app);
+  }
+
+  detail::printCalcStatus(output, calc);
 }
 
 void chernov::detail::printCalcStatus(std::ostream &output, const calc_t &calc)
