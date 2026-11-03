@@ -8,9 +8,41 @@
 #include <istream>
 #include <limits>
 #include <poll.h>
+#include <streambuf>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cerrno>
+
+namespace chernov {
+namespace detail {
+  class CommandBuffer: public std::streambuf {
+  public:
+    explicit CommandBuffer(std::string &line)
+    {
+      if (line.empty()) {
+        setg(nullptr, nullptr, nullptr);
+      } else {
+        char *begin = &line[0];
+        setg(begin, begin, begin + line.size());
+      }
+    }
+  };
+
+  bool isValidName(const std::string &name)
+  {
+    return !name.empty()
+        && ((name.front() >= 'a' && name.front() <= 'z') || (name.front() >= 'A' && name.front() <= 'Z'));
+  }
+
+  void requireEnd(std::istream &input)
+  {
+    input >> std::ws;
+    if (!input.eof()) {
+      throw std::runtime_error("extra arguments");
+    }
+  }
+}
+}
 
 std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 {
@@ -19,24 +51,21 @@ std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
     return input;
   }
 
-  std::string str = "";
-  input >> str;
+  std::string command;
+  input >> command;
+  std::string arguments;
+  std::getline(input, arguments);
+  detail::CommandBuffer buffer(arguments);
+  std::istream command_input(&buffer);
 
-  if (input) {
+  const auto command_it = cmd_io.cmds.find(command);
+  if (command_it == cmd_io.cmds.end()) {
+    cmd_io.output << "<UNKNOWN COMMAND>\n";
+  } else {
     try {
-      cmd_io.cmds.at(str)(input, cmd_io.output, cmd_io.app);
+      command_it->second(command_input, cmd_io.output, cmd_io.app);
     } catch (...) {
-      input.setstate(std::ios::failbit);
-    }
-  }
-
-  if (!input) {
-    input.clear();
-    input.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
-    if (cmd_io.cmds.find(str) != cmd_io.cmds.end()) {
       cmd_io.output << "<INVALID COMMAND>\n";
-    } else {
-      cmd_io.output << "<UNKNOWN COMMAND>\n";
     }
   }
 
@@ -58,8 +87,9 @@ void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
   if (!(input >> name >> r >> x >> y)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
-  if (app.ellipses.find(name) != app.ellipses.end()) {
+  if (!detail::isValidName(name) || app.ellipses.find(name) != app.ellipses.end()) {
     throw std::runtime_error("ellipse name already exists");
   }
   if (r <= 0) {
@@ -76,8 +106,9 @@ void chernov::cmdEllipse(std::istream &input, std::ostream &, App &app)
   if (!(input >> name >> horizontal_radius >> vertical_radius >> x >> y)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
-  if (app.ellipses.find(name) != app.ellipses.end()) {
+  if (!detail::isValidName(name) || app.ellipses.find(name) != app.ellipses.end()) {
     throw std::runtime_error("ellipse name already exists");
   }
   if (horizontal_radius <= 0 || vertical_radius <= 0) {
@@ -94,6 +125,7 @@ void chernov::cmdRotate(std::istream &input, std::ostream &, App &app)
   if (!(input >> name >> ksi)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.ellipses.find(name) == app.ellipses.end()) {
     throw std::runtime_error("ellipse name not found");
@@ -130,7 +162,11 @@ void chernov::cmdSet(std::istream &input, std::ostream &, App &app)
 
     set.push_back(shape);
   }
+  detail::requireEnd(input);
 
+  if (!detail::isValidName(name)) {
+    throw std::runtime_error("invalid set name");
+  }
   app.sets.insert({name, std::move(set)});
 }
 
@@ -140,6 +176,7 @@ void chernov::cmdShow(std::istream &input, std::ostream &output, App &app)
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.ellipses.find(name) == app.ellipses.end()) {
     throw std::runtime_error("ellipse name not found");
@@ -154,6 +191,7 @@ void chernov::cmdShowSet(std::istream &input, std::ostream &output, App &app)
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.sets.find(name) == app.sets.end()) {
     throw std::runtime_error("set name not found");
@@ -171,6 +209,7 @@ void chernov::cmdFrame(std::istream &input, std::ostream &output, App &app)
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.ellipses.find(name) == app.ellipses.end()) {
     throw std::runtime_error("ellipse name not found");
@@ -186,6 +225,7 @@ void chernov::cmdFrameSet(std::istream &input, std::ostream &output, App &app)
   if (!(input >> name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.sets.find(name) == app.sets.end()) {
     throw std::runtime_error("set name not found");
@@ -210,8 +250,9 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
   if (!(input >> process_name >> seed)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
-  if (seed < 0) {
+  if (!detail::isValidName(process_name) || seed < 0) {
     throw std::runtime_error("seed must not be negative");
   }
 
@@ -295,6 +336,11 @@ void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
   if (!(input >> process_name >> calc_name >> set_name >> threads >> tries)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
+
+  if (!detail::isValidName(calc_name)) {
+    throw std::runtime_error("invalid calc name");
+  }
 
   if (app.processes.find(process_name) == app.processes.end()) {
     throw std::runtime_error("process name not found");
@@ -352,6 +398,7 @@ void chernov::cmdStatus(std::istream &input, std::ostream &output, App &app)
   if (!(input >> calc_name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.calcs.find(calc_name) == app.calcs.end()) {
     throw std::runtime_error("calc name not found");
@@ -367,6 +414,7 @@ void chernov::cmdWait(std::istream &input, std::ostream &output, App &app)
   if (!(input >> calc_name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.calcs.find(calc_name) == app.calcs.end()) {
     throw std::runtime_error("calc name not found");
@@ -402,6 +450,7 @@ void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
   if (!(input >> calc_name >> timeout_ms)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.calcs.find(calc_name) == app.calcs.end()) {
     throw std::runtime_error("calc name not found");
@@ -449,6 +498,7 @@ void chernov::cmdKill(std::istream &input, std::ostream &, App &app)
   if (!(input >> process_name)) {
     throw std::runtime_error("invalid input");
   }
+  detail::requireEnd(input);
 
   if (app.processes.find(process_name) == app.processes.end()) {
     throw std::runtime_error("process name not found");
