@@ -2,6 +2,11 @@
 #include <future>
 #include <random>
 
+namespace
+{
+  constexpr size_t LARGE_TESTS_THRESHOLD = 1000000;
+}
+
 size_t zubarev::calc(const std::vector< Circle >& circles, size_t tests, size_t seed, const Frame& f)
 {
   if (tests == 0 || circles.empty())
@@ -10,10 +15,62 @@ size_t zubarev::calc(const std::vector< Circle >& circles, size_t tests, size_t 
   }
 
   std::mt19937 gen(seed);
+  size_t hits = 0;
+
+  if (tests > LARGE_TESTS_THRESHOLD)
+  {
+    const double min_x = f.min_x;
+    const double min_y = f.min_y;
+    const double scale_x = (f.max_x - min_x) / static_cast< double >(gen.max());
+    const double scale_y = (f.max_y - min_y) / static_cast< double >(gen.max());
+
+    if (circles.size() == 1)
+    {
+      const double cx = circles[0].x;
+      const double cy = circles[0].y;
+      const double r2 = circles[0].r * circles[0].r;
+
+      for (size_t j = 0; j < tests; ++j)
+      {
+        const double x = min_x + static_cast< double >(gen()) * scale_x;
+        const double y = min_y + static_cast< double >(gen()) * scale_y;
+        const double dx = x - cx;
+        const double dy = y - cy;
+        if (dx * dx + dy * dy <= r2)
+        {
+          hits++;
+        }
+      }
+      return hits;
+    }
+
+    const size_t n = circles.size();
+    std::vector< double > r2(n);
+    for (size_t i = 0; i < n; ++i)
+    {
+      r2[i] = circles[i].r * circles[i].r;
+    }
+
+    for (size_t j = 0; j < tests; ++j)
+    {
+      const double x = min_x + static_cast< double >(gen()) * scale_x;
+      const double y = min_y + static_cast< double >(gen()) * scale_y;
+      for (size_t i = 0; i < n; ++i)
+      {
+        const double dx = x - circles[i].x;
+        const double dy = y - circles[i].y;
+        if (dx * dx + dy * dy <= r2[i])
+        {
+          hits++;
+          break;
+        }
+      }
+    }
+    return hits;
+  }
+
   std::uniform_real_distribution< double > dist_x(f.min_x, f.max_x);
   std::uniform_real_distribution< double > dist_y(f.min_y, f.max_y);
-
-  size_t hits = 0;
 
   if (circles.size() == 1)
   {
