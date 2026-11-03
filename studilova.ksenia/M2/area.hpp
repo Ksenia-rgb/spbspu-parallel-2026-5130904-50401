@@ -7,7 +7,7 @@
 
 namespace studilova
 {
-  double calculateArea(const std::vector< circle_t >& circles, size_t tries, unsigned int seed);
+  double calculateArea(const std::vector< circle_t >& circles, size_t threads, size_t tries, unsigned int seed);
 }
 
 #endif
