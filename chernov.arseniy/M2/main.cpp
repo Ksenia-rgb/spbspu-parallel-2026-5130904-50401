@@ -35,6 +35,7 @@ int main()
   cmds["status"] = chernov::cmdStatus;
   cmds["wait"] = chernov::cmdWait;
   cmds["timeout"] = chernov::cmdTimeout;
+  cmds["kill"] = chernov::cmdKill;
 
   auto cmd_io = chernov::CommandIO{std::cout, cmds, app};
   chernov::runCommands(std::cin, cmd_io);

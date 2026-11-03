@@ -443,12 +443,72 @@ void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
   detail::printCalcStatus(output, calc);
 }
 
+void chernov::cmdKill(std::istream &input, std::ostream &, App &app)
+{
+  std::string process_name;
+  if (!(input >> process_name)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.processes.find(process_name) == app.processes.end()) {
+    throw std::runtime_error("process name not found");
+  }
+
+  process_t &process = app.processes.at(process_name);
+  if (process.state != ProcessState::Active) {
+    throw std::runtime_error("process state must be active");
+  }
+
+  process.state = ProcessState::Stopping;
+  for (const std::string &calc_name : process.pending_calcs) {
+    calc_t &calc = app.calcs.at(calc_name);
+    if (calc.state == TaskState::Pending) {
+      calc.state = TaskState::Cancelled;
+    }
+  }
+  process.pending_calcs.clear();
+  if (process.task_fd >= 0) {
+    close(process.task_fd);
+    process.task_fd = -1;
+  }
+
+  pid_t result;
+  do {
+    result = waitpid(process.pid, nullptr, 0);
+  } while (result == -1 && errno == EINTR);
+  if (result == -1 && errno != ECHILD) {
+    throw std::runtime_error("waitpid failed");
+  }
+
+  if (process.result_fd >= 0) {
+    try {
+      receiveAvailableResult(app, process);
+    } catch (...) {
+    }
+  }
+  if (!process.current_calc_name.empty()) {
+    calc_t &calc = app.calcs.at(process.current_calc_name);
+    if (calc.state == TaskState::Running) {
+      calc.state = TaskState::Failed;
+    }
+  }
+  if (process.result_fd >= 0) {
+    close(process.result_fd);
+  }
+  process.result_fd = -1;
+  process.buffer.clear();
+  process.current_calc_name.clear();
+  process.state = ProcessState::Stopped;
+}
+
 void chernov::detail::printCalcStatus(std::ostream &output, const calc_t &calc)
 {
   IOguard guard(output);
   output << calc.process_name << " ";
   if (calc.state == TaskState::Completed) {
     output << std::fixed << std::setprecision(3) << calc.milliseconds << " " << calc.result;
+  } else if (calc.state == TaskState::Cancelled) {
+    output << "<CANCELED>";
   } else if (calc.state == TaskState::Failed) {
     output << "<FAILED>";
   } else {

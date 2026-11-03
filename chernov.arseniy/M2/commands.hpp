@@ -41,6 +41,7 @@ namespace chernov {
   void cmdStatus(std::istream &, std::ostream &, App &);
   void cmdWait(std::istream &, std::ostream &, App &);
   void cmdTimeout(std::istream &, std::ostream &, App &);
+  void cmdKill(std::istream &, std::ostream &, App &);
 
   namespace detail {
     void printCalcStatus(std::ostream &output, const calc_t &calc);
