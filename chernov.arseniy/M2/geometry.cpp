@@ -7,12 +7,12 @@
 
 std::ostream& chernov::operator<<(std::ostream& output, const point_t& point)
 {
-  std::ostream::sentry sentry(output);
+  const std::ostream::sentry sentry(output);
   if (!sentry) {
     return output;
   }
 
-  detail::IOguard guard(output);
+  const detail::IOguard guard(output);
   output << "(" << point.x << " " << point.y << ")";
 
   return output;
@@ -20,12 +20,12 @@ std::ostream& chernov::operator<<(std::ostream& output, const point_t& point)
 
 std::ostream& chernov::operator<<(std::ostream& output, const frame_t& frame)
 {
-  std::ostream::sentry sentry(output);
+  const std::ostream::sentry sentry(output);
   if (!sentry) {
     return output;
   }
 
-  detail::IOguard guard(output);
+  const detail::IOguard guard(output);
   output << frame.left_bottom << " " << frame.right_top;
 
   return output;
@@ -33,12 +33,12 @@ std::ostream& chernov::operator<<(std::ostream& output, const frame_t& frame)
 
 std::ostream& chernov::operator<<(std::ostream& output, const ellipse_t& ellipse)
 {
-  std::ostream::sentry sentry(output);
+  const std::ostream::sentry sentry(output);
   if (!sentry) {
     return output;
   }
 
-  detail::IOguard guard(output);
+  const detail::IOguard guard(output);
   if (ellipse.is_circle) {
     output << ellipse.horizontal_radius << " " << ellipse.center;
   } else {

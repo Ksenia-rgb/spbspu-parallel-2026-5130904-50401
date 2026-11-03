@@ -176,7 +176,7 @@ void chernov::spawnProcess(App &app, const std::string &name, size_t seed)
   if (flags == -1 || fcntl(to_parent[0], F_SETFL, flags | O_NONBLOCK) == -1) {
     close(to_child[1]);
     close(to_parent[0]);
-    pid_t result;
+    pid_t result = 0;
     do {
       result = waitpid(pid, nullptr, 0);
     } while (result == -1 && errno == EINTR);
@@ -189,7 +189,7 @@ void chernov::spawnProcess(App &app, const std::string &name, size_t seed)
   } catch (...) {
     close(to_child[1]);
     close(to_parent[0]);
-    pid_t result;
+    pid_t result = 0;
     do {
       result = waitpid(pid, nullptr, 0);
     } while (result == -1 && errno == EINTR);
@@ -210,7 +210,7 @@ void chernov::startNextCalculation(App &app, process_t &process)
   }
 
   process.current_calc_name = calc_name;
-  int err;
+  int err = 0;
   const size_t sent = detail::sendAll(err, process.task_fd, reinterpret_cast< const char * >(&task), sizeof(task));
   bool failed = err != 0 || sent != sizeof(task);
   if (!failed) {
@@ -334,7 +334,7 @@ void chernov::checkProcesses(App &app)
       }
     }
 
-    pid_t result;
+    pid_t result = 0;
     do {
       result = waitpid(process.pid, nullptr, WNOHANG);
     } while (result == -1 && errno == EINTR);
@@ -374,12 +374,12 @@ void chernov::waitCalculation(App &app, calc_t &calc)
 {
   checkProcesses(app);
   while (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
-    process_t &process = app.processes.at(calc.process_name);
+    const process_t &process = app.processes.at(calc.process_name);
     if (process.result_fd < 0) {
       throw std::runtime_error("result pipe is closed");
     }
     pollfd descriptor{process.result_fd, POLLIN, 0};
-    int result;
+    int result = 0;
     do {
       result = poll(&descriptor, 1, -1);
     } while (result == -1 && errno == EINTR);
@@ -401,7 +401,7 @@ void chernov::waitCalculation(App &app, calc_t &calc, long long timeout_ms)
       break;
     }
 
-    process_t &process = app.processes.at(calc.process_name);
+    const process_t &process = app.processes.at(calc.process_name);
     if (process.result_fd < 0) {
       throw std::runtime_error("result pipe is closed");
     }
@@ -435,7 +435,7 @@ void chernov::killProcess(App &app, process_t &process)
     process.task_fd = -1;
   }
 
-  pid_t result;
+  pid_t result = 0;
   do {
     result = waitpid(process.pid, nullptr, 0);
   } while (result == -1 && errno == EINTR);
@@ -490,7 +490,7 @@ void chernov::shutdownProcesses(App &app)
     if (process.state == ProcessState::Stopped) {
       continue;
     }
-    pid_t result;
+    pid_t result = 0;
     do {
       result = waitpid(process.pid, nullptr, 0);
     } while (result == -1 && errno == EINTR);

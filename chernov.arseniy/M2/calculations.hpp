@@ -1,5 +1,5 @@
-#ifndef CALCULATION_HPP
-#define CALCULATION_HPP
+#ifndef CALCULATIONS_HPP
+#define CALCULATIONS_HPP
 
 #include "geometry.hpp"
 

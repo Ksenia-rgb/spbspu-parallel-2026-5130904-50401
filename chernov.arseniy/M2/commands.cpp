@@ -7,7 +7,7 @@
 
 std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
 {
-  std::istream::sentry sentry(input);
+  const std::istream::sentry sentry(input);
   if (!sentry) {
     return input;
   }
@@ -44,7 +44,9 @@ void chernov::runCommands(std::istream &input, CommandIO &cmd_io)
 void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
 {
   std::string name;
-  double r, x, y;
+  double r = 0;
+  double x = 0;
+  double y = 0;
   if (!(input >> name >> r >> x >> y)) {
     throw std::runtime_error("invalid input");
   }
@@ -63,7 +65,10 @@ void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
 void chernov::cmdEllipse(std::istream &input, std::ostream &, App &app)
 {
   std::string name;
-  double horizontal_radius, vertical_radius, x, y;
+  double horizontal_radius = 0;
+  double vertical_radius = 0;
+  double x = 0;
+  double y = 0;
   if (!(input >> name >> horizontal_radius >> vertical_radius >> x >> y)) {
     throw std::runtime_error("invalid input");
   }
@@ -82,7 +87,7 @@ void chernov::cmdEllipse(std::istream &input, std::ostream &, App &app)
 void chernov::cmdRotate(std::istream &input, std::ostream &, App &app)
 {
   std::string name;
-  double ksi;
+  double ksi = 0;
   if (!(input >> name >> ksi)) {
     throw std::runtime_error("invalid input");
   }
@@ -98,7 +103,7 @@ void chernov::cmdRotate(std::istream &input, std::ostream &, App &app)
 void chernov::cmdSet(std::istream &input, std::ostream &, App &app)
 {
   std::string name;
-  long long size;
+  long long size = 0;
   if (!(input >> name >> size)) {
     throw std::runtime_error("invalid input");
   }
@@ -159,7 +164,7 @@ void chernov::cmdShowSet(std::istream &input, std::ostream &output, App &app)
   }
 
   const set_t &set = app.sets.at(name);
-  for (std::string ellipse_name : set) {
+  for (const std::string &ellipse_name : set) {
     output << app.ellipses.at(ellipse_name) << "\n";
   }
 }
@@ -196,7 +201,7 @@ void chernov::cmdFrameSet(std::istream &input, std::ostream &output, App &app)
   std::vector< ellipse_t > ellipses_vector;
   ellipses_vector.reserve(set.size());
 
-  for (std::string ellipse_name : set) {
+  for (const std::string &ellipse_name : set) {
     ellipses_vector.push_back(app.ellipses.at(ellipse_name));
   }
 
@@ -207,7 +212,7 @@ void chernov::cmdFrameSet(std::istream &input, std::ostream &output, App &app)
 void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
 {
   std::string process_name;
-  long long seed;
+  long long seed = 0;
   if (!(input >> process_name >> seed)) {
     throw std::runtime_error("invalid input");
   }
@@ -226,7 +231,8 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
 void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
 {
   std::string process_name, calc_name, set_name;
-  long long threads, tries;
+  long long threads = 0;
+  long long tries = 0;
   if (!(input >> process_name >> calc_name >> set_name >> threads >> tries)) {
     throw std::runtime_error("invalid input");
   }
@@ -322,7 +328,7 @@ void chernov::cmdWait(std::istream &input, std::ostream &output, App &app)
 void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
 {
   std::string calc_name;
-  long long timeout_ms;
+  long long timeout_ms = 0;
   if (!(input >> calc_name >> timeout_ms)) {
     throw std::runtime_error("invalid input");
   }
@@ -365,14 +371,14 @@ chernov::detail::CommandBuffer::CommandBuffer(std::string &line)
   if (line.empty()) {
     setg(nullptr, nullptr, nullptr);
   } else {
-    char *begin = &line[0];
+    char *const begin = &line[0];
     setg(begin, begin, begin + line.size());
   }
 }
 
 void chernov::detail::printCalcStatus(std::ostream &output, const calc_t &calc)
 {
-  IOguard guard(output);
+  const IOguard guard(output);
   output << calc.process_name << " ";
   if (calc.state == TaskState::Completed) {
     output << std::fixed << std::setprecision(3) << calc.milliseconds << " " << calc.result;
