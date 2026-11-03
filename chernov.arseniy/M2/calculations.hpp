@@ -60,6 +60,7 @@ namespace chernov {
   void startNextCalculation(App &app, process_t &process);
   void receiveAvailableResult(App &, process_t &);
   void checkProcesses(App &app);
+  void shutdownProcesses(App &app);
 
   bool isInside(double x, double y, const ellipse_t &ellipse);
   bool isInsideAny(point_t point, const std::vector< ellipse_t > &ellipses);

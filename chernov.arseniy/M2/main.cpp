@@ -35,4 +35,5 @@ int main()
 
   auto cmd_io = chernov::CommandIO{std::cout, cmds, app};
   chernov::runCommands(std::cin, cmd_io);
+  chernov::shutdownProcesses(app);
 }

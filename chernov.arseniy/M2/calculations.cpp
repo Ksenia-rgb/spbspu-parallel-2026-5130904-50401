@@ -297,6 +297,68 @@ void chernov::checkProcesses(App &app)
   }
 }
 
+void chernov::shutdownProcesses(App &app)
+{
+  for (auto &entry : app.processes) {
+    process_t &process = entry.second;
+    if (process.state == ProcessState::Stopped) {
+      continue;
+    }
+
+    process.state = ProcessState::Stopping;
+    if (process.task_fd >= 0) {
+      close(process.task_fd);
+      process.task_fd = -1;
+    }
+    for (const std::string &calc_name : process.pending_calcs) {
+      calc_t &calc = app.calcs.at(calc_name);
+      if (calc.state == TaskState::Pending) {
+        calc.state = TaskState::Failed;
+      }
+    }
+    process.pending_calcs.clear();
+  }
+
+  int wait_error = 0;
+  for (auto &entry : app.processes) {
+    process_t &process = entry.second;
+    if (process.state == ProcessState::Stopped) {
+      continue;
+    }
+
+    pid_t result;
+    do {
+      result = waitpid(process.pid, nullptr, 0);
+    } while (result == -1 && errno == EINTR);
+    if (result == -1 && errno != ECHILD) {
+      wait_error = errno;
+    }
+
+    if (process.result_fd >= 0) {
+      try {
+        receiveAvailableResult(app, process);
+      } catch (...) {
+      }
+    }
+    if (!process.current_calc_name.empty()) {
+      calc_t &calc = app.calcs.at(process.current_calc_name);
+      if (calc.state == TaskState::Running) {
+        calc.state = TaskState::Failed;
+      }
+    }
+    if (process.result_fd >= 0) {
+      close(process.result_fd);
+    }
+    process.result_fd = -1;
+    process.buffer.clear();
+    process.current_calc_name.clear();
+    process.state = ProcessState::Stopped;
+  }
+  if (wait_error != 0) {
+    throw std::runtime_error(std::strerror(wait_error));
+  }
+}
+
 bool chernov::isInside(const double x, const double y, const ellipse_t &ellipse)
 {
   const double dx = x - ellipse.center.x;
