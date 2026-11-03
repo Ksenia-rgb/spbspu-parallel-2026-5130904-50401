@@ -34,6 +34,7 @@ int main()
   cmds["area-on"] = chernov::cmdAreaOn;
   cmds["status"] = chernov::cmdStatus;
   cmds["wait"] = chernov::cmdWait;
+  cmds["timeout"] = chernov::cmdTimeout;
 
   auto cmd_io = chernov::CommandIO{std::cout, cmds, app};
   chernov::runCommands(std::cin, cmd_io);

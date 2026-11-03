@@ -1,5 +1,7 @@
 #include "commands.hpp"
 
+#include <algorithm>
+#include <chrono>
 #include <fcntl.h>
 #include <iomanip>
 #include <iostream>
@@ -82,8 +84,7 @@ void chernov::cmdEllipse(std::istream &input, std::ostream &, App &app)
     throw std::runtime_error("ellipse radii must be greater than zero");
   }
 
-  app.ellipses.insert(
-      {name, ellipse_t{point_t{x, y}, horizontal_radius, vertical_radius, 0, false}});
+  app.ellipses.insert({name, ellipse_t{point_t{x, y}, horizontal_radius, vertical_radius, 0, false}});
 }
 
 void chernov::cmdRotate(std::istream &input, std::ostream &, App &app)
@@ -270,8 +271,7 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
       throw std::runtime_error("fcntl failed");
     }
 
-    process_t process{
-        pid, static_cast< size_t >(seed), to_child[1], to_parent[0], ProcessState::Active, "", {}};
+    process_t process{pid, static_cast< size_t >(seed), to_child[1], to_parent[0], ProcessState::Active, "", {}};
 
     try {
       app.processes.insert({process_name, std::move(process)});
@@ -386,6 +386,54 @@ void chernov::cmdWait(std::istream &input, std::ostream &output, App &app)
       result = poll(&descriptor, 1, -1);
     } while (result == -1 && errno == EINTR);
     if (result == -1) {
+      throw std::runtime_error("poll failed");
+    }
+
+    checkProcesses(app);
+  }
+
+  detail::printCalcStatus(output, calc);
+}
+
+void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
+{
+  std::string calc_name;
+  long long timeout_ms;
+  if (!(input >> calc_name >> timeout_ms)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.calcs.find(calc_name) == app.calcs.end()) {
+    throw std::runtime_error("calc name not found");
+  }
+  if (timeout_ms < 0) {
+    throw std::runtime_error("timeout must not be negative");
+  }
+
+  checkProcesses(app);
+  calc_t &calc = app.calcs.at(calc_name);
+  const auto start = std::chrono::steady_clock::now();
+  while (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
+    const auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(
+        std::chrono::steady_clock::now() - start);
+    if (elapsed.count() >= timeout_ms) {
+      break;
+    }
+
+    process_t &process = app.processes.at(calc.process_name);
+    if (process.result_fd < 0) {
+      throw std::runtime_error("result pipe is closed");
+    }
+
+    const long long remaining = timeout_ms - elapsed.count();
+    const int poll_timeout = static_cast< int >(
+        std::min(remaining, static_cast< long long >(std::numeric_limits< int >::max())));
+    pollfd descriptor{process.result_fd, POLLIN, 0};
+    const int result = poll(&descriptor, 1, poll_timeout);
+    if (result == -1) {
+      if (errno == EINTR) {
+        continue;
+      }
       throw std::runtime_error("poll failed");
     }
 
