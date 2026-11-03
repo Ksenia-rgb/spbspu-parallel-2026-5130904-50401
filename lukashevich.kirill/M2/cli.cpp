@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <charconv>
 #include <stdexcept>
 #include <system_error>
 #include <utility>
@@ -61,7 +62,7 @@ namespace lukashevich
     {
       long long result = 0;
       const char* first = text.data();
-      const char* last = first + text.size();
+      const char* const last = first + text.size();
       if (first != last && *first == '+')
       {
         ++first;
@@ -139,9 +140,40 @@ namespace lukashevich
   }
 }
 
+lukashevich::CommandLine::~CommandLine()
+{
+  for (auto& entry : processes_)
+  {
+    shutdown(entry.second);
+  }
+}
+
+void lukashevich::CommandLine::run(std::istream& input, std::ostream& output)
+{
+  std::string line;
+  while (std::getline(input, line))
+  {
+    try
+    {
+      const auto arguments = detail::split(line);
+      if (!arguments.empty())
+      {
+        execute(arguments, output);
+      }
+    }
+    catch (const std::exception&)
+    {
+      output << "<INVALID COMMAND>\n";
+    }
+    output.flush();
+  }
+}
+
 void lukashevich::CommandLine::addShape(const std::vector< std::string >& arguments, bool circle)
 {
-  detail::require(arguments.size() == (circle ? 5 : 6));
+  constexpr std::size_t circle_count = 5;
+  constexpr std::size_t ellipse_count = 6;
+  detail::require(arguments.size() == (circle ? circle_count : ellipse_count));
   const std::string& name = arguments[1];
   detail::checkName(name);
   detail::require(shapes_.count(name) == 0);
@@ -184,6 +216,140 @@ std::vector< lukashevich::Shape > lukashevich::CommandLine::getSet(const std::st
   return shapes;
 }
 
+void lukashevich::CommandLine::spawn(const std::string& name, std::size_t seed)
+{
+  detail::checkName(name);
+  detail::require(processes_.count(name) == 0);
+  const auto entry = processes_.emplace(name, Process{-1, -1, -1, false});
+  int commands[2]{-1, -1};
+  int responses[2]{-1, -1};
+  try
+  {
+    if (pipe(commands) < 0 || pipe(responses) < 0)
+    {
+      throw std::system_error(errno, std::generic_category(), "pipe");
+    }
+    const pid_t pid = fork();
+    if (pid < 0)
+    {
+      throw std::system_error(errno, std::generic_category(), "fork");
+    }
+    if (pid == 0)
+    {
+      closeDescriptor(commands[1]);
+      closeDescriptor(responses[0]);
+      for (auto& process : processes_)
+      {
+        closeDescriptor(process.second.input);
+        closeDescriptor(process.second.output);
+      }
+      int code = 0;
+      try
+      {
+        computeProcess(commands[0], responses[1], seed);
+      }
+      catch (...)
+      {
+        code = 1;
+      }
+      closeDescriptor(commands[0]);
+      closeDescriptor(responses[1]);
+      _exit(code);
+    }
+    closeDescriptor(commands[0]);
+    closeDescriptor(responses[1]);
+    entry.first->second = Process{pid, commands[1], responses[0], true};
+  }
+  catch (...)
+  {
+    for (int& descriptor : commands)
+    {
+      closeDescriptor(descriptor);
+    }
+    for (int& descriptor : responses)
+    {
+      closeDescriptor(descriptor);
+    }
+    processes_.erase(entry.first);
+    throw;
+  }
+}
+
+lukashevich::Response lukashevich::CommandLine::exchange(
+    Process& process, const Request& request, const std::vector< Shape >& shapes)
+{
+  detail::require(process.alive);
+  try
+  {
+    sendAll(process.input, &request, sizeof(request));
+    if (request.kind == RequestKind::calculate)
+    {
+      sendAll(process.input, shapes.data(), shapes.size() * sizeof(Shape));
+    }
+    Response response{};
+    if (!receiveAll(process.output, &response, sizeof(response)))
+    {
+      throw std::runtime_error("Process error");
+    }
+    return response;
+  }
+  catch (...)
+  {
+    shutdown(process);
+    throw;
+  }
+}
+
+void lukashevich::CommandLine::start(const std::vector< std::string >& arguments)
+{
+  detail::require(arguments.size() == 6);
+  const std::string& name = arguments[2];
+  detail::checkName(name);
+  detail::require(calculations_.count(name) == 0);
+  Process& process = processes_.at(arguments[1]);
+  detail::require(process.alive);
+  const std::size_t threads = detail::count(arguments[4], false);
+  const std::size_t tries = detail::count(arguments[5], true);
+  const auto shapes = getSet(arguments[3]);
+  const std::size_t id = calculations_.size();
+  const auto inserted
+      = calculations_.emplace(name, Calculation{arguments[1], id, {CalculationState::progress, 0.0, 0.0}});
+  try
+  {
+    const Request request{RequestKind::calculate, id, threads, tries, shapes.size(), 0};
+    const Response response = exchange(process, request, shapes);
+    detail::require(response.state == CalculationState::progress);
+  }
+  catch (...)
+  {
+    calculations_.erase(inserted.first);
+    throw;
+  }
+}
+
+void lukashevich::CommandLine::shutdown(Process& process) noexcept
+{
+  if (process.pid <= 0)
+  {
+    return;
+  }
+  if (process.alive)
+  {
+    try
+    {
+      const Request request{RequestKind::shutdown, 0, 0, 0, 0, 0};
+      sendAll(process.input, &request, sizeof(request));
+    }
+    catch (...)
+    {}
+  }
+  closeDescriptor(process.input);
+  closeDescriptor(process.output);
+  detail::reap(process.pid);
+  process.pid = -1;
+  process.alive = false;
+}
+
 void lukashevich::CommandLine::execute(const std::vector< std::string >& arguments, std::ostream& output)
 {
   const std::string& command = arguments[0];
@@ -214,6 +380,15 @@ void lukashevich::CommandLine::execute(const std::vector< std::string >& argumen
       const auto shapes = command == "frame" ? std::vector< Shape >{shapes_.at(arguments[1])} : getSet(arguments[1]);
       detail::printBounds(output, getBounds(shapes));
     }
+  }
+  else if (command == "spawn")
+  {
+    detail::require(arguments.size() == 3);
+    spawn(arguments[1], detail::count(arguments[2], false));
+  }
+  else if (command == "area-on")
+  {
+    start(arguments);
   }
   else
   {
