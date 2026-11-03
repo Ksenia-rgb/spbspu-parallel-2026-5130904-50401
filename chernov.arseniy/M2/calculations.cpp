@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
+#include <cmath>
 #include <cstring>
 #include <limits>
 #include <functional>
@@ -363,9 +364,13 @@ bool chernov::isInside(const double x, const double y, const ellipse_t &ellipse)
 {
   const double dx = x - ellipse.center.x;
   const double dy = y - ellipse.center.y;
+  const double cosine = std::cos(ellipse.ksi);
+  const double sine = std::sin(ellipse.ksi);
+  const double local_x = dx * cosine + dy * sine;
+  const double local_y = -dx * sine + dy * cosine;
   const double a = ellipse.horizontal_radius;
   const double b = ellipse.vertical_radius;
-  return dx * dx / (a * a) + dy * dy / (b * b) <= 1;
+  return local_x * local_x / (a * a) + local_y * local_y / (b * b) <= 1;
 }
 
 bool chernov::isInsideAny(point_t point, const std::vector< ellipse_t > &ellipses)

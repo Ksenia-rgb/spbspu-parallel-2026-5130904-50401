@@ -64,7 +64,41 @@ void chernov::cmdCircle(std::istream &input, std::ostream &, App &app)
     throw std::runtime_error("ellipse radius must be greater than zero");
   }
 
-  app.ellipses.insert({name, ellipse_t{point_t{x, y}, r, r, 0}});
+  app.ellipses.insert({name, ellipse_t{point_t{x, y}, r, r, 0, true}});
+}
+
+void chernov::cmdEllipse(std::istream &input, std::ostream &, App &app)
+{
+  std::string name;
+  double horizontal_radius, vertical_radius, x, y;
+  if (!(input >> name >> horizontal_radius >> vertical_radius >> x >> y)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.ellipses.find(name) != app.ellipses.end()) {
+    throw std::runtime_error("ellipse name already exists");
+  }
+  if (horizontal_radius <= 0 || vertical_radius <= 0) {
+    throw std::runtime_error("ellipse radii must be greater than zero");
+  }
+
+  app.ellipses.insert(
+      {name, ellipse_t{point_t{x, y}, horizontal_radius, vertical_radius, 0, false}});
+}
+
+void chernov::cmdRotate(std::istream &input, std::ostream &, App &app)
+{
+  std::string name;
+  double ksi;
+  if (!(input >> name >> ksi)) {
+    throw std::runtime_error("invalid input");
+  }
+
+  if (app.ellipses.find(name) == app.ellipses.end()) {
+    throw std::runtime_error("ellipse name not found");
+  }
+
+  app.ellipses.at(name).ksi += ksi;
 }
 
 void chernov::cmdSet(std::istream &input, std::ostream &, App &app)

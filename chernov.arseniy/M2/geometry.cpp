@@ -1,6 +1,7 @@
 #include "geometry.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <ostream>
 
@@ -38,11 +39,11 @@ std::ostream& chernov::operator<<(std::ostream& output, const ellipse_t& ellipse
   }
 
   detail::IOguard guard(output);
-  if (ellipse.horizontal_radius == ellipse.vertical_radius) {
+  if (ellipse.is_circle) {
     output << ellipse.horizontal_radius << " " << ellipse.center;
   } else {
     output << ellipse.horizontal_radius << " " << ellipse.vertical_radius << " " << ellipse.center;
-    output << std::fixed << std::setprecision(3) << ellipse.ksi;
+    output << " " << std::fixed << std::setprecision(3) << ellipse.ksi;
   }
 
   return output;
@@ -50,42 +51,32 @@ std::ostream& chernov::operator<<(std::ostream& output, const ellipse_t& ellipse
 
 chernov::frame_t chernov::getFrame(const ellipse_t& ellipse)
 {
+  const double cosine = std::cos(ellipse.ksi);
+  const double sine = std::sin(ellipse.ksi);
+  const double horizontal_radius = ellipse.horizontal_radius;
+  const double vertical_radius = ellipse.vertical_radius;
+  const double half_width = std::sqrt(
+      horizontal_radius * horizontal_radius * cosine * cosine
+      + vertical_radius * vertical_radius * sine * sine);
+  const double half_height = std::sqrt(
+      horizontal_radius * horizontal_radius * sine * sine
+      + vertical_radius * vertical_radius * cosine * cosine);
   return {
-      {ellipse.center.x - ellipse.horizontal_radius, ellipse.center.y - ellipse.vertical_radius},
-      {ellipse.center.x + ellipse.horizontal_radius, ellipse.center.y + ellipse.vertical_radius},
+      {ellipse.center.x - half_width, ellipse.center.y - half_height},
+      {ellipse.center.x + half_width, ellipse.center.y + half_height},
   };
 }
 
 chernov::frame_t chernov::getFrame(const std::vector< ellipse_t >& ellipses)
 {
-  auto cmp_min_x = [](const ellipse_t& a, const ellipse_t& b)
-  {
-    return a.center.x - a.horizontal_radius < b.center.x - b.horizontal_radius;
-  };
-  auto cmp_min_y = [](const ellipse_t& a, const ellipse_t& b)
-  {
-    return a.center.y - a.vertical_radius < b.center.y - b.vertical_radius;
-  };
-  auto cmp_max_x = [](const ellipse_t& a, const ellipse_t& b)
-  {
-    return a.center.x + a.horizontal_radius < b.center.x + b.horizontal_radius;
-  };
-  auto cmp_max_y = [](const ellipse_t& a, const ellipse_t& b)
-  {
-    return a.center.y + a.vertical_radius < b.center.y + b.vertical_radius;
-  };
-
-  const auto it_min_x = std::min_element(ellipses.begin(), ellipses.end(), cmp_min_x);
-  const auto it_min_y = std::min_element(ellipses.begin(), ellipses.end(), cmp_min_y);
-  const auto it_max_x = std::max_element(ellipses.begin(), ellipses.end(), cmp_max_x);
-  const auto it_max_y = std::max_element(ellipses.begin(), ellipses.end(), cmp_max_y);
-
-  const double min_x = it_min_x->center.x - it_min_x->horizontal_radius;
-  const double min_y = it_min_y->center.y - it_min_y->vertical_radius;
-  const double max_x = it_max_x->center.x + it_max_x->horizontal_radius;
-  const double max_y = it_max_y->center.y + it_max_y->vertical_radius;
-
-  const frame_t frame{{min_x, min_y}, {max_x, max_y}};
+  frame_t frame = getFrame(ellipses.front());
+  for (auto it = ellipses.begin() + 1; it != ellipses.end(); ++it) {
+    const frame_t ellipse_frame = getFrame(*it);
+    frame.left_bottom.x = std::min(frame.left_bottom.x, ellipse_frame.left_bottom.x);
+    frame.left_bottom.y = std::min(frame.left_bottom.y, ellipse_frame.left_bottom.y);
+    frame.right_top.x = std::max(frame.right_top.x, ellipse_frame.right_top.x);
+    frame.right_top.y = std::max(frame.right_top.y, ellipse_frame.right_top.y);
+  }
   return frame;
 }
 

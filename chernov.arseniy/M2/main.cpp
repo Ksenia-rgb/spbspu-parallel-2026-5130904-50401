@@ -23,6 +23,8 @@ int main()
 
   std::unordered_map< std::string, chernov::cmd_t > cmds;
   cmds["circle"] = chernov::cmdCircle;
+  cmds["ellipse"] = chernov::cmdEllipse;
+  cmds["rotate"] = chernov::cmdRotate;
   cmds["set"] = chernov::cmdSet;
   cmds["show"] = chernov::cmdShow;
   cmds["showset"] = chernov::cmdShowSet;

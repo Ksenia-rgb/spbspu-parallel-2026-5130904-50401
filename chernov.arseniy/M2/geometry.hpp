@@ -21,6 +21,7 @@ namespace chernov {
     double horizontal_radius;
     double vertical_radius;
     double ksi;
+    bool is_circle;
   };
 
   using ellipses_t = std::unordered_map< std::string, ellipse_t >;

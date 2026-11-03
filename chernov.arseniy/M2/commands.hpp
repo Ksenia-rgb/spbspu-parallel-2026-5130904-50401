@@ -29,6 +29,8 @@ namespace chernov {
   void runCommands(std::istream &input, CommandIO &cmd_io);
 
   void cmdCircle(std::istream &, std::ostream &, App &);
+  void cmdEllipse(std::istream &, std::ostream &, App &);
+  void cmdRotate(std::istream &, std::ostream &, App &);
   void cmdSet(std::istream &, std::ostream &, App &);
   void cmdShow(std::istream &, std::ostream &, App &);
   void cmdShowSet(std::istream &, std::ostream &, App &);
