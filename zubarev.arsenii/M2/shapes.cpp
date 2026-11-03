@@ -8,7 +8,8 @@ zubarev::Circle::Circle(double x, double y, double r):
   y(y),
   r(r)
 {
-  if (r <= 0.0) {
+  if (r <= 0.0)
+  {
     throw std::invalid_argument("Radius must be positive");
   }
 }
@@ -20,7 +21,8 @@ zubarev::Frame zubarev::frame(const Circle& c)
 
 zubarev::Frame zubarev::frame(const std::vector< Circle >& circles)
 {
-  if (circles.empty()) {
+  if (circles.empty())
+  {
     return Frame{0.0, 0.0, 0.0, 0.0};
   }
 
@@ -29,8 +31,9 @@ zubarev::Frame zubarev::frame(const std::vector< Circle >& circles)
   double max_x = std::numeric_limits< double >::lowest();
   double max_y = std::numeric_limits< double >::lowest();
 
-  for (const auto& c : circles) {
-    Frame f = frame(c);
+  for (const Circle& c : circles)
+  {
+    const Frame f = frame(c);
     min_x = std::min(min_x, f.min_x);
     min_y = std::min(min_y, f.min_y);
     max_x = std::max(max_x, f.max_x);

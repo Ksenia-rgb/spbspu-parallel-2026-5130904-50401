@@ -4,16 +4,22 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace zubarev {
-  struct RequestHeader {
-    char name[32];
+namespace zubarev
+{
+  constexpr size_t NAME_MAX_LEN = 32;
+  constexpr size_t PIPE_ENDS = 2;
+
+  struct RequestHeader
+  {
+    char name[NAME_MAX_LEN];
     uint64_t threads;
     uint64_t tries;
     uint64_t count;
   };
 
-  struct Response {
-    char name[32];
+  struct Response
+  {
+    char name[NAME_MAX_LEN];
     double ms;
     double area;
   };
@@ -21,7 +27,8 @@ namespace zubarev {
   size_t send(int& err, int wr, const char* b, size_t k);
   size_t recv(int& err, int rd, char* b, size_t k);
 
-  class Pipe {
+  class Pipe
+  {
   public:
     Pipe();
     ~Pipe();
@@ -45,7 +52,7 @@ namespace zubarev {
     void closeAll() noexcept;
 
   private:
-    int fds_[2];
+    int fds_[PIPE_ENDS];
   };
 }
 

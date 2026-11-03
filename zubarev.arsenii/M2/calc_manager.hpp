@@ -10,10 +10,17 @@
 #include <sys/types.h>
 #include "shapes.hpp"
 
-namespace zubarev {
-  enum class CalcStatus { IN_PROGRESS, COMPLETED, CANCELED };
+namespace zubarev
+{
+  enum class CalcStatus
+  {
+    IN_PROGRESS,
+    COMPLETED,
+    CANCELED
+  };
 
-  struct ProcessInfo {
+  struct ProcessInfo
+  {
     pid_t pid = -1;
     int req_wr = -1;
     int resp_rd = -1;
@@ -21,7 +28,8 @@ namespace zubarev {
     std::string name;
   };
 
-  struct CalcInfo {
+  struct CalcInfo
+  {
     std::string calc_name;
     std::string process_name;
     CalcStatus status = CalcStatus::IN_PROGRESS;
@@ -29,7 +37,8 @@ namespace zubarev {
     double area = 0.0;
   };
 
-  struct CalcTable {
+  struct CalcTable
+  {
     std::map< std::string, ProcessInfo > processes;
     std::set< std::string > used_processes;
     std::map< std::string, CalcInfo > calcs;
