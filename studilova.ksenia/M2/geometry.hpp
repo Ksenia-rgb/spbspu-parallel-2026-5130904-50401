@@ -1,6 +1,8 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
 
+#include <vector>
+
 namespace studilova
 {
   struct circle_t
@@ -19,6 +21,7 @@ namespace studilova
   };
 
   rectangle_t findFrame(const circle_t& circle);
+  rectangle_t findFrame(const std::vector< circle_t >& circles);
 }
 
 #endif
