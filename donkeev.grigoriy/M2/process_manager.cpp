@@ -72,23 +72,43 @@ namespace
   void monteCarloWorker(const std::vector< donkeev::circle_t >& circles, const donkeev::rectangle_t& bbox,
       size_t thread_tries, size_t thread_seed, size_t& out_hits)
   {
+    std::vector<donkeev::FlatCircle> flat_circles;
+    flat_circles.reserve(circles.size());
+    for (const auto& c : circles)
+    {
+      auto center = c.getCenter();
+      double r = c.getRadius();
+      
+      donkeev::FlatCircle fc;
+      fc.cx = center.x_;
+      fc.cy = center.y_;
+      fc.r2 = r * r;
+      
+      flat_circles.push_back(fc);
+    }
+
     std::mt19937_64 rng(thread_seed);
-    std::uniform_real_distribution< double > dist_x(bbox.bottom_left_.x_, bbox.top_right_.x_);
-    std::uniform_real_distribution< double > dist_y(bbox.bottom_left_.y_, bbox.top_right_.y_);
+    
+    const double min_x = bbox.bottom_left_.x_;
+    const double max_x = bbox.top_right_.x_;
+    const double min_y = bbox.bottom_left_.y_;
+    const double max_y = bbox.top_right_.y_;
+    
+    const double range_x = max_x - min_x;
+    const double range_y = max_y - min_y;
+    constexpr double kInv = 1.0 / 9007199254740992.0;
 
     size_t local_hits = 0;
     for (size_t i = 0; i < thread_tries; ++i)
     {
-      double px = dist_x(rng);
-      double py = dist_y(rng);
+      double px = min_x + (rng() >> 11) * kInv * range_x;
+      double py = min_y + (rng() >> 11) * kInv * range_y;
 
-      for (const auto& c : circles)
+      for (const auto& fc : flat_circles)
       {
-        donkeev::point_t center = c.getCenter();
-        double dx = px - center.x_;
-        double dy = py - center.y_;
-        double r = c.getRadius();
-        if (dx * dx + dy * dy <= r * r)
+        double dx = px - fc.cx;
+        double dy = py - fc.cy;
+        if (dx * dx + dy * dy <= fc.r2)
         {
           ++local_hits;
           break;

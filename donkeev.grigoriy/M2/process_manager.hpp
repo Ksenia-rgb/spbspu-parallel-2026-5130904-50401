@@ -12,6 +12,10 @@
 
 namespace donkeev
 {
+  struct FlatCircle {
+    int cx, cy, r2;
+  };
+
   struct CalculationInfo
   {
     std::string process_name_;
