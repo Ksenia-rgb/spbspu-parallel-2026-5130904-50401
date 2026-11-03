@@ -242,6 +242,7 @@ void chernov::receiveAvailableResult(App &app, process_t &process)
   calc.state = TaskState::Completed;
   process.buffer.clear();
   process.current_calc_name.clear();
+  startNextCalculation(app, process);
 }
 
 void chernov::checkProcesses(App &app)
@@ -251,6 +252,13 @@ void chernov::checkProcesses(App &app)
     process_t &process = entry.second;
     if (process.state == ProcessState::Stopped) {
       continue;
+    }
+
+    if (process.result_fd >= 0) {
+      try {
+        receiveAvailableResult(app, process);
+      } catch (...) {
+      }
     }
 
     pid_t result;
@@ -263,13 +271,6 @@ void chernov::checkProcesses(App &app)
     if (result == -1 && errno != ECHILD) {
       wait_error = errno;
       continue;
-    }
-
-    if (result == process.pid && process.result_fd >= 0) {
-      try {
-        receiveAvailableResult(app, process);
-      } catch (...) {
-      }
     }
 
     for (auto &calc_entry : app.calcs) {
