@@ -35,12 +35,12 @@ namespace
     return (dx * dx + dy * dy) <= (r * r);
   }
 
-  Result worker(int id, long long my_tries, const std::vector<donkeev::circle_t>& circles, const Bounds& b, long long seed)
+  Result worker(int id, long long my_tries, const std::vector< donkeev::circle_t >& circles, const Bounds& b, long long seed)
   {
-    std::default_random_engine gen(seed + static_cast<unsigned>(id));
+    std::default_random_engine gen(seed + static_cast< unsigned >(id));
 
-    std::uniform_real_distribution<double> dist_x(b.min_x, b.max_x);
-    std::uniform_real_distribution<double> dist_y(b.min_y, b.max_y);
+    std::uniform_real_distribution< double > dist_x(b.min_x, b.max_x);
+    std::uniform_real_distribution< double > dist_y(b.min_y, b.max_y);
 
     Result res;
     for (long long i = 0; i < my_tries; ++i)
@@ -52,7 +52,7 @@ namespace
       bool in_all = true;
       for (const auto& c : circles)
       {
-        const bool inside = contains(c, {static_cast<int>(x), static_cast<int>(y)});
+        const bool inside = contains(c, {static_cast< int >(x), static_cast< int >(y)});
         in_any = in_any || inside;
         in_all = in_all && inside;
       }
@@ -71,35 +71,44 @@ namespace
 
   bool writeAll(int fd, const void* buffer, size_t count)
   {
-    const char* ptr = static_cast<const char*>(buffer);
+    const char* ptr = static_cast< const char* >(buffer);
     size_t total_written = 0;
     while (total_written < count)
     {
       ssize_t written = write(fd, ptr + total_written, count - total_written);
       if (written < 0)
       {
-        if (errno == EINTR) continue;
+        if (errno == EINTR)
+        {
+          continue;
+        }
         return false;
       }
-      total_written += static_cast<size_t>(written);
+      total_written += static_cast< size_t >(written);
     }
     return true;
   }
 
   bool readAll(int fd, void* buffer, size_t count)
   {
-    char* ptr = static_cast<char*>(buffer);
+    char* ptr = static_cast< char* >(buffer);
     size_t total_read = 0;
     while (total_read < count)
     {
       ssize_t bytes_read = read(fd, ptr + total_read, count - total_read);
       if (bytes_read < 0)
       {
-        if (errno == EINTR) continue;
+        if (errno == EINTR)
+        {
+          continue;
+        }
         return false;
       }
-      if (bytes_read == 0) return false;
-      total_read += static_cast<size_t>(bytes_read);
+      if (bytes_read == 0)
+      {
+        return false;
+      }
+      total_read += static_cast< size_t >(bytes_read);
     }
     return true;
   }
@@ -129,19 +138,21 @@ namespace
         break;
       }
 
-      std::vector<donkeev::circle_t> circles;
+      std::vector< donkeev::circle_t > circles;
       circles.reserve(num_circles);
       for (size_t i = 0; i < num_circles; ++i)
       {
         RawCircleData raw{};
-        if (!readAll(read_fd, &raw, sizeof(raw))) return;
+        if (!readAll(read_fd, &raw, sizeof(raw)))
+        {
+          return;
+        }
         circles.emplace_back(raw.r, raw.x, raw.y);
       }
 
       size_t threads_count = 0;
       size_t tries = 0;
-      if (!readAll(read_fd, &threads_count, sizeof(threads_count)) ||
-          !readAll(read_fd, &tries, sizeof(tries)))
+      if (!readAll(read_fd, &threads_count, sizeof(threads_count)) || !readAll(read_fd, &tries, sizeof(tries)))
       {
         return;
       }
@@ -152,36 +163,46 @@ namespace
       for (size_t i = 1; i < circles.size(); ++i)
       {
         donkeev::rectangle_t curr = circles[i].getBoundingBox();
-        if (curr.bottom_left_.x_ < bbox.bottom_left_.x_) bbox.bottom_left_.x_ = curr.bottom_left_.x_;
-        if (curr.bottom_left_.y_ < bbox.bottom_left_.y_) bbox.bottom_left_.y_ = bbox.bottom_left_.y_;
-        if (curr.top_right_.x_ > bbox.top_right_.x_) bbox.top_right_.x_ = curr.top_right_.x_;
-        if (curr.top_right_.y_ > bbox.top_right_.y_) bbox.top_right_.y_ = curr.top_right_.y_;
+        if (curr.bottom_left_.x_ < bbox.bottom_left_.x_)
+        {
+          bbox.bottom_left_.x_ = curr.bottom_left_.x_;
+        }
+        if (curr.bottom_left_.y_ < bbox.bottom_left_.y_)
+        {
+          bbox.bottom_left_.y_ = bbox.bottom_left_.y_;
+        }
+        if (curr.top_right_.x_ > bbox.top_right_.x_)
+        {
+          bbox.top_right_.x_ = curr.top_right_.x_;
+        }
+        if (curr.top_right_.y_ > bbox.top_right_.y_)
+        {
+          bbox.top_right_.y_ = curr.top_right_.y_;
+        }
       }
 
-      Bounds b{
-        static_cast<double>(bbox.bottom_left_.x_),
-        static_cast<double>(bbox.top_right_.x_),
-        static_cast<double>(bbox.bottom_left_.y_),
-        static_cast<double>(bbox.top_right_.y_)
-      };
+      Bounds b{static_cast< double >(bbox.bottom_left_.x_), static_cast< double >(bbox.top_right_.x_),
+          static_cast< double >(bbox.bottom_left_.y_), static_cast< double >(bbox.top_right_.y_)};
 
       double box_area = (b.max_x - b.min_x) * (b.max_y - b.min_y);
 
-      std::vector<std::thread> workers;
-      std::vector<Result> thread_results(threads_count);
+      std::vector< std::thread > workers;
+      std::vector< Result > thread_results(threads_count);
       workers.reserve(threads_count);
 
-      long long base_tries = static_cast<long long>(tries / threads_count);
-      long long remainder = static_cast<long long>(tries % threads_count);
+      long long base_tries = static_cast< long long >(tries / threads_count);
+      long long remainder = static_cast< long long >(tries % threads_count);
 
-      for (int i = 0; i < static_cast<int>(threads_count); ++i)
+      for (int i = 0; i < static_cast< int >(threads_count); ++i)
       {
         long long my_tries = base_tries + (i < remainder ? 1 : 0);
-        long long thread_seed = static_cast<long long>(master_rng());
-        
-        workers.emplace_back([i, my_tries, &circles, b, thread_seed, &thread_results]() {
-          thread_results[i] = worker(i, my_tries, circles, b, thread_seed);
-        });
+        long long thread_seed = static_cast< long long >(master_rng());
+
+        workers.emplace_back(
+            [i, my_tries, &circles, b, thread_seed, &thread_results]()
+            {
+              thread_results[i] = worker(i, my_tries, circles, b, thread_seed);
+            });
       }
 
       for (auto& th : workers)
@@ -195,10 +216,10 @@ namespace
         total_union += res.in_union;
       }
 
-      double area = box_area * (static_cast<double>(total_union) / static_cast<double>(tries));
+      double area = box_area * (static_cast< double >(total_union) / static_cast< double >(tries));
 
       auto end_time = std::chrono::high_resolution_clock::now();
-      double time_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+      double time_ms = std::chrono::duration< double, std::milli >(end_time - start_time).count();
 
       RawResultData result{area, time_ms};
       if (!writeAll(write_fd, &result, sizeof(result)))
