@@ -78,22 +78,22 @@ namespace
     {
       auto center = c.getCenter();
       double r = c.getRadius();
-      
+
       donkeev::FlatCircle fc;
       fc.cx = center.x_;
       fc.cy = center.y_;
       fc.r2 = r * r;
-      
+
       flat_circles.push_back(fc);
     }
 
     std::mt19937_64 rng(thread_seed);
-    
+
     const double min_x = bbox.bottom_left_.x_;
     const double max_x = bbox.top_right_.x_;
     const double min_y = bbox.bottom_left_.y_;
     const double max_y = bbox.top_right_.y_;
-    
+
     const double range_x = max_x - min_x;
     const double range_y = max_y - min_y;
     constexpr double kInv = 1.0 / 9007199254740992.0;
