@@ -1,6 +1,7 @@
 #include "commands.hpp"
 
 #include <fcntl.h>
+#include <iomanip>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -305,7 +306,7 @@ void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
   startNextCalculation(app, process);
 }
 
-void chernov::cmdStatus(std::istream &input, std::ostream &, App &app)
+void chernov::cmdStatus(std::istream &input, std::ostream &output, App &app)
 {
   std::string calc_name;
   if (!(input >> calc_name)) {
@@ -315,6 +316,9 @@ void chernov::cmdStatus(std::istream &input, std::ostream &, App &app)
   if (app.calcs.find(calc_name) == app.calcs.end()) {
     throw std::runtime_error("calc name not found");
   }
+
+  checkProcesses(app);
+  detail::printCalcStatus(output, app.calcs.at(calc_name));
 }
 
 void chernov::cmdWait(std::istream &input, std::ostream &, App &app)
@@ -327,4 +331,18 @@ void chernov::cmdWait(std::istream &input, std::ostream &, App &app)
   if (app.calcs.find(calc_name) == app.calcs.end()) {
     throw std::runtime_error("calc name not found");
   }
+}
+
+void chernov::detail::printCalcStatus(std::ostream &output, const calc_t &calc)
+{
+  IOguard guard(output);
+  output << calc.process_name << " ";
+  if (calc.state == TaskState::Completed) {
+    output << std::fixed << std::setprecision(3) << calc.milliseconds << " " << calc.result;
+  } else if (calc.state == TaskState::Failed) {
+    output << "<FAILED>";
+  } else {
+    output << "<IN PROGRESS>";
+  }
+  output << "\n";
 }
