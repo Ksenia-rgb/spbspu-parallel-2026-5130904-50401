@@ -15,7 +15,8 @@ int main()
     {"show", madieva::show},
     {"showset", madieva::showSet},
     {"frame", madieva::showFrame},
-    {"frameset", madieva::showFrameSet}
+    {"frameset", madieva::showFrameSet},
+    {"spawn", madieva::spawn}
   };
   madieva::state_t state;
   std::string line;
