@@ -302,6 +302,7 @@ void chernov::cmdAreaOn(std::istream &input, std::ostream &, App &app)
   }
 
   ++app.id_counter;
+  startNextCalculation(app, process);
 }
 
 void chernov::cmdStatus(std::istream &input, std::ostream &, App &app)
