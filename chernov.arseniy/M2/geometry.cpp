@@ -56,11 +56,9 @@ chernov::frame_t chernov::getFrame(const ellipse_t& ellipse)
   const double horizontal_radius = ellipse.horizontal_radius;
   const double vertical_radius = ellipse.vertical_radius;
   const double half_width = std::sqrt(
-      horizontal_radius * horizontal_radius * cosine * cosine
-      + vertical_radius * vertical_radius * sine * sine);
+      horizontal_radius * horizontal_radius * cosine * cosine + vertical_radius * vertical_radius * sine * sine);
   const double half_height = std::sqrt(
-      horizontal_radius * horizontal_radius * sine * sine
-      + vertical_radius * vertical_radius * cosine * cosine);
+      horizontal_radius * horizontal_radius * sine * sine + vertical_radius * vertical_radius * cosine * cosine);
   return {
       {ellipse.center.x - half_width, ellipse.center.y - half_height},
       {ellipse.center.x + half_width, ellipse.center.y + half_height},

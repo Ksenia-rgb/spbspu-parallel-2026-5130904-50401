@@ -14,34 +14,34 @@
 #include <cerrno>
 
 namespace chernov {
-namespace detail {
-  class CommandBuffer: public std::streambuf {
-  public:
-    explicit CommandBuffer(std::string &line)
+  namespace detail {
+    class CommandBuffer: public std::streambuf {
+    public:
+      explicit CommandBuffer(std::string &line)
+      {
+        if (line.empty()) {
+          setg(nullptr, nullptr, nullptr);
+        } else {
+          char *begin = &line[0];
+          setg(begin, begin, begin + line.size());
+        }
+      }
+    };
+
+    bool isValidName(const std::string &name)
     {
-      if (line.empty()) {
-        setg(nullptr, nullptr, nullptr);
-      } else {
-        char *begin = &line[0];
-        setg(begin, begin, begin + line.size());
+      return !name.empty()
+          && ((name.front() >= 'a' && name.front() <= 'z') || (name.front() >= 'A' && name.front() <= 'Z'));
+    }
+
+    void requireEnd(std::istream &input)
+    {
+      input >> std::ws;
+      if (!input.eof()) {
+        throw std::runtime_error("extra arguments");
       }
     }
-  };
-
-  bool isValidName(const std::string &name)
-  {
-    return !name.empty()
-        && ((name.front() >= 'a' && name.front() <= 'z') || (name.front() >= 'A' && name.front() <= 'Z'));
   }
-
-  void requireEnd(std::istream &input)
-  {
-    input >> std::ws;
-    if (!input.eof()) {
-      throw std::runtime_error("extra arguments");
-    }
-  }
-}
 }
 
 std::istream &chernov::operator>>(std::istream &input, const CommandIO &cmd_io)
@@ -463,8 +463,8 @@ void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
   calc_t &calc = app.calcs.at(calc_name);
   const auto start = std::chrono::steady_clock::now();
   while (calc.state == TaskState::Pending || calc.state == TaskState::Running) {
-    const auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds >(
-        std::chrono::steady_clock::now() - start);
+    const auto elapsed
+        = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::steady_clock::now() - start);
     if (elapsed.count() >= timeout_ms) {
       break;
     }
@@ -475,8 +475,8 @@ void chernov::cmdTimeout(std::istream &input, std::ostream &output, App &app)
     }
 
     const long long remaining = timeout_ms - elapsed.count();
-    const int poll_timeout = static_cast< int >(
-        std::min(remaining, static_cast< long long >(std::numeric_limits< int >::max())));
+    const int poll_timeout
+        = static_cast< int >(std::min(remaining, static_cast< long long >(std::numeric_limits< int >::max())));
     pollfd descriptor{process.result_fd, POLLIN, 0};
     const int result = poll(&descriptor, 1, poll_timeout);
     if (result == -1) {
