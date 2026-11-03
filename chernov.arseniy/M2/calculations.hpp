@@ -66,6 +66,17 @@ namespace chernov {
   bool isInsideAny(point_t point, const std::vector< ellipse_t > &ellipses);
   size_t calc(const std::vector< ellipse_t > &ellipses, const frame_t &frame, size_t tests, size_t seed);
   double areaOf(const std::vector< ellipse_t > &ellipses, size_t threads, size_t tries, size_t seed);
+
+  namespace detail {
+    struct prepared_ellipse_t {
+      point_t center;
+      double xx;
+      double xy;
+      double yy;
+    };
+
+    std::vector< prepared_ellipse_t > prepareEllipses(const std::vector< ellipse_t > &ellipses);
+  }
 }
 
 #endif
