@@ -1,7 +1,7 @@
 #ifndef CIRCLE_HPP
 #define CIRCLE_HPP
 
-#include <iostream>
+#include <iosfwd>
 #include <vector>
 
 namespace madieva
@@ -34,7 +34,6 @@ namespace madieva
   frame_t computeFrame(const std::vector< const Circle * > &);
 
   std::ostream & operator<<(std::ostream & out, const frame_t & frame);
-
 }
 
 #endif

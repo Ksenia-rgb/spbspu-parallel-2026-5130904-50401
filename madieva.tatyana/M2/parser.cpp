@@ -42,3 +42,18 @@ long long madieva::parseInteger(const std::string & arg)
   }
   return res;
 }
+
+void madieva::checkName(const std::string & name)
+{
+  if (name.empty())
+  {
+    throw std::invalid_argument("the name is empty");
+  }
+  const char first = name[0];
+  const bool is_lower = (first >= 'a') && (first <= 'z');
+  const bool is_upper = (first >= 'A') && (first <= 'Z');
+  if (!is_lower && !is_upper)
+  {
+    throw std::invalid_argument("the name must start with a letter");
+  }
+}

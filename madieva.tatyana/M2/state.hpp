@@ -2,8 +2,8 @@
 #define STATE_HPP
 
 #include <map>
-#include <iostream>
 #include <vector>
+#include <string>
 #include "circle.hpp"
 
 namespace madieva

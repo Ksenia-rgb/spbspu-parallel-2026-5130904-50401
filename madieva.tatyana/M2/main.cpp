@@ -1,14 +1,11 @@
 #include <map>
 #include <iostream>
 #include <string>
-#include <vector>
-#include <functional>
-#include <limits>
 #include <stdexcept>
 #include "circle.hpp"
 #include "state.hpp"
 #include "commands.hpp"
-#include"parser.hpp"
+#include "parser.hpp"
 
 int main()
 {
@@ -17,8 +14,8 @@ int main()
     {"set", madieva::addSet},
     {"show", madieva::show},
     {"showset", madieva::showSet},
-    {"frame", madieva::frame},
-    {"frameset", madieva::frameSet}
+    {"frame", madieva::showFrame},
+    {"frameset", madieva::showFrameSet}
   };
   madieva::state_t state;
   std::string line;
@@ -54,5 +51,4 @@ int main()
   }
 
   return 0;
-
 }

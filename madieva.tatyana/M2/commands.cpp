@@ -1,6 +1,7 @@
 #include "commands.hpp"
 #include <string>
 #include <stdexcept>
+#include <iostream>
 #include "parser.hpp"
 
 void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
@@ -11,9 +12,10 @@ void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
   }
 
   const std::string & name = args[1];
-  const long long & r = parseInteger(args[2]);
-  const long long & x = parseInteger(args[3]);
-  const long long & y = parseInteger(args[4]);
+  checkName(name);
+  const long long r = parseInteger(args[2]);
+  const long long x = parseInteger(args[3]);
+  const long long y = parseInteger(args[4]);
 
   Circle circle(r, x, y);
 
@@ -33,6 +35,7 @@ void madieva::addSet(madieva::state_t & state, const madieva::Args & args)
   }
 
   const std::string & name = args[1];
+  checkName(name);
   const long long count = parseInteger(args[2]);
 
   if (count <= 0)
@@ -103,7 +106,7 @@ void madieva::showSet(const madieva::state_t & state, const madieva::Args & args
   }
 }
 
-void madieva::frame(const madieva::state_t & state, const madieva::Args & args)
+void madieva::showFrame(const madieva::state_t & state, const madieva::Args & args)
 {
   if (args.size() != 2)
   {
@@ -119,7 +122,7 @@ void madieva::frame(const madieva::state_t & state, const madieva::Args & args)
   std::cout << madieva::computeFrame(it->second) << "\n";
 }
 
-void madieva::frameSet(const madieva::state_t & state, const madieva::Args & args)
+void madieva::showFrameSet(const madieva::state_t & state, const madieva::Args & args)
 {
   if (args.size() != 2)
   {

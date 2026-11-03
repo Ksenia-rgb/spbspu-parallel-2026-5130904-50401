@@ -10,6 +10,7 @@ namespace madieva
 
   Args split(const std::string &);
   long long parseInteger(const std::string &);
+  void checkName(const std::string &);
 }
 
 #endif

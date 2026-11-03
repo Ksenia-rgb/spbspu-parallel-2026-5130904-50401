@@ -8,15 +8,14 @@
 
 namespace madieva
 {
-  using Command = std::function< void(madieva::state_t &, const madieva::Args &) >;
+  using Command = std::function< void(state_t &, const Args &) >;
 
-  void addCircle(madieva::state_t &, const madieva::Args &);
-  void addSet(madieva::state_t &, const madieva::Args &);
-  void show(const madieva::state_t &, const madieva::Args &);
-  void showSet(const madieva::state_t &, const madieva::Args &);
-  void frame(const madieva::state_t &, const madieva::Args &);
-  void frameSet(const madieva::state_t &, const madieva::Args &);
-
+  void addCircle(state_t &, const Args &);
+  void addSet(state_t &, const Args &);
+  void show(const state_t &, const Args &);
+  void showSet(const state_t &, const Args &);
+  void showFrame(const state_t &, const Args &);
+  void showFrameSet(const state_t &, const Args &);
 }
 
 #endif
