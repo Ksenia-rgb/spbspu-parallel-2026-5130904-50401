@@ -12,46 +12,94 @@
 
 namespace
 {
+  struct Result
+  {
+    long long in_union = 0;
+    long long in_intersection = 0;
+  };
+
+  struct Bounds
+  {
+    double min_x;
+    double max_x;
+    double min_y;
+    double max_y;
+  };
+
+  bool contains(const donkeev::circle_t& c, donkeev::point_t pt)
+  {
+    donkeev::point_t center = c.getCenter();
+    double dx = pt.x_ - center.x_;
+    double dy = pt.y_ - center.y_;
+    double r = c.getRadius();
+    return (dx * dx + dy * dy) <= (r * r);
+  }
+
+  Result worker(int id, long long my_tries, const std::vector<donkeev::circle_t>& circles, const Bounds& b, long long seed)
+  {
+    std::default_random_engine gen(seed + static_cast<unsigned>(id));
+
+    std::uniform_real_distribution<double> dist_x(b.min_x, b.max_x);
+    std::uniform_real_distribution<double> dist_y(b.min_y, b.max_y);
+
+    Result res;
+    for (long long i = 0; i < my_tries; ++i)
+    {
+      const double x = dist_x(gen);
+      const double y = dist_y(gen);
+
+      bool in_any = false;
+      bool in_all = true;
+      for (const auto& c : circles)
+      {
+        const bool inside = contains(c, {static_cast<int>(x), static_cast<int>(y)});
+        in_any = in_any || inside;
+        in_all = in_all && inside;
+      }
+
+      if (in_any)
+      {
+        res.in_union++;
+      }
+      if (in_all)
+      {
+        res.in_intersection++;
+      }
+    }
+    return res;
+  }
+
   bool writeAll(int fd, const void* buffer, size_t count)
   {
-    const char* ptr = static_cast< const char* >(buffer);
+    const char* ptr = static_cast<const char*>(buffer);
     size_t total_written = 0;
     while (total_written < count)
     {
       ssize_t written = write(fd, ptr + total_written, count - total_written);
       if (written < 0)
       {
-        if (errno == EINTR)
-        {
-          continue;
-        }
+        if (errno == EINTR) continue;
         return false;
       }
-      total_written += static_cast< size_t >(written);
+      total_written += static_cast<size_t>(written);
     }
     return true;
   }
 
   bool readAll(int fd, void* buffer, size_t count)
   {
-    char* ptr = static_cast< char* >(buffer);
+    char* ptr = static_cast<char*>(buffer);
     size_t total_read = 0;
     while (total_read < count)
     {
       ssize_t bytes_read = read(fd, ptr + total_read, count - total_read);
       if (bytes_read < 0)
       {
-        if (errno == EINTR)
-        {
-          continue;
-        }
+        if (errno == EINTR) continue;
         return false;
       }
-      if (bytes_read == 0)
-      {
-        return false;
-      }
-      total_read += static_cast< size_t >(bytes_read);
+      if (bytes_read == 0) return false;
+      total_read += static_cast<size_t>(bytes_read);
     }
     return true;
   }
@@ -69,35 +117,6 @@ namespace
     double time_ms;
   };
 
-  void monteCarloWorker(const std::vector< donkeev::circle_t >& circles, const donkeev::rectangle_t& bbox,
-      size_t thread_tries, size_t thread_seed, size_t& out_hits)
-  {
-    std::mt19937_64 rng(thread_seed);
-    std::uniform_real_distribution< double > dist_x(bbox.bottom_left_.x_, bbox.top_right_.x_);
-    std::uniform_real_distribution< double > dist_y(bbox.bottom_left_.y_, bbox.top_right_.y_);
-
-    size_t local_hits = 0;
-    for (size_t i = 0; i < thread_tries; ++i)
-    {
-      double px = dist_x(rng);
-      double py = dist_y(rng);
-
-      for (const auto& c : circles)
-      {
-        donkeev::point_t center = c.getCenter();
-        double dx = px - center.x_;
-        double dy = py - center.y_;
-        double r = c.getRadius();
-        if (dx * dx + dy * dy <= r * r)
-        {
-          ++local_hits;
-          break;
-        }
-      }
-    }
-    out_hits = local_hits;
-  }
-
   void runChildLoop(int read_fd, int write_fd, size_t seed)
   {
     std::mt19937_64 master_rng(seed);
@@ -110,21 +129,19 @@ namespace
         break;
       }
 
-      std::vector< donkeev::circle_t > circles;
+      std::vector<donkeev::circle_t> circles;
       circles.reserve(num_circles);
       for (size_t i = 0; i < num_circles; ++i)
       {
         RawCircleData raw{};
-        if (!readAll(read_fd, &raw, sizeof(raw)))
-        {
-          return;
-        }
+        if (!readAll(read_fd, &raw, sizeof(raw))) return;
         circles.emplace_back(raw.r, raw.x, raw.y);
       }
 
       size_t threads_count = 0;
       size_t tries = 0;
-      if (!readAll(read_fd, &threads_count, sizeof(threads_count)) || !readAll(read_fd, &tries, sizeof(tries)))
+      if (!readAll(read_fd, &threads_count, sizeof(threads_count)) ||
+          !readAll(read_fd, &tries, sizeof(tries)))
       {
         return;
       }
@@ -135,41 +152,36 @@ namespace
       for (size_t i = 1; i < circles.size(); ++i)
       {
         donkeev::rectangle_t curr = circles[i].getBoundingBox();
-        if (curr.bottom_left_.x_ < bbox.bottom_left_.x_)
-        {
-          bbox.bottom_left_.x_ = curr.bottom_left_.x_;
-        }
-        if (curr.bottom_left_.y_ < bbox.bottom_left_.y_)
-        {
-          bbox.bottom_left_.y_ = curr.bottom_left_.y_;
-        }
-        if (curr.top_right_.x_ > bbox.top_right_.x_)
-        {
-          bbox.top_right_.x_ = curr.top_right_.x_;
-        }
-        if (curr.top_right_.y_ > bbox.top_right_.y_)
-        {
-          bbox.top_right_.y_ = curr.top_right_.y_;
-        }
+        if (curr.bottom_left_.x_ < bbox.bottom_left_.x_) bbox.bottom_left_.x_ = curr.bottom_left_.x_;
+        if (curr.bottom_left_.y_ < bbox.bottom_left_.y_) bbox.bottom_left_.y_ = bbox.bottom_left_.y_;
+        if (curr.top_right_.x_ > bbox.top_right_.x_) bbox.top_right_.x_ = curr.top_right_.x_;
+        if (curr.top_right_.y_ > bbox.top_right_.y_) bbox.top_right_.y_ = curr.top_right_.y_;
       }
 
-      double width = static_cast< double >(bbox.top_right_.x_ - bbox.bottom_left_.x_);
-      double height = static_cast< double >(bbox.top_right_.y_ - bbox.bottom_left_.y_);
-      double box_area = width * height;
+      Bounds b{
+        static_cast<double>(bbox.bottom_left_.x_),
+        static_cast<double>(bbox.top_right_.x_),
+        static_cast<double>(bbox.bottom_left_.y_),
+        static_cast<double>(bbox.top_right_.y_)
+      };
 
-      std::vector< std::thread > workers;
-      std::vector< size_t > hits_per_thread(threads_count, 0);
+      double box_area = (b.max_x - b.min_x) * (b.max_y - b.min_y);
+
+      std::vector<std::thread> workers;
+      std::vector<Result> thread_results(threads_count);
       workers.reserve(threads_count);
 
-      size_t base_tries = tries / threads_count;
-      size_t remainder = tries % threads_count;
+      long long base_tries = static_cast<long long>(tries / threads_count);
+      long long remainder = static_cast<long long>(tries % threads_count);
 
-      for (size_t i = 0; i < threads_count; ++i)
+      for (int i = 0; i < static_cast<int>(threads_count); ++i)
       {
-        size_t thread_tries = base_tries + (i < remainder ? 1 : 0);
-        size_t thread_seed = master_rng();
-        workers.emplace_back(monteCarloWorker, std::cref(circles), std::cref(bbox), thread_tries, thread_seed,
-            std::ref(hits_per_thread[i]));
+        long long my_tries = base_tries + (i < remainder ? 1 : 0);
+        long long thread_seed = static_cast<long long>(master_rng());
+        
+        workers.emplace_back([i, my_tries, &circles, b, thread_seed, &thread_results]() {
+          thread_results[i] = worker(i, my_tries, circles, b, thread_seed);
+        });
       }
 
       for (auto& th : workers)
@@ -177,16 +189,16 @@ namespace
         th.join();
       }
 
-      size_t total_hits = 0;
-      for (size_t h : hits_per_thread)
+      long long total_union = 0;
+      for (const auto& res : thread_results)
       {
-        total_hits += h;
+        total_union += res.in_union;
       }
 
-      double area = box_area * (static_cast< double >(total_hits) / static_cast< double >(tries));
+      double area = box_area * (static_cast<double>(total_union) / static_cast<double>(tries));
 
       auto end_time = std::chrono::high_resolution_clock::now();
-      double time_ms = std::chrono::duration< double, std::milli >(end_time - start_time).count();
+      double time_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
 
       RawResultData result{area, time_ms};
       if (!writeAll(write_fd, &result, sizeof(result)))
