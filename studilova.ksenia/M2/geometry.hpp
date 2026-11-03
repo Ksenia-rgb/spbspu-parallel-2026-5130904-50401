@@ -1,6 +1,7 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
 
+#include <iosfwd>
 #include <vector>
 
 namespace studilova
@@ -19,6 +20,9 @@ namespace studilova
     double maxX;
     double maxY;
   };
+
+  std::ostream& operator<<(std::ostream& out, const circle_t& circle);
+  std::ostream& operator<<(std::ostream& out, const rectangle_t& rectangle);
 
   rectangle_t findFrame(const circle_t& circle);
   rectangle_t findFrame(const std::vector< circle_t >& circles);

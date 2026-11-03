@@ -2,6 +2,29 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <iomanip>
+#include <ostream>
+
+std::ostream& studilova::operator<<(std::ostream& out, const circle_t& circle)
+{
+  out << circle.radius << " (" << circle.x << ' ' << circle.y << ')';
+  return out;
+}
+
+std::ostream& studilova::operator<<(std::ostream& out, const rectangle_t& rectangle)
+{
+  const std::ios_base::fmtflags oldFlags = out.flags();
+  const std::streamsize oldPrecision = out.precision();
+
+  out << std::fixed << std::setprecision(0);
+  out << '(' << rectangle.minX << ' ' << rectangle.minY << ") (";
+  out << rectangle.maxX << ' ' << rectangle.maxY << ')';
+
+  out.flags(oldFlags);
+  out.precision(oldPrecision);
+
+  return out;
+}
 
 studilova::rectangle_t studilova::findFrame(const circle_t& circle)
 {

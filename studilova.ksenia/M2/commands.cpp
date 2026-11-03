@@ -120,7 +120,7 @@ void studilova::showCircle(std::istream& in, std::ostream& out, const circles_t&
   }
 
   const circle_t& circle = found->second;
-  out << circle.radius << " (" << circle.x << ' ' << circle.y << ")\n";
+  out << circle << '\n';
 }
 
 void studilova::createSet(std::istream& in, const circles_t& circles, sets_t& sets)
@@ -172,7 +172,7 @@ void studilova::showSet(std::istream& in, std::ostream& out, const circles_t& ci
   for (const std::string& circleName: circleSet)
   {
     const circle_t& circle = circles.at(circleName);
-    out << circle.radius << " (" << circle.x << ' ' << circle.y << ")\n";
+    out << circle << '\n';
   }
 }
 
@@ -189,15 +189,7 @@ void studilova::showFrame(std::istream& in, std::ostream& out, const circles_t& 
 
   const rectangle_t frame = findFrame(found->second);
 
-  const std::ios_base::fmtflags oldFlags = out.flags();
-  const std::streamsize oldPrecision = out.precision();
-
-  out << std::fixed << std::setprecision(0);
-  out << '(' << frame.minX << ' ' << frame.minY << ") (";
-  out << frame.maxX << ' ' << frame.maxY << ")\n";
-
-  out.flags(oldFlags);
-  out.precision(oldPrecision);
+  out << frame << '\n';
 }
 
 void studilova::showSetFrame(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets)
@@ -221,13 +213,5 @@ void studilova::showSetFrame(std::istream& in, std::ostream& out, const circles_
 
   const rectangle_t frame = findFrame(shapes);
 
-  const std::ios_base::fmtflags oldFlags = out.flags();
-  const std::streamsize oldPrecision = out.precision();
-
-  out << std::fixed << std::setprecision(0);
-  out << '(' << frame.minX << ' ' << frame.minY << ") (";
-  out << frame.maxX << ' ' << frame.maxY << ")\n";
-
-  out.flags(oldFlags);
-  out.precision(oldPrecision);
+  out << frame << '\n';
 }
