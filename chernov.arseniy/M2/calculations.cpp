@@ -398,8 +398,8 @@ size_t chernov::calc(
     const double y = frame.left_bottom.y + (gen() - random_min) * y_scale;
 
     for (const detail::prepared_ellipse_t &ellipse : prepared) {
-      const double dx = x - ellipse.x;
-      const double dy = y - ellipse.y;
+      const double dx = x - ellipse.xx;
+      const double dy = y - ellipse.xy;
       if (ellipse.xx * dx * dx + ellipse.xy * dx * dy + ellipse.yy * dy * dy <= 1) {
         ++count;
         break;
