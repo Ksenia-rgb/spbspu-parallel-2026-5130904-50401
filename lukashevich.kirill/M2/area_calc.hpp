@@ -24,12 +24,11 @@ namespace lukashevich
     double max_y;
   };
 
-  bool contains(const Shape & shape, double x, double y);
-  Bounds getBounds(const std::vector< Shape > & shapes);
-  std::size_t sampleRange(const std::vector< Shape > * shapes, const Bounds * bounds,
-      std::size_t tries, std::size_t seed);
-  double calculateArea(const std::vector< Shape > & shapes, std::size_t threads,
-      std::size_t tries, std::size_t seed);
+  bool contains(const Shape& shape, double x, double y);
+  Bounds getBounds(const std::vector< Shape >& shapes);
+  std::size_t sampleRange(
+      const std::vector< Shape >* shapes, const Bounds* bounds, std::size_t tries, std::size_t seed);
+  double calculateArea(const std::vector< Shape >& shapes, std::size_t threads, std::size_t tries, std::size_t seed);
 }
 
 #endif

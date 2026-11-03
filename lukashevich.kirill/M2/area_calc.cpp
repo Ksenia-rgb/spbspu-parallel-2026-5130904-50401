@@ -6,7 +6,7 @@
 #include <random>
 #include <stdexcept>
 
-bool lukashevich::contains(const Shape & shape, double x, double y)
+bool lukashevich::contains(const Shape& shape, double x, double y)
 {
   const double delta_x = x - shape.center_x;
   const double delta_y = y - shape.center_y;
@@ -22,7 +22,7 @@ bool lukashevich::contains(const Shape & shape, double x, double y)
   return local_x * local_x + local_y * local_y <= 1.0;
 }
 
-lukashevich::Bounds lukashevich::getBounds(const std::vector< Shape > & shapes)
+lukashevich::Bounds lukashevich::getBounds(const std::vector< Shape >& shapes)
 {
   if (shapes.empty())
   {
@@ -30,7 +30,7 @@ lukashevich::Bounds lukashevich::getBounds(const std::vector< Shape > & shapes)
   }
   Bounds bounds{};
   bool first = true;
-  for (const Shape & shape : shapes)
+  for (const Shape& shape : shapes)
   {
     const double cosine = std::cos(shape.angle);
     const double sine = std::sin(shape.angle);
@@ -53,4 +53,58 @@ lukashevich::Bounds lukashevich::getBounds(const std::vector< Shape > & shapes)
     }
   }
   return bounds;
+}
+
+std::size_t lukashevich::sampleRange(
+    const std::vector< Shape >* shapes, const Bounds* bounds, std::size_t tries, std::size_t seed)
+{
+  std::mt19937_64 generator(seed);
+  std::uniform_real_distribution< double > x_distribution(bounds->min_x, bounds->max_x);
+  std::uniform_real_distribution< double > y_distribution(bounds->min_y, bounds->max_y);
+  std::size_t covered = 0;
+  for (std::size_t index = 0; index < tries; ++index)
+  {
+    const double x = x_distribution(generator);
+    const double y = y_distribution(generator);
+    for (const Shape& shape : *shapes)
+    {
+      if (contains(shape, x, y))
+      {
+        ++covered;
+        break;
+      }
+    }
+  }
+  return covered;
+}
+
+double lukashevich::calculateArea(
+    const std::vector< Shape >& shapes, std::size_t threads, std::size_t tries, std::size_t seed)
+{
+  if (tries == 0)
+  {
+    throw std::invalid_argument("Tries must be positive");
+  }
+  if (shapes.empty())
+  {
+    return 0.0;
+  }
+  threads = std::min(threads == 0 ? std::size_t{1} : threads, tries);
+  const Bounds bounds = getBounds(shapes);
+  const std::size_t tries_per_task = tries / threads;
+  const std::size_t remaining_tries = tries % threads;
+  std::vector< std::future< std::size_t > > tasks;
+  tasks.reserve(threads);
+  for (std::size_t index = 0; index < threads; ++index)
+  {
+    const std::size_t task_tries = tries_per_task + (index < remaining_tries ? 1 : 0);
+    tasks.emplace_back(std::async(std::launch::async, sampleRange, &shapes, &bounds, task_tries, seed + index));
+  }
+  std::size_t covered = 0;
+  for (std::future< std::size_t >& task : tasks)
+  {
+    covered += task.get();
+  }
+  const double rectangle_area = (bounds.max_x - bounds.min_x) * (bounds.max_y - bounds.min_y);
+  return rectangle_area * static_cast< double >(covered) / static_cast< double >(tries);
 }
