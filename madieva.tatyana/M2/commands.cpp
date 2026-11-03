@@ -202,6 +202,49 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
   cmd_rd.close();
   res_wr.close();
 
-  state.processes.insert({process_name, Process{pid, std::move(cmd_wr), std::move(res_rd)}});
+  state.processes.insert({process_name, Process{pid, std::move(cmd_wr), std::move(res_rd), seed}});
+}
 
+void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 6)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+  const std::string & process_name = args[1];
+  const std::string & calc_name = args[2];
+  const std::string & set_name = args[3];
+  const long long threads = parseInteger(args[4]);
+  const long long tries = parseInteger(args[5]);
+
+  const auto proc_it = state.processes.find(process_name);
+  if (proc_it == state.processes.end())
+  {
+    throw std::invalid_argument("process with this name does not exist");
+  }
+
+  const auto it = state.calc.find(calc_name);
+  if (it != state.calc.end())
+  {
+    throw std::invalid_argument("calc with this name already exists");
+  }
+
+  if (state.sets.find(set_name) == state.sets.end())
+  {
+    throw std::invalid_argument("set with this name does not exist");
+  }
+
+  if (threads <= 0)
+  {
+    throw std::invalid_argument("the number of threads must be positive");
+  }
+
+  if (tries <= 0)
+  {
+    throw std::invalid_argument("the number of tries must be positive");
+  }
+
+//пайп
+
+  state.calc.insert({calc_name, calc_t{process_name, threads, tries, true, 0.0, 0}});
 }
