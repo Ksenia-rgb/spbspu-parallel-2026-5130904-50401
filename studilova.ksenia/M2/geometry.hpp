@@ -26,6 +26,8 @@ namespace studilova
 
   rectangle_t findFrame(const circle_t& circle);
   rectangle_t findFrame(const std::vector< circle_t >& circles);
+
+  bool isInside(double x, double y, const std::vector< circle_t >& circles);
 }
 
 #endif

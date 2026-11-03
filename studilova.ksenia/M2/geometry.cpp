@@ -54,3 +54,19 @@ studilova::rectangle_t studilova::findFrame(const std::vector< circle_t >& circl
   }
   return frame;
 }
+
+bool studilova::isInside(double x, double y, const std::vector< circle_t >& circles)
+{
+  for (const circle_t& circle: circles)
+  {
+    const double dx = x - circle.x;
+    const double dy = y - circle.y;
+    const double radius = circle.radius;
+
+    if (dx * dx + dy * dy <= radius * radius)
+    {
+      return true;
+    }
+  }
+  return false;
+}
