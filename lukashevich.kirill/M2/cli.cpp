@@ -1,13 +1,11 @@
 #include "cli.hpp"
 
 #include <cerrno>
-#include <charconv>
 #include <cmath>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <charconv>
 #include <stdexcept>
 #include <system_error>
 #include <utility>
@@ -60,16 +58,12 @@ namespace lukashevich
 
     long long integer(const std::string& text)
     {
-      long long result = 0;
-      const char* first = text.data();
-      const char* const last = first + text.size();
-      if (first != last && *first == '+')
-      {
-        ++first;
-        require(first != last && *first >= '0' && *first <= '9');
-      }
-      const auto parsed = std::from_chars(first, last, result);
-      require(parsed.ec == std::errc{} && parsed.ptr == last);
+      const char* const first = text.c_str();
+      require(*first == '+' || *first == '-' || (*first >= '0' && *first <= '9'));
+      char* end = nullptr;
+      errno = 0;
+      const long long result = std::strtoll(first, &end, 10);
+      require(end != first && end == first + text.size() && errno != ERANGE);
       return result;
     }
 
@@ -302,14 +296,16 @@ lukashevich::Response lukashevich::CommandLine::exchange(
 
 void lukashevich::CommandLine::start(const std::vector< std::string >& arguments)
 {
-  detail::require(arguments.size() == 6);
+  constexpr std::size_t argument_count = 6;
+  constexpr std::size_t tries_index = 5;
+  detail::require(arguments.size() == argument_count);
   const std::string& name = arguments[2];
   detail::checkName(name);
   detail::require(calculations_.count(name) == 0);
   Process& process = processes_.at(arguments[1]);
   detail::require(process.alive);
   const std::size_t threads = detail::count(arguments[4], false);
-  const std::size_t tries = detail::count(arguments[5], true);
+  const std::size_t tries = detail::count(arguments[tries_index], true);
   const auto shapes = getSet(arguments[3]);
   const std::size_t id = calculations_.size();
   const auto inserted
@@ -325,6 +321,38 @@ void lukashevich::CommandLine::start(const std::vector< std::string >& arguments
     calculations_.erase(inserted.first);
     throw;
   }
+}
+
+void lukashevich::CommandLine::query(Calculation& calculation, RequestKind kind, long long milliseconds)
+{
+  if (calculation.result.state == CalculationState::progress)
+  {
+    Process& process = processes_.at(calculation.process);
+    if (!process.alive)
+    {
+      calculation.result.state = CalculationState::failed;
+      return;
+    }
+    const Request request{kind, calculation.id, 0, 0, 0, milliseconds};
+    calculation.result = exchange(process, request);
+  }
+}
+
+void lukashevich::CommandLine::stop(const std::string& name)
+{
+  Process& process = processes_.at(name);
+  detail::require(process.alive);
+  const Request request{RequestKind::stop, 0, 0, 0, 0, 0};
+  exchange(process, request);
+  for (auto& entry : calculations_)
+  {
+    Calculation& calculation = entry.second;
+    if (calculation.process == name)
+    {
+      query(calculation, RequestKind::status, 0);
+    }
+  }
+  shutdown(process);
 }
 
 void lukashevich::CommandLine::shutdown(Process& process) noexcept
@@ -353,9 +381,20 @@ void lukashevich::CommandLine::shutdown(Process& process) noexcept
 void lukashevich::CommandLine::execute(const std::vector< std::string >& arguments, std::ostream& output)
 {
   const std::string& command = arguments[0];
-  if (command == "circle")
+  if (command == "circle" || command == "ellipse")
   {
-    addShape(arguments, true);
+    addShape(arguments, command == "circle");
+  }
+  else if (command == "rotate")
+  {
+    detail::require(arguments.size() == 3);
+    Shape& shape = shapes_.at(arguments[1]);
+    const double rotation = detail::angle(arguments[2]);
+    const double period = 2.0 * std::acos(-1.0);
+    if (!shape.circle)
+    {
+      shape.angle = std::remainder(shape.angle + std::remainder(rotation, period), period);
+    }
   }
   else if (command == "set")
   {
@@ -389,6 +428,22 @@ void lukashevich::CommandLine::execute(const std::vector< std::string >& argumen
   else if (command == "area-on")
   {
     start(arguments);
+  }
+  else if (command == "status" || command == "wait" || command == "timeout")
+  {
+    detail::require(arguments.size() == (command == "timeout" ? 3 : 2));
+    const long long milliseconds = command == "timeout" ? detail::integer(arguments[2]) : 0;
+    detail::require(milliseconds >= 0);
+    Calculation& calculation = calculations_.at(arguments[1]);
+    const RequestKind kind
+        = command == "wait" ? RequestKind::wait : (command == "timeout" ? RequestKind::timeout : RequestKind::status);
+    query(calculation, kind, milliseconds);
+    detail::printStatus(output, calculation);
+  }
+  else if (command == "kill")
+  {
+    detail::require(arguments.size() == 2);
+    stop(arguments[1]);
   }
   else
   {
