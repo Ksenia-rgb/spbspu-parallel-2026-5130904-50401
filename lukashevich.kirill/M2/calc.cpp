@@ -59,7 +59,31 @@ namespace lukashevich
         changed_.notify_all();
       }
 
-      Response query(const Request &request);
+      Response query(const Request &request)
+      {
+        std::unique_lock< std::mutex > lock(mutex_);
+        Response &result = results_.at(request.id);
+        const auto ready = [&result]()
+        {
+          return result.state != CalculationState::progress;
+        };
+        if (request.kind == RequestKind::wait)
+        {
+          changed_.wait(lock, ready);
+        }
+        else if (request.kind == RequestKind::timeout)
+        {
+          const auto now = std::chrono::steady_clock::now();
+          const auto available = std::chrono::duration_cast< std::chrono::milliseconds >(
+              std::chrono::steady_clock::time_point::max() - now)
+                                     .count();
+          const auto deadline = request.milliseconds >= available
+              ? std::chrono::steady_clock::time_point::max()
+              : now + std::chrono::milliseconds(request.milliseconds);
+          changed_.wait_until(lock, deadline, ready);
+        }
+        return result;
+      }
 
       void finish(bool cancel)
       {
@@ -129,5 +153,45 @@ namespace lukashevich
         }
       }
     };
+  }
+}
+
+void lukashevich::computeProcess(int input, int output, std::size_t seed)
+{
+  detail::Calculator calculator(seed);
+  Request request{};
+  while (receiveAll(input, &request, sizeof(request)))
+  {
+    Response response{CalculationState::done, 0.0, 0.0};
+    if (request.kind == RequestKind::shutdown)
+    {
+      break;
+    }
+    if (request.kind == RequestKind::calculate)
+    {
+      detail::Job job{request, std::vector< Shape >(request.count)};
+      if (!receiveAll(input, job.shapes.data(), job.shapes.size() * sizeof(Shape)))
+      {
+        throw std::runtime_error("Missing shapes");
+      }
+      try
+      {
+        calculator.add(std::move(job));
+        response.state = CalculationState::progress;
+      }
+      catch (...)
+      {
+        response.state = CalculationState::failed;
+      }
+    }
+    else if (request.kind == RequestKind::stop)
+    {
+      calculator.finish(true);
+    }
+    else
+    {
+      response = calculator.query(request);
+    }
+    sendAll(output, &response, sizeof(response));
   }
 }
