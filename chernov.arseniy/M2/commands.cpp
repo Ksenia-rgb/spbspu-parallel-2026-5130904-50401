@@ -171,9 +171,13 @@ void chernov::cmdFrameSet(std::istream &input, std::ostream &output, App &app)
 void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
 {
   std::string process_name;
-  size_t seed;
+  long long seed;
   if (!(input >> process_name >> seed)) {
     throw std::runtime_error("invalid input");
+  }
+
+  if (seed < 0) {
+    throw std::runtime_error("seed must not be negative");
   }
 
   if (app.processes.find(process_name) != app.processes.end()) {
@@ -214,7 +218,7 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
       }
     }
 
-    calculationLoop(to_child[0], to_parent[1], seed);
+    calculationLoop(to_child[0], to_parent[1], static_cast< size_t >(seed));
   } else {
     close(to_child[0]);
     close(to_parent[1]);
@@ -232,7 +236,8 @@ void chernov::cmdSpawn(std::istream &input, std::ostream &, App &app)
       throw std::runtime_error("fcntl failed");
     }
 
-    process_t process{pid, seed, to_child[1], to_parent[0], ProcessState::Active, "", {}};
+    process_t process{
+        pid, static_cast< size_t >(seed), to_child[1], to_parent[0], ProcessState::Active, "", {}};
 
     try {
       app.processes.insert({process_name, std::move(process)});
