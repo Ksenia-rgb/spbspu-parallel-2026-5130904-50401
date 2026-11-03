@@ -58,17 +58,20 @@ lukashevich::Bounds lukashevich::getBounds(const std::vector< Shape >& shapes)
 std::size_t lukashevich::sampleRange(
     const std::vector< Shape >* shapes, const Bounds* bounds, std::size_t tries, std::size_t seed)
 {
-  std::mt19937_64 generator(seed);
-  std::uniform_real_distribution< double > x_distribution(bounds->min_x, bounds->max_x);
-  std::uniform_real_distribution< double > y_distribution(bounds->min_y, bounds->max_y);
+  std::minstd_rand generator(seed % std::minstd_rand::max() + 1);
+  const double generator_range = static_cast< double >(generator.max()) - static_cast< double >(generator.min()) + 1.0;
+  const double x_scale = (bounds->max_x - bounds->min_x) / generator_range;
+  const double y_scale = (bounds->max_y - bounds->min_y) / generator_range;
+  const Shape* const first = shapes->data();
+  const Shape* const last = first + shapes->size();
   std::size_t covered = 0;
   for (std::size_t index = 0; index < tries; ++index)
   {
-    const double x = x_distribution(generator);
-    const double y = y_distribution(generator);
-    for (const Shape& shape : *shapes)
+    const double x = bounds->min_x + static_cast< double >(generator() - generator.min()) * x_scale;
+    const double y = bounds->min_y + static_cast< double >(generator() - generator.min()) * y_scale;
+    for (const Shape* shape = first; shape != last; ++shape)
     {
-      if (contains(shape, x, y))
+      if (contains(*shape, x, y))
       {
         ++covered;
         break;
