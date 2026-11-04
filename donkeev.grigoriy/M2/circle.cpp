@@ -28,5 +28,5 @@ donkeev::point_t donkeev::circle_t::getCenter() const
 
 donkeev::rectangle_t donkeev::circle_t::getBoundingBox() const
 {
-  return rectangle_t{point_t{center_.x_ - r_, center_.y_ - r_}, point_t{center_.x_ + r_, center_.y_ + r_}};
+  return rectangle_t{point_t{center_.x - r_, center_.y - r_}, point_t{center_.x + r_, center_.y + r_}};
 }

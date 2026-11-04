@@ -54,7 +54,7 @@ bool donkeev::isPositiveNumber(const std::string& str)
   {
     return false;
   }
-  for (char ch : str)
+  for (const char ch : str)
   {
     if (!std::isdigit(static_cast< unsigned char >(ch)))
     {
@@ -63,7 +63,7 @@ bool donkeev::isPositiveNumber(const std::string& str)
   }
   try
   {
-    unsigned long val = std::stoul(str);
+    const unsigned long val = std::stoul(str);
     return val > 0;
   }
   catch (...)
@@ -78,7 +78,7 @@ bool donkeev::isValidName(const std::string& str)
   {
     return false;
   }
-  char first = str[0];
+  const char first = str[0];
   if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z')))
   {
     return false;

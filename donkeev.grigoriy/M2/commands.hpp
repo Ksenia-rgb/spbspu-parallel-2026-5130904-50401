@@ -17,23 +17,23 @@ namespace donkeev
     ExecutorFunc execute;
   };
 
-  bool validateCircle(const std::vector< std::string >& tokens);
-  bool validateSet(const std::vector< std::string >& tokens);
-  bool validateTwoTokens(const std::vector< std::string >& tokens);
-  bool validateSpawn(const std::vector< std::string >& tokens);
-  bool validateAreaOn(const std::vector< std::string >& tokens);
+  bool validateCircle(const std::vector< std::string >&);
+  bool validateSet(const std::vector< std::string >&);
+  bool validateTwoTokens(const std::vector< std::string >&);
+  bool validateSpawn(const std::vector< std::string >&);
+  bool validateAreaOn(const std::vector< std::string >&);
 
-  void executeCircle(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeSet(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeShow(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeShowSet(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeFrame(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeFrameSet(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
+  void executeCircle(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeSet(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeShow(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeShowSet(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeFrame(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeFrameSet(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
 
-  void executeSpawn(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeAreaOn(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeStatus(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
-  void executeWait(ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens);
+  void executeSpawn(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeAreaOn(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeStatus(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
+  void executeWait(ShapeManager&, ProcessManager&, const std::vector< std::string >&);
 }
 
 #endif

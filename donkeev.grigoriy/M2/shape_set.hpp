@@ -8,7 +8,7 @@ namespace donkeev
 {
   struct shape_set_t
   {
-    std::vector< std::string > shape_names_;
+    std::vector< std::string > shape_names;
   };
 }
 

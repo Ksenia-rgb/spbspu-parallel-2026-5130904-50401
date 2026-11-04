@@ -5,8 +5,8 @@ namespace donkeev
 {
   struct point_t
   {
-    int x_;
-    int y_;
+    int x;
+    int y;
   };
 }
 

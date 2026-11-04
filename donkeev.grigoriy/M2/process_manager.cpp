@@ -12,232 +12,221 @@
 
 namespace
 {
-  bool writeAll(int fd, const void* buffer, size_t count)
+  constexpr int kRngShift = 11;
+  constexpr double kInv = 1.0 / 9007199254740992.0;
+}
+
+bool donkeev::writeAll(int fd, const void* buffer, size_t count)
+{
+  const char* ptr = static_cast< const char* >(buffer);
+  size_t total_written = 0;
+  while (total_written < count)
   {
-    const char* ptr = static_cast< const char* >(buffer);
-    size_t total_written = 0;
-    while (total_written < count)
+    ssize_t written = write(fd, ptr + total_written, count - total_written);
+    if (written < 0)
     {
-      ssize_t written = write(fd, ptr + total_written, count - total_written);
-      if (written < 0)
+      if (errno == EINTR)
       {
-        if (errno == EINTR)
-        {
-          continue;
-        }
-        return false;
+        continue;
       }
-      total_written += static_cast< size_t >(written);
+      return false;
     }
-    return true;
+    total_written += static_cast< size_t >(written);
+  }
+  return true;
+}
+
+bool donkeev::readAll(int fd, void* buffer, size_t count)
+{
+  char* ptr = static_cast< char* >(buffer);
+  size_t total_read = 0;
+  while (total_read < count)
+  {
+    ssize_t bytes_read = read(fd, ptr + total_read, count - total_read);
+    if (bytes_read < 0)
+    {
+      if (errno == EINTR)
+      {
+        continue;
+      }
+      return false;
+    }
+    if (bytes_read == 0)
+    {
+      return false;
+    }
+    total_read += static_cast< size_t >(bytes_read);
+  }
+  return true;
+}
+
+void donkeev::monteCarloWorker(const std::vector< donkeev::circle_t >& circles, const donkeev::rectangle_t& bbox,
+    size_t thread_tries, size_t thread_seed, size_t& out_hits)
+{
+  std::vector< donkeev::FlatCircle > flat_circles;
+  flat_circles.reserve(circles.size());
+  for (const auto& c : circles)
+  {
+    auto center = c.getCenter();
+    double r = c.getRadius();
+
+    donkeev::FlatCircle fc;
+    fc.cx = center.x;
+    fc.cy = center.y;
+    fc.r2 = r * r;
+
+    flat_circles.push_back(fc);
   }
 
-  bool readAll(int fd, void* buffer, size_t count)
+  std::mt19937_64 rng(thread_seed);
+
+  const double min_x = bbox.bottom_left.x;
+  const double max_x = bbox.top_right.x;
+  const double min_y = bbox.bottom_left.y;
+  const double max_y = bbox.top_right.y;
+
+  const double range_x = max_x - min_x;
+  const double range_y = max_y - min_y;
+
+  size_t local_hits = 0;
+  for (size_t i = 0; i < thread_tries; ++i)
   {
-    char* ptr = static_cast< char* >(buffer);
-    size_t total_read = 0;
-    while (total_read < count)
+    double px = min_x + (rng() >> kRngShift) * kInv * range_x;
+    double py = min_y + (rng() >> kRngShift) * kInv * range_y;
+
+    for (const auto& fc : flat_circles)
     {
-      ssize_t bytes_read = read(fd, ptr + total_read, count - total_read);
-      if (bytes_read < 0)
+      double dx = px - fc.cx;
+      double dy = py - fc.cy;
+      if (dx * dx + dy * dy <= fc.r2)
       {
-        if (errno == EINTR)
-        {
-          continue;
-        }
-        return false;
-      }
-      if (bytes_read == 0)
-      {
-        return false;
-      }
-      total_read += static_cast< size_t >(bytes_read);
-    }
-    return true;
-  }
-
-  struct RawCircleData
-  {
-    int r;
-    int x;
-    int y;
-  };
-
-  struct RawResultData
-  {
-    double area;
-    double time_ms;
-  };
-
-  void monteCarloWorker(const std::vector< donkeev::circle_t >& circles, const donkeev::rectangle_t& bbox,
-      size_t thread_tries, size_t thread_seed, size_t& out_hits)
-  {
-    std::vector< donkeev::FlatCircle > flat_circles;
-    flat_circles.reserve(circles.size());
-    for (const auto& c : circles)
-    {
-      auto center = c.getCenter();
-      double r = c.getRadius();
-
-      donkeev::FlatCircle fc;
-      fc.cx = center.x_;
-      fc.cy = center.y_;
-      fc.r2 = r * r;
-
-      flat_circles.push_back(fc);
-    }
-
-    std::mt19937_64 rng(thread_seed);
-
-    const double min_x = bbox.bottom_left_.x_;
-    const double max_x = bbox.top_right_.x_;
-    const double min_y = bbox.bottom_left_.y_;
-    const double max_y = bbox.top_right_.y_;
-
-    const double range_x = max_x - min_x;
-    const double range_y = max_y - min_y;
-    constexpr double kInv = 1.0 / 9007199254740992.0;
-
-    size_t local_hits = 0;
-    for (size_t i = 0; i < thread_tries; ++i)
-    {
-      double px = min_x + (rng() >> 11) * kInv * range_x;
-      double py = min_y + (rng() >> 11) * kInv * range_y;
-
-      for (const auto& fc : flat_circles)
-      {
-        double dx = px - fc.cx;
-        double dy = py - fc.cy;
-        if (dx * dx + dy * dy <= fc.r2)
-        {
-          ++local_hits;
-          break;
-        }
-      }
-    }
-    out_hits = local_hits;
-  }
-
-  void runChildLoop(int read_fd, int write_fd, size_t seed)
-  {
-    std::mt19937_64 master_rng(seed);
-
-    while (true)
-    {
-      size_t num_circles = 0;
-      if (!readAll(read_fd, &num_circles, sizeof(num_circles)))
-      {
+        ++local_hits;
         break;
       }
+    }
+  }
+  out_hits = local_hits;
+}
 
-      std::vector< donkeev::circle_t > circles;
-      circles.reserve(num_circles);
-      for (size_t i = 0; i < num_circles; ++i)
-      {
-        RawCircleData raw{};
-        if (!readAll(read_fd, &raw, sizeof(raw)))
-        {
-          return;
-        }
-        circles.emplace_back(raw.r, raw.x, raw.y);
-      }
+void donkeev::runChildLoop(const int read_fd, const int write_fd, size_t seed)
+{
+  std::mt19937_64 master_rng(seed);
 
-      size_t threads_count = 0;
-      size_t tries = 0;
-      if (!readAll(read_fd, &threads_count, sizeof(threads_count)) || !readAll(read_fd, &tries, sizeof(tries)))
-      {
-        return;
-      }
+  while (true)
+  {
+    size_t num_circles = 0;
+    if (!readAll(read_fd, &num_circles, sizeof(num_circles)))
+    {
+      break;
+    }
 
-      auto start_time = std::chrono::high_resolution_clock::now();
-
-      donkeev::rectangle_t bbox = circles[0].getBoundingBox();
-      for (size_t i = 1; i < circles.size(); ++i)
-      {
-        donkeev::rectangle_t curr = circles[i].getBoundingBox();
-        if (curr.bottom_left_.x_ < bbox.bottom_left_.x_)
-        {
-          bbox.bottom_left_.x_ = curr.bottom_left_.x_;
-        }
-        if (curr.bottom_left_.y_ < bbox.bottom_left_.y_)
-        {
-          bbox.bottom_left_.y_ = curr.bottom_left_.y_;
-        }
-        if (curr.top_right_.x_ > bbox.top_right_.x_)
-        {
-          bbox.top_right_.x_ = curr.top_right_.x_;
-        }
-        if (curr.top_right_.y_ > bbox.top_right_.y_)
-        {
-          bbox.top_right_.y_ = curr.top_right_.y_;
-        }
-      }
-
-      double width = static_cast< double >(bbox.top_right_.x_ - bbox.bottom_left_.x_);
-      double height = static_cast< double >(bbox.top_right_.y_ - bbox.bottom_left_.y_);
-      double box_area = width * height;
-
-      std::vector< std::thread > workers;
-      std::vector< size_t > hits_per_thread(threads_count, 0);
-      workers.reserve(threads_count);
-
-      size_t base_tries = tries / threads_count;
-      size_t remainder = tries % threads_count;
-
-      for (size_t i = 0; i < threads_count; ++i)
-      {
-        size_t thread_tries = base_tries + (i < remainder ? 1 : 0);
-        size_t thread_seed = master_rng();
-        workers.emplace_back(monteCarloWorker, std::cref(circles), std::cref(bbox), thread_tries, thread_seed,
-            std::ref(hits_per_thread[i]));
-      }
-
-      for (auto& th : workers)
-      {
-        th.join();
-      }
-
-      size_t total_hits = 0;
-      for (size_t h : hits_per_thread)
-      {
-        total_hits += h;
-      }
-
-      double area = box_area * (static_cast< double >(total_hits) / static_cast< double >(tries));
-
-      auto end_time = std::chrono::high_resolution_clock::now();
-      double time_ms = std::chrono::duration< double, std::milli >(end_time - start_time).count();
-
-      RawResultData result{area, time_ms};
-      if (!writeAll(write_fd, &result, sizeof(result)))
+    std::vector< donkeev::circle_t > circles;
+    circles.reserve(num_circles);
+    for (size_t i = 0; i < num_circles; ++i)
+    {
+      RawCircleData raw{};
+      if (!readAll(read_fd, &raw, sizeof(raw)))
       {
         return;
       }
+      circles.emplace_back(raw.r, raw.x, raw.y);
+    }
+
+    size_t threads_count = 0;
+    size_t tries = 0;
+    if (!readAll(read_fd, &threads_count, sizeof(threads_count)) || !readAll(read_fd, &tries, sizeof(tries)))
+    {
+      return;
+    }
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    donkeev::rectangle_t bbox = circles[0].getBoundingBox();
+    for (size_t i = 1; i < circles.size(); ++i)
+    {
+      donkeev::rectangle_t curr = circles[i].getBoundingBox();
+      if (curr.bottom_left.x < bbox.bottom_left.x)
+      {
+        bbox.bottom_left.x = curr.bottom_left.x;
+      }
+      if (curr.bottom_left.y < bbox.bottom_left.y)
+      {
+        bbox.bottom_left.y = curr.bottom_left.y;
+      }
+      if (curr.top_right.x > bbox.top_right.x)
+      {
+        bbox.top_right.x = curr.top_right.x;
+      }
+      if (curr.top_right.y > bbox.top_right.y)
+      {
+        bbox.top_right.y = curr.top_right.y;
+      }
+    }
+
+    const double width = static_cast< double >(bbox.top_right.x - bbox.bottom_left.x);
+    const double height = static_cast< double >(bbox.top_right.y - bbox.bottom_left.y);
+    const double box_area = width * height;
+
+    std::vector< std::thread > workers;
+    std::vector< size_t > hits_per_thread(threads_count, 0);
+    workers.reserve(threads_count);
+
+    const size_t base_tries = tries / threads_count;
+    const size_t remainder = tries % threads_count;
+
+    for (size_t i = 0; i < threads_count; ++i)
+    {
+      size_t thread_tries = base_tries + (i < remainder ? 1 : 0);
+      size_t thread_seed = master_rng();
+      workers.emplace_back(monteCarloWorker, std::cref(circles), std::cref(bbox), thread_tries, thread_seed,
+          std::ref(hits_per_thread[i]));
+    }
+
+    for (auto& th : workers)
+    {
+      th.join();
+    }
+
+    size_t total_hits = 0;
+    for (const size_t h : hits_per_thread)
+    {
+      total_hits += h;
+    }
+
+    const double area = box_area * (static_cast< double >(total_hits) / static_cast< double >(tries));
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    const double time_ms = std::chrono::duration< double, std::milli >(end_time - start_time).count();
+
+    RawResultData result{area, time_ms};
+    if (!writeAll(write_fd, &result, sizeof(result)))
+    {
+      return;
     }
   }
 }
 
 void donkeev::closeProcess(Process& proc)
 {
-  if (proc.pipe_to_child_[0] != -1)
+  if (proc.pipe_to_child[0] != -1)
   {
-    close(proc.pipe_to_child_[0]);
-    proc.pipe_to_child_[0] = -1;
+    close(proc.pipe_to_child[0]);
+    proc.pipe_to_child[0] = -1;
   }
-  if (proc.pipe_to_child_[1] != -1)
+  if (proc.pipe_to_child[1] != -1)
   {
-    close(proc.pipe_to_child_[1]);
-    proc.pipe_to_child_[1] = -1;
+    close(proc.pipe_to_child[1]);
+    proc.pipe_to_child[1] = -1;
   }
-  if (proc.pipe_from_child_[0] != -1)
+  if (proc.pipe_from_child[0] != -1)
   {
-    close(proc.pipe_from_child_[0]);
-    proc.pipe_from_child_[0] = -1;
+    close(proc.pipe_from_child[0]);
+    proc.pipe_from_child[0] = -1;
   }
-  if (proc.pipe_from_child_[1] != -1)
+  if (proc.pipe_from_child[1] != -1)
   {
-    close(proc.pipe_from_child_[1]);
-    proc.pipe_from_child_[1] = -1;
+    close(proc.pipe_from_child[1]);
+    proc.pipe_from_child[1] = -1;
   }
 }
 
@@ -245,18 +234,18 @@ donkeev::Process donkeev::spawnProcess(size_t seed, const std::vector< Process >
 {
   Process proc{-1, {-1, -1}, {-1, -1}};
 
-  if (pipe(proc.pipe_to_child_) == -1)
+  if (pipe(proc.pipe_to_child) == -1)
   {
     throw std::runtime_error("Failed to create pipe_to_child");
   }
 
-  if (pipe(proc.pipe_from_child_) == -1)
+  if (pipe(proc.pipe_from_child) == -1)
   {
     closeProcess(proc);
     throw std::runtime_error("Failed to create pipe_from_child");
   }
 
-  pid_t pid = fork();
+  const pid_t pid = fork();
   if (pid < 0)
   {
     closeProcess(proc);
@@ -270,21 +259,21 @@ donkeev::Process donkeev::spawnProcess(size_t seed, const std::vector< Process >
       closeProcess(existing);
     }
 
-    close(proc.pipe_to_child_[1]);
-    close(proc.pipe_from_child_[0]);
+    close(proc.pipe_to_child[1]);
+    close(proc.pipe_from_child[0]);
 
-    runChildLoop(proc.pipe_to_child_[0], proc.pipe_from_child_[1], seed);
+    runChildLoop(proc.pipe_to_child[0], proc.pipe_from_child[1], seed);
 
-    close(proc.pipe_to_child_[0]);
-    close(proc.pipe_from_child_[1]);
+    close(proc.pipe_to_child[0]);
+    close(proc.pipe_from_child[1]);
     _exit(0);
   }
 
-  proc.pid_ = pid;
-  close(proc.pipe_to_child_[0]);
-  proc.pipe_to_child_[0] = -1;
-  close(proc.pipe_from_child_[1]);
-  proc.pipe_from_child_[1] = -1;
+  proc.pid = pid;
+  close(proc.pipe_to_child[0]);
+  proc.pipe_to_child[0] = -1;
+  close(proc.pipe_from_child[1]);
+  proc.pipe_from_child[1] = -1;
 
   return proc;
 }
@@ -294,9 +283,9 @@ donkeev::ProcessManager::~ProcessManager()
   for (auto& pair : processes_)
   {
     closeProcess(pair.second);
-    if (pair.second.pid_ > 0)
+    if (pair.second.pid > 0)
     {
-      waitpid(pair.second.pid_, nullptr, 0);
+      waitpid(pair.second.pid, nullptr, 0);
     }
   }
 }
@@ -327,25 +316,25 @@ std::vector< donkeev::Process > donkeev::ProcessManager::getAllProcesses() const
   return result;
 }
 
-void donkeev::ProcessManager::startCalculation(const std::string& processName, const std::string& calcName,
-    const std::string& setName, const ShapeManager& shapeManager, size_t threads, size_t tries)
+void donkeev::ProcessManager::startCalculation(const std::string& process_name, const std::string& calc_name,
+    const std::string& set_name, const ShapeManager& shape_manager, size_t threads, size_t tries)
 {
-  if (calculations_.count(calcName) > 0)
+  if (calculations_.count(calc_name) > 0)
   {
     throw std::invalid_argument("Calculation with this name already exists");
   }
 
-  auto procIt = processes_.find(processName);
-  if (procIt == processes_.end())
+  auto proc_it = processes_.find(process_name);
+  if (proc_it == processes_.end())
   {
     throw std::invalid_argument("Process does not exist");
   }
 
-  const auto& shapeSet = shapeManager.getSet(setName);
-  const auto& shapeNames = shapeSet.shape_names_;
+  const auto& shape_set = shape_manager.getSet(set_name);
+  const auto& shapeNames = shape_set.shape_names;
   size_t num_circles = shapeNames.size();
 
-  int write_fd = procIt->second.pipe_to_child_[1];
+  const int write_fd = proc_it->second.pipe_to_child[1];
 
   if (!writeAll(write_fd, &num_circles, sizeof(num_circles)))
   {
@@ -354,9 +343,9 @@ void donkeev::ProcessManager::startCalculation(const std::string& processName, c
 
   for (const auto& sName : shapeNames)
   {
-    const auto& circle = shapeManager.getCircle(sName);
+    const auto& circle = shape_manager.getCircle(sName);
     point_t center = circle.getCenter();
-    RawCircleData raw{circle.getRadius(), center.x_, center.y_};
+    RawCircleData raw{circle.getRadius(), center.x, center.y};
     if (!writeAll(write_fd, &raw, sizeof(raw)))
     {
       throw std::runtime_error("Failed to write circle data");
@@ -368,48 +357,48 @@ void donkeev::ProcessManager::startCalculation(const std::string& processName, c
     throw std::runtime_error("Failed to write calculation parameters");
   }
 
-  calculations_.emplace(calcName, CalculationInfo{processName, false, 0.0, 0.0});
-  pending_calcs_[processName].push(calcName);
+  calculations_.emplace(calc_name, CalculationInfo{process_name, false, 0.0, 0.0});
+  pending_calcs_[process_name].push(calc_name);
 }
 
-void donkeev::ProcessManager::readOneResultBlocking(const std::string& processName)
+void donkeev::ProcessManager::readOneResultBlocking(const std::string& process_name)
 {
-  auto procIt = processes_.find(processName);
-  auto& queue = pending_calcs_[processName];
+  auto procIt = processes_.find(process_name);
+  auto& queue = pending_calcs_[process_name];
   if (procIt == processes_.end() || queue.empty())
   {
     return;
   }
 
   RawResultData raw{};
-  int read_fd = procIt->second.pipe_from_child_[0];
+  const int read_fd = procIt->second.pipe_from_child[0];
   if (!readAll(read_fd, &raw, sizeof(raw)))
   {
     throw std::runtime_error("Failed to read calculation result from child");
   }
 
-  std::string finished_calc_name = queue.front();
+  const std::string finished_calc_name = queue.front();
   queue.pop();
 
-  auto calcIt = calculations_.find(finished_calc_name);
-  if (calcIt != calculations_.end())
+  auto calc_it = calculations_.find(finished_calc_name);
+  if (calc_it != calculations_.end())
   {
-    calcIt->second.completed_ = true;
-    calcIt->second.area_ = raw.area;
-    calcIt->second.time_ms_ = raw.time_ms;
+    calc_it->second.completed = true;
+    calc_it->second.area = raw.area;
+    calc_it->second.time_ms = raw.time_ms;
   }
 }
 
-void donkeev::ProcessManager::pollProcessResults(const std::string& processName)
+void donkeev::ProcessManager::pollProcessResults(const std::string& process_name)
 {
-  auto procIt = processes_.find(processName);
-  auto& queue = pending_calcs_[processName];
+  auto procIt = processes_.find(process_name);
+  auto& queue = pending_calcs_[process_name];
   if (procIt == processes_.end())
   {
     return;
   }
 
-  int read_fd = procIt->second.pipe_from_child_[0];
+  const int read_fd = procIt->second.pipe_from_child[0];
 
   while (!queue.empty())
   {
@@ -418,10 +407,10 @@ void donkeev::ProcessManager::pollProcessResults(const std::string& processName)
     FD_SET(read_fd, &read_set);
 
     timeval timeout{0, 0};
-    int ready = select(read_fd + 1, &read_set, nullptr, nullptr, &timeout);
+    const int ready = select(read_fd + 1, &read_set, nullptr, nullptr, &timeout);
     if (ready > 0 && FD_ISSET(read_fd, &read_set))
     {
-      readOneResultBlocking(processName);
+      readOneResultBlocking(process_name);
     }
     else
     {
@@ -430,51 +419,51 @@ void donkeev::ProcessManager::pollProcessResults(const std::string& processName)
   }
 }
 
-void donkeev::ProcessManager::printStatus(const std::string& calcName, std::ostream& out)
+void donkeev::ProcessManager::printStatus(const std::string& calc_name, std::ostream& out)
 {
-  auto it = calculations_.find(calcName);
+  auto it = calculations_.find(calc_name);
   if (it == calculations_.end())
   {
     throw std::invalid_argument("Calculation was not started");
   }
 
-  if (!it->second.completed_)
+  if (!it->second.completed)
   {
-    pollProcessResults(it->second.process_name_);
+    pollProcessResults(it->second.process_name);
   }
 
-  if (!it->second.completed_)
+  if (!it->second.completed)
   {
-    out << it->second.process_name_ << " <IN PROGRESS>\n";
+    out << it->second.process_name << " <IN PROGRESS>\n";
   }
   else
   {
-    std::ios_base::fmtflags old_flags = out.flags();
-    std::streamsize old_prec = out.precision();
-    out << std::fixed << std::setprecision(3) << it->second.process_name_ << " " << it->second.time_ms_ << " "
-        << it->second.area_ << "\n";
+    const std::ios_base::fmtflags old_flags = out.flags();
+    const std::streamsize old_prec = out.precision();
+    out << std::fixed << std::setprecision(3) << it->second.process_name << " " << it->second.time_ms << " "
+        << it->second.area << "\n";
     out.flags(old_flags);
     out.precision(old_prec);
   }
 }
 
-void donkeev::ProcessManager::waitCalculation(const std::string& calcName, std::ostream& out)
+void donkeev::ProcessManager::waitCalculation(const std::string& calc_name, std::ostream& out)
 {
-  auto it = calculations_.find(calcName);
+  auto it = calculations_.find(calc_name);
   if (it == calculations_.end())
   {
     throw std::invalid_argument("Calculation was not started");
   }
 
-  while (!it->second.completed_)
+  while (!it->second.completed)
   {
-    readOneResultBlocking(it->second.process_name_);
+    readOneResultBlocking(it->second.process_name);
   }
 
-  std::ios_base::fmtflags old_flags = out.flags();
-  std::streamsize old_prec = out.precision();
-  out << std::fixed << std::setprecision(3) << it->second.process_name_ << " " << it->second.time_ms_ << " "
-      << it->second.area_ << "\n";
+  const std::ios_base::fmtflags old_flags = out.flags();
+  const std::streamsize old_prec = out.precision();
+  out << std::fixed << std::setprecision(3) << it->second.process_name << " " << it->second.time_ms << " "
+      << it->second.area << "\n";
   out.flags(old_flags);
   out.precision(old_prec);
 }

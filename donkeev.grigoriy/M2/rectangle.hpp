@@ -7,8 +7,8 @@ namespace donkeev
 {
   struct rectangle_t
   {
-    point_t bottom_left_;
-    point_t top_right_;
+    point_t bottom_left;
+    point_t top_right;
   };
 }
 

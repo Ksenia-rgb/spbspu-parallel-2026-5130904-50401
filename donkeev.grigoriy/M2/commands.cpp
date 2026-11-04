@@ -3,9 +3,15 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace {
+  constexpr size_t kCircleTokens = 5;
+  constexpr size_t kAreaOnTokens = 6;
+  constexpr size_t kTriesIndex = 5;
+}
+
 bool donkeev::validateCircle(const std::vector< std::string >& tokens)
 {
-  return tokens.size() == 5 && isValidName(tokens[1]) && isPositiveNumber(tokens[2]) && isNumber(tokens[3])
+  return tokens.size() == kCircleTokens && isValidName(tokens[1]) && isPositiveNumber(tokens[2]) && isNumber(tokens[3])
       && isNumber(tokens[4]);
 }
 
@@ -49,8 +55,8 @@ bool donkeev::validateSpawn(const std::vector< std::string >& tokens)
 
 bool donkeev::validateAreaOn(const std::vector< std::string >& tokens)
 {
-  return tokens.size() == 6 && isValidName(tokens[1]) && isValidName(tokens[2]) && isValidName(tokens[3])
-      && isPositiveNumber(tokens[4]) && isPositiveNumber(tokens[5]);
+  return tokens.size() == kAreaOnTokens && isValidName(tokens[1]) && isValidName(tokens[2]) && isValidName(tokens[3])
+      && isPositiveNumber(tokens[4]) && isPositiveNumber(tokens[kTriesIndex]);
 }
 
 void donkeev::executeCircle(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
@@ -69,17 +75,17 @@ void donkeev::executeShow(ShapeManager& manager, ProcessManager&, const std::vec
 {
   const auto& circle = manager.getCircle(tokens[1]);
   auto center = circle.getCenter();
-  std::cout << circle.getRadius() << " (" << center.x_ << " " << center.y_ << ")\n";
+  std::cout << circle.getRadius() << " (" << center.x << " " << center.y << ")\n";
 }
 
 void donkeev::executeShowSet(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
 {
   const auto& shapeSet = manager.getSet(tokens[1]);
-  for (const auto& shapeName : shapeSet.shape_names_)
+  for (const auto& shapeName : shapeSet.shape_names)
   {
     const auto& circle = manager.getCircle(shapeName);
     auto center = circle.getCenter();
-    std::cout << circle.getRadius() << " (" << center.x_ << " " << center.y_ << ")\n";
+    std::cout << circle.getRadius() << " (" << center.x << " " << center.y << ")\n";
   }
 }
 
@@ -87,15 +93,15 @@ void donkeev::executeFrame(ShapeManager& manager, ProcessManager&, const std::ve
 {
   const auto& circle = manager.getCircle(tokens[1]);
   rectangle_t bbox = circle.getBoundingBox();
-  std::cout << "(" << bbox.bottom_left_.x_ << " " << bbox.bottom_left_.y_ << ") "
-            << "(" << bbox.top_right_.x_ << " " << bbox.top_right_.y_ << ")\n";
+  std::cout << "(" << bbox.bottom_left.x << " " << bbox.bottom_left.y << ") "
+            << "(" << bbox.top_right.x << " " << bbox.top_right.y << ")\n";
 }
 
 void donkeev::executeFrameSet(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
 {
   rectangle_t bbox = manager.getSetBoundingBox(tokens[1]);
-  std::cout << "(" << bbox.bottom_left_.x_ << " " << bbox.bottom_left_.y_ << ") "
-            << "(" << bbox.top_right_.x_ << " " << bbox.top_right_.y_ << ")\n";
+  std::cout << "(" << bbox.bottom_left.x << " " << bbox.bottom_left.y << ") "
+            << "(" << bbox.top_right.x << " " << bbox.top_right.y << ")\n";
 }
 
 void donkeev::executeSpawn(ShapeManager&, ProcessManager& procManager, const std::vector< std::string >& tokens)
@@ -134,7 +140,7 @@ void donkeev::executeAreaOn(
   const std::string& calcName = tokens[2];
   const std::string& setName = tokens[3];
   size_t threads = std::stoul(tokens[4]);
-  size_t tries = std::stoul(tokens[5]);
+  size_t tries = std::stoul(tokens[kTriesIndex]);
 
   procManager.startCalculation(processName, calcName, setName, manager, threads, tries);
 }

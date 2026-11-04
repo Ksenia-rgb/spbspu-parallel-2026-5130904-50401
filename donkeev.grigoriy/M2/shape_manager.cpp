@@ -10,14 +10,14 @@ void donkeev::ShapeManager::addCircle(const std::string& name, int r, int x, int
   circles_.emplace(name, circle_t(r, x, y));
 }
 
-void donkeev::ShapeManager::addSet(const std::string& name, const std::vector< std::string >& shapeNames)
+void donkeev::ShapeManager::addSet(const std::string& name, const std::vector< std::string >& shape_names)
 {
   if (sets_.count(name) > 0)
   {
     throw std::invalid_argument("Set with this name already exists");
   }
 
-  for (const auto& shapeName : shapeNames)
+  for (const auto& shapeName : shape_names)
   {
     if (circles_.count(shapeName) == 0)
     {
@@ -25,7 +25,7 @@ void donkeev::ShapeManager::addSet(const std::string& name, const std::vector< s
     }
   }
 
-  sets_.emplace(name, shape_set_t{shapeNames});
+  sets_.emplace(name, shape_set_t{shape_names});
 }
 
 const donkeev::circle_t& donkeev::ShapeManager::getCircle(const std::string& name) const
@@ -66,35 +66,35 @@ donkeev::rectangle_t donkeev::ShapeManager::getSetBoundingBox(const std::string&
     throw std::out_of_range("Set does not exist");
   }
 
-  const auto& shapeNames = it->second.shape_names_;
-  if (shapeNames.empty())
+  const auto& shape_names = it->second.shape_names;
+  if (shape_names.empty())
   {
     throw std::logic_error("Set is empty");
   }
 
-  const auto& firstCircle = getCircle(shapeNames[0]);
-  rectangle_t bbox = firstCircle.getBoundingBox();
+  const auto& first_circle = getCircle(shape_names[0]);
+  rectangle_t bbox = first_circle.getBoundingBox();
 
-  for (size_t i = 1; i < shapeNames.size(); ++i)
+  for (size_t i = 1; i < shape_names.size(); ++i)
   {
-    const auto& circle = getCircle(shapeNames[i]);
-    rectangle_t currBbox = circle.getBoundingBox();
+    const auto& circle = getCircle(shape_names[i]);
+    const rectangle_t curr_bbox = circle.getBoundingBox();
 
-    if (currBbox.bottom_left_.x_ < bbox.bottom_left_.x_)
+    if (curr_bbox.bottom_left.x < bbox.bottom_left.x)
     {
-      bbox.bottom_left_.x_ = currBbox.bottom_left_.x_;
+      bbox.bottom_left.x = curr_bbox.bottom_left.x;
     }
-    if (currBbox.bottom_left_.y_ < bbox.bottom_left_.y_)
+    if (curr_bbox.bottom_left.y < bbox.bottom_left.y)
     {
-      bbox.bottom_left_.y_ = currBbox.bottom_left_.y_;
+      bbox.bottom_left.y = curr_bbox.bottom_left.y;
     }
-    if (currBbox.top_right_.x_ > bbox.top_right_.x_)
+    if (curr_bbox.top_right.x > bbox.top_right.x)
     {
-      bbox.top_right_.x_ = currBbox.top_right_.x_;
+      bbox.top_right.x = curr_bbox.top_right.x;
     }
-    if (currBbox.top_right_.y_ > bbox.top_right_.y_)
+    if (curr_bbox.top_right.y > bbox.top_right.y)
     {
-      bbox.top_right_.y_ = currBbox.top_right_.y_;
+      bbox.top_right.y = curr_bbox.top_right.y;
     }
   }
 

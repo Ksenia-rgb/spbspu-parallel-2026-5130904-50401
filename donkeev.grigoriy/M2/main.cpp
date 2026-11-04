@@ -9,10 +9,10 @@
 
 int main()
 {
-  donkeev::ShapeManager shapeManager;
-  donkeev::ProcessManager procManager;
+  donkeev::ShapeManager shape_manager;
+  donkeev::ProcessManager proc_manager;
 
-  std::map< std::string, donkeev::Command > commandMap = {{"circle", {donkeev::validateCircle, donkeev::executeCircle}},
+  std::map< std::string, donkeev::Command > command_map = {{"circle", {donkeev::validateCircle, donkeev::executeCircle}},
       {"set", {donkeev::validateSet, donkeev::executeSet}},
       {"show", {donkeev::validateTwoTokens, donkeev::executeShow}},
       {"showset", {donkeev::validateTwoTokens, donkeev::executeShowSet}},
@@ -37,10 +37,10 @@ int main()
       continue;
     }
 
-    const std::string& cmdName = tokens[0];
-    auto it = commandMap.find(cmdName);
+    const std::string& cmd_name = tokens[0];
+    auto it = command_map.find(cmd_name);
 
-    if (it == commandMap.end())
+    if (it == command_map.end())
     {
       std::cout << "<UNKNOWN COMMAND>\n";
       continue;
@@ -54,7 +54,7 @@ int main()
 
     try
     {
-      it->second.execute(shapeManager, procManager, tokens);
+      it->second.execute(shape_manager, proc_manager, tokens);
     }
     catch (...)
     {

@@ -7,9 +7,9 @@ namespace donkeev
 {
   struct Process
   {
-    pid_t pid_;
-    int pipe_to_child_[2];
-    int pipe_from_child_[2];
+    pid_t pid;
+    int pipe_to_child[2];
+    int pipe_from_child[2];
   };
 }
 
