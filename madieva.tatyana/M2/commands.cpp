@@ -313,3 +313,50 @@ void madieva::status(madieva::state_t & state, const madieva::Args & args)
     std::cout << std::defaultfloat;
   }
 }
+
+void madieva::wait(madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 2)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+  const std::string & calc_name = args[1];
+
+  const auto it = state.calc.find(calc_name);
+  if (it == state.calc.end())
+  {
+    throw std::invalid_argument("calc with this name does not exist");
+  }
+
+  const std::string & process_name = it->second.process_name;
+  const auto proc_it = state.processes.find(process_name);
+  if (proc_it == state.processes.end())
+  {
+    throw std::invalid_argument("process for this calc does not exist");
+  }
+
+  calc_t & c = it->second;
+  if (!c.InProgress)
+  {
+    std::cout << c.process_name << " " << c.ms << " "
+      << std::fixed << std::setprecision(3) << c.area << "\n";
+    std::cout << std::defaultfloat;
+    return;
+  }
+  while (true)
+  {
+    std::size_t rsize = 0;
+    madieva::recvAll(proc_it->second.res_rd.get(), reinterpret_cast< char * >(&rsize), sizeof(rsize));
+    std::string rmsg(rsize, '\0');
+    madieva::recvAll(proc_it->second.res_rd.get(), &rmsg[0], rmsg.size());
+    const madieva::Args rargs = madieva::split(rmsg);
+    madieva::applyAreaResponse(state, rargs);
+    if (!c.InProgress)
+    {
+      std::cout << c.process_name << " " << c.ms << " "
+        << std::fixed << std::setprecision(3) << c.area << "\n";
+      std::cout << std::defaultfloat;
+      return;
+    }
+  }
+}
