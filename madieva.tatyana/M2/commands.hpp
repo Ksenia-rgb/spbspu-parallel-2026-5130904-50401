@@ -18,6 +18,7 @@ namespace madieva
   void showFrameSet(const state_t &, const Args &);
   void spawn(state_t &, const Args &);
   void area_on(state_t &, const Args &);
+  void status(state_t &, const Args &);
 }
 
 #endif

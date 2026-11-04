@@ -5,6 +5,8 @@
 #include <iostream>
 #include <cstring>
 #include <signal.h>
+#include <poll.h>
+#include <iomanip>
 #include "parser.hpp"
 #include "file_descriptor.hpp"
 #include "message.hpp"
@@ -257,4 +259,57 @@ void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
   madieva::sendAll(proc_it->second.cmd_wr.get(), msg.data(), msg.size());
 
   state.calc.insert({calc_name, calc_t{process_name, threads, tries, true, 0.0, 0}});
+}
+
+void madieva::status(madieva::state_t & state, const madieva::Args & args)
+{
+  if (args.size() != 2)
+  {
+    throw std::invalid_argument("incorrect number of arguments");
+  }
+  const std::string & calc_name = args[1];
+
+  const auto it = state.calc.find(calc_name);
+  if (it == state.calc.end())
+  {
+    throw std::invalid_argument("calc with this name does not exist");
+  }
+
+  const std::string & process_name = it->second.process_name;
+  const auto proc_it = state.processes.find(process_name);
+  if (proc_it == state.processes.end())
+  {
+    throw std::invalid_argument("process for this calc does not exist");
+  }
+
+  const int fd = proc_it->second.res_rd.get();
+  while (true)
+  {
+    struct pollfd pfd = {};
+    pfd.fd = fd;
+    pfd.events = POLLIN;
+    const int r = ::poll(&pfd, 1, 0);
+    if (r <= 0 || !(pfd.revents & POLLIN))
+    {
+      break;
+    }
+    std::size_t rsize = 0;
+    madieva::recvAll(fd, reinterpret_cast< char * >(&rsize), sizeof(rsize));
+    std::string rmsg(rsize, '\0');
+    madieva::recvAll(fd, &rmsg[0], rmsg.size());
+    const madieva::Args rargs = madieva::split(rmsg);
+    madieva::applyAreaResponse(state, rargs);
+  }
+
+  const calc_t & c = it->second;
+  if (c.InProgress)
+  {
+    std::cout << c.process_name << " <IN PROGRESS>\n";
+  }
+  else
+  {
+    std::cout << c.process_name << " " << c.ms << " "
+      << std::fixed << std::setprecision(3) << c.area << "\n";
+    std::cout << std::defaultfloat;
+  }
 }

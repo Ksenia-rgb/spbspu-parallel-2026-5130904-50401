@@ -76,6 +76,24 @@ std::string madieva::makeAreaResponse(const std::string & calc_name, long long m
   return message;
 }
 
+void madieva::applyAreaResponse(state_t & state, const Args & args)
+{
+  if (args.size() < 3)
+  {
+    throw std::runtime_error("bad area response");
+  }
+  const std::string & calc_name = args[0];
+  const auto it = state.calc.find(calc_name);
+  if (it == state.calc.end())
+  {
+    return;
+  }
+  calc_t & c = it->second;
+  c.ms = parseInteger(args[1]);
+  c.area = std::stod(args[2]);
+  c.InProgress = false;
+}
+
 void madieva::sendAll(int fd, const char * data, std::size_t k)
 {
   std::size_t sent = 0;
