@@ -2,6 +2,8 @@
 #include <stdexcept>
 #include <vector>
 #include <ostream>
+#include <cstddef>
+#include <algorithm>
 
 madieva::Circle::Circle(long long r, long long x, long long y):
   r_(r),

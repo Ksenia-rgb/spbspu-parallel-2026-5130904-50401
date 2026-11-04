@@ -2,6 +2,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <cstddef>
 
 madieva::Args madieva::split(const std::string & line)
 {

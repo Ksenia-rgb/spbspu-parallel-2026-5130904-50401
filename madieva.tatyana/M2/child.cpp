@@ -8,6 +8,10 @@
 #include <chrono>
 #include <random>
 #include <thread>
+#include <vector>
+#include <functional>
+#include <stdexcept>
+#include <exception> 
 #include "file_descriptor.hpp"
 #include "message.hpp"
 #include "parser.hpp"
@@ -108,8 +112,8 @@ namespace
 
 void madieva::runChild(int cmd_fd, int res_fd, long long seed)
 {
-  madieva::FileDescriptor cmd_rd(cmd_fd);
-  madieva::FileDescriptor res_wr(res_fd);
+  const madieva::FileDescriptor cmd_rd(cmd_fd);
+  const madieva::FileDescriptor res_wr(res_fd);
 
   while (true)
   {

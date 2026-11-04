@@ -7,14 +7,20 @@
 #include <signal.h>
 #include <poll.h>
 #include <iomanip>
+#include <vector>
+#include <sys/types.h>
+#include <utility>
 #include "parser.hpp"
 #include "file_descriptor.hpp"
 #include "message.hpp"
 #include "child.hpp"
+#include "state.hpp"
+#include "circle.hpp"
 
 void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
 {
-  if (args.size() != 5)
+  constexpr std::size_t circle_args_count = 5;
+  if (args.size() != circle_args_count)
   {
     throw std::invalid_argument("incorrect number of arguments");
   }
@@ -25,7 +31,7 @@ void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
   const long long x = parseInteger(args[3]);
   const long long y = parseInteger(args[4]);
 
-  Circle circle(r, x, y);
+  const Circle circle(r, x, y);
 
   auto it = state.circles.find(name);
   if (it != state.circles.end())
@@ -184,7 +190,7 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
   FileDescriptor res_rd(res_pps[0]);
   FileDescriptor res_wr(res_pps[1]);
 
-  pid_t pid = fork();
+  const pid_t pid = fork();
 
   if (pid < 0)
   {
@@ -212,9 +218,10 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
   }
 }
 
-void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
+void madieva::areaOn(madieva::state_t & state, const madieva::Args & args)
 {
-  if (args.size() != 6)
+  constexpr std::size_t area_on_args_count = 6;
+  if (args.size() != area_on_args_count)
   {
     throw std::invalid_argument("incorrect number of arguments");
   }
@@ -302,7 +309,7 @@ void madieva::status(madieva::state_t & state, const madieva::Args & args)
   }
 
   const calc_t & c = it->second;
-  if (c.InProgress)
+  if (c.in_progress)
   {
     std::cout << c.process_name << " <IN PROGRESS>\n";
   }
@@ -335,8 +342,8 @@ void madieva::wait(madieva::state_t & state, const madieva::Args & args)
     throw std::invalid_argument("process for this calc does not exist");
   }
 
-  calc_t & c = it->second;
-  if (!c.InProgress)
+  const calc_t & c = it->second;
+  if (!c.in_progress)
   {
     std::cout << c.process_name << " " << c.ms << " "
       << std::fixed << std::setprecision(3) << c.area << "\n";
@@ -351,7 +358,7 @@ void madieva::wait(madieva::state_t & state, const madieva::Args & args)
     madieva::recvAll(proc_it->second.res_rd.get(), &rmsg[0], rmsg.size());
     const madieva::Args rargs = madieva::split(rmsg);
     madieva::applyAreaResponse(state, rargs);
-    if (!c.InProgress)
+    if (!c.in_progress)
     {
       std::cout << c.process_name << " " << c.ms << " "
         << std::fixed << std::setprecision(3) << c.area << "\n";

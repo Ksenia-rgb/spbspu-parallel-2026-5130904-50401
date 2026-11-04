@@ -2,7 +2,6 @@
 #define COMMANDS_HPP
 
 #include <functional>
-#include <istream>
 #include "state.hpp"
 #include "parser.hpp"
 
@@ -17,7 +16,7 @@ namespace madieva
   void showFrame(const state_t &, const Args &);
   void showFrameSet(const state_t &, const Args &);
   void spawn(state_t &, const Args &);
-  void area_on(state_t &, const Args &);
+  void areaOn(state_t &, const Args &);
   void status(state_t &, const Args &);
   void wait(state_t &, const Args &);
 }

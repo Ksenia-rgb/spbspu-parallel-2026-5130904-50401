@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <sys/types.h>
 #include "circle.hpp"
 #include "file_descriptor.hpp"
 
@@ -15,7 +16,7 @@ namespace madieva
     std::string process_name;
     long long threads = 0;
     long long tries = 0;
-    bool InProgress = true;
+    bool in_progress = true;
     double area = 0.0;
     long long ms = 0;
   };

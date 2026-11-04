@@ -3,7 +3,11 @@
 #include <stdexcept>
 #include <cstring>
 #include <unistd.h>
+#include <vector>
+#include <cerrno>
 #include "parser.hpp"
+#include "circle.hpp"
+#include "state.hpp"
 
 std::string madieva::makeAreaRequest(const std::string & calc_name,
   long long threads, long long tries,
@@ -17,8 +21,9 @@ std::string madieva::makeAreaRequest(const std::string & calc_name,
   message += std::to_string(tries);
   message += ' ';
   message += std::to_string(figures.size());
-  for (const Circle * circle : figures)
+  for (std::size_t i = 0; i < figures.size(); ++i)
   {
+    const Circle * const circle = figures[i];
     message += ' ';
     message += std::to_string(circle->getRadius());
     message += ' ';
@@ -91,7 +96,7 @@ void madieva::applyAreaResponse(state_t & state, const Args & args)
   calc_t & c = it->second;
   c.ms = parseInteger(args[1]);
   c.area = std::stod(args[2]);
-  c.InProgress = false;
+  c.in_progress = false;
 }
 
 void madieva::sendAll(int fd, const char * data, std::size_t k)

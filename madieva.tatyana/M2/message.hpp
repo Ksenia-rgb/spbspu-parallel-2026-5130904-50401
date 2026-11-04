@@ -1,8 +1,9 @@
-#ifndef MASSAGE_HPP
-#define MASSAGE_HPP
+#ifndef MESSAGE_HPP
+#define MESSAGE_HPP
 
 #include <string>
 #include <vector>
+#include <cstddef>
 #include "circle.hpp"
 #include "parser.hpp"
 #include "state.hpp"

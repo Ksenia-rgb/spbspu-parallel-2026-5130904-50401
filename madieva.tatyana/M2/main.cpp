@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
-#include "circle.hpp"
+#include <exception>
 #include "state.hpp"
 #include "commands.hpp"
 #include "parser.hpp"
@@ -17,7 +17,7 @@ int main()
     {"frame", madieva::showFrame},
     {"frameset", madieva::showFrameSet},
     {"spawn", madieva::spawn},
-    {"area-on", madieva::area_on},
+    {"area-on", madieva::areaOn},
     {"status", madieva::status},
     {"wait", madieva::wait}
   };
