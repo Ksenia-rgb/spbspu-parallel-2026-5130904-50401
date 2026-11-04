@@ -119,9 +119,15 @@ void madieva::runChild(int cmd_fd, int res_fd, long long seed)
     std::size_t size = 0;
     try
     {
-      madieva::recvAll(cmd_rd.get(), reinterpret_cast< char * >(&size), sizeof(size));
+      if (!madieva::recvAll(cmd_rd.get(), reinterpret_cast< char * >(&size), sizeof(size)))
+      {
+        break;
+      }
       std::string msg(size, '\0');
-      madieva::recvAll(cmd_rd.get(), &msg[0], msg.size());
+      if (!madieva::recvAll(cmd_rd.get(), &msg[0], msg.size()))
+      {
+        throw std::runtime_error("unexpected EOF in message body");
+      }
 
       const madieva::Args args = madieva::split(msg);
       const madieva::AreaRequest req = madieva::parseAreaRequest(args);
@@ -135,10 +141,6 @@ void madieva::runChild(int cmd_fd, int res_fd, long long seed)
       const std::size_t rsize = response.size();
       madieva::sendAll(res_wr.get(), reinterpret_cast< const char * >(&rsize), sizeof(rsize));
       madieva::sendAll(res_wr.get(), response.data(), response.size());
-    }
-    catch (const std::runtime_error &)
-    {
-      break;
     }
     catch (const std::exception &e)
     {

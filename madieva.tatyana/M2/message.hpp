@@ -25,8 +25,8 @@ namespace madieva
   std::string makeAreaResponse(const std::string & calc_name, long long ms, double area);
   void applyAreaResponse(state_t & state, const Args & args);
 
-  void sendAll(int fd, const char * data, std::size_t k);
-  void recvAll(int fd, char * data, std::size_t k);
+  bool sendAll(int fd, const char * data, std::size_t k);
+  bool recvAll(int fd, char * data, std::size_t k);
 }
 
 #endif

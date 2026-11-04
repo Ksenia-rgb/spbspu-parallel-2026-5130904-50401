@@ -98,7 +98,7 @@ void madieva::applyAreaResponse(state_t & state, const Args & args)
   c.in_progress = false;
 }
 
-void madieva::sendAll(int fd, const char * data, std::size_t k)
+bool madieva::sendAll(int fd, const char * data, std::size_t k)
 {
   std::size_t sent = 0;
   while (sent < k)
@@ -114,9 +114,10 @@ void madieva::sendAll(int fd, const char * data, std::size_t k)
     }
     sent += static_cast< std::size_t >(r);
   }
+  return true;
 }
 
-void madieva::recvAll(int fd, char * data, std::size_t k)
+bool madieva::recvAll(int fd, char * data, std::size_t k)
 {
   std::size_t received = 0;
   while (received < k)
@@ -132,8 +133,9 @@ void madieva::recvAll(int fd, char * data, std::size_t k)
     }
     if (r == 0)
     {
-      throw std::runtime_error("unexpected EOF");
+      return false;
     }
     received += static_cast< std::size_t >(r);
   }
+  return true;
 }

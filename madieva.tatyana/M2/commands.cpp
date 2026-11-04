@@ -302,9 +302,15 @@ void madieva::status(madieva::state_t & state, const madieva::Args & args)
       break;
     }
     std::size_t rsize = 0;
-    madieva::recvAll(fd, reinterpret_cast< char * >(&rsize), sizeof(rsize));
+    if (!madieva::recvAll(fd, reinterpret_cast< char * >(&rsize), sizeof(rsize)))
+    {
+      break;
+    }
     std::string rmsg(rsize, '\0');
-    madieva::recvAll(fd, &rmsg[0], rmsg.size());
+    if (!madieva::recvAll(fd, &rmsg[0], rmsg.size()))
+    {
+      throw std::runtime_error("unexpected EOF in response body");
+    }
     const madieva::Args rargs = madieva::split(rmsg);
     madieva::applyAreaResponse(state, rargs);
   }
@@ -352,9 +358,15 @@ void madieva::wait(madieva::state_t & state, const madieva::Args & args)
   while (true)
   {
     std::size_t rsize = 0;
-    madieva::recvAll(proc_it->second.res_rd.get(), reinterpret_cast< char * >(&rsize), sizeof(rsize));
+    if (!madieva::recvAll(proc_it->second.res_rd.get(), reinterpret_cast< char * >(&rsize), sizeof(rsize)))
+    {
+      throw std::runtime_error("child closed pipe before sending response");
+    }
     std::string rmsg(rsize, '\0');
-    madieva::recvAll(proc_it->second.res_rd.get(), &rmsg[0], rmsg.size());
+    if (!madieva::recvAll(proc_it->second.res_rd.get(), &rmsg[0], rmsg.size()))
+    {
+      throw std::runtime_error("unexpected EOF in response body");
+    }
     const madieva::Args rargs = madieva::split(rmsg);
     madieva::applyAreaResponse(state, rargs);
     if (!c.in_progress)
