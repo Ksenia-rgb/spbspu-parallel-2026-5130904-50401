@@ -17,7 +17,7 @@ studilova::Descriptor::~Descriptor()
 {
   if (descriptor_ != -1)
   {
-    ::close(descriptor_);
+    close(descriptor_);
   }
 }
 
@@ -27,7 +27,7 @@ studilova::Descriptor& studilova::Descriptor::operator=(Descriptor&& other) noex
   {
     if (descriptor_ != -1)
     {
-      ::close(descriptor_);
+      close(descriptor_);
     }
     descriptor_ = other.release();
   }
