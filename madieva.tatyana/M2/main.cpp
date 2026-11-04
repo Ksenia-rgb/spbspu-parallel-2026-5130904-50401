@@ -9,18 +9,10 @@
 
 int main()
 {
-  const std::map< std::string, madieva::Command > commands = {
-    {"circle", madieva::addCircle},
-    {"set", madieva::addSet},
-    {"show", madieva::show},
-    {"showset", madieva::showSet},
-    {"frame", madieva::showFrame},
-    {"frameset", madieva::showFrameSet},
-    {"spawn", madieva::spawn},
-    {"area-on", madieva::areaOn},
-    {"status", madieva::status},
-    {"wait", madieva::wait}
-  };
+  const std::map< std::string, madieva::Command > commands = {{"circle", madieva::addCircle}, {"set", madieva::addSet},
+      {"show", madieva::show}, {"showset", madieva::showSet}, {"frame", madieva::showFrame},
+      {"frameset", madieva::showFrameSet}, {"spawn", madieva::spawn}, {"area-on", madieva::areaOn},
+      {"status", madieva::status}, {"wait", madieva::wait}};
   madieva::state_t state;
   std::string line;
   while (std::getline(std::cin, line))
@@ -47,7 +39,7 @@ int main()
     {
       std::cout << "<INVALID COMMAND>\n";
     }
-    catch (const std::exception & e)
+    catch (const std::exception &e)
     {
       std::cerr << "internal error: " << e.what() << "\n";
       return 2;

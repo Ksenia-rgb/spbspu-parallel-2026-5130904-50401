@@ -8,7 +8,7 @@
 #include "parser.hpp"
 #include "state.hpp"
 
- namespace madieva
+namespace madieva
 {
   struct AreaRequest
   {
@@ -18,9 +18,8 @@
     std::vector< madieva::Circle > circles;
   };
 
-  std::string makeAreaRequest(const std::string & calc_name,
-    long long threads, long long tries,
-    const std::vector< const Circle * > & figures);
+  std::string makeAreaRequest(
+      const std::string & calc_name, long long threads, long long tries, const std::vector< const Circle * > & figures);
   AreaRequest parseAreaRequest(const Args & args);
 
   std::string makeAreaResponse(const std::string & calc_name, long long ms, double area);

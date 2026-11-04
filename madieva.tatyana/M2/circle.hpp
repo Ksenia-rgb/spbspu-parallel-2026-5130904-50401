@@ -20,7 +20,7 @@ namespace madieva
     long long y_ = 0;
   };
 
-  std::ostream & operator<<(std::ostream & out, const Circle & circle);
+  std::ostream &operator<<(std::ostream &out, const Circle &circle);
 
   struct frame_t
   {
@@ -33,7 +33,7 @@ namespace madieva
   frame_t computeFrame(const Circle &);
   frame_t computeFrame(const std::vector< const Circle * > &);
 
-  std::ostream & operator<<(std::ostream & out, const frame_t & frame);
+  std::ostream &operator<<(std::ostream &out, const frame_t &frame);
 }
 
 #endif

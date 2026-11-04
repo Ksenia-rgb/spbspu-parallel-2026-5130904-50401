@@ -21,7 +21,6 @@ namespace madieva
     long long ms = 0;
   };
 
-
   struct Process
   {
     pid_t pid = -1;

@@ -175,7 +175,7 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
   int cmd_pps[2] = {};
   int res_pps[2] = {};
   if (pipe(cmd_pps) != 0)
-  { 
+  {
     throw std::runtime_error("pipe failed");
   }
   if (pipe(res_pps) != 0)
@@ -197,7 +197,8 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
     throw std::runtime_error("fork failed");
   }
 
-  if (pid == 0) {
+  if (pid == 0)
+  {
     cmd_wr.close();
     res_rd.close();
     madieva::runChild(cmd_rd.get(), res_wr.get(), seed);
@@ -315,8 +316,7 @@ void madieva::status(madieva::state_t & state, const madieva::Args & args)
   }
   else
   {
-    std::cout << c.process_name << " " << c.ms << " "
-      << std::fixed << std::setprecision(3) << c.area << "\n";
+    std::cout << c.process_name << " " << c.ms << " " << std::fixed << std::setprecision(3) << c.area << "\n";
     std::cout << std::defaultfloat;
   }
 }
@@ -345,8 +345,7 @@ void madieva::wait(madieva::state_t & state, const madieva::Args & args)
   const calc_t & c = it->second;
   if (!c.in_progress)
   {
-    std::cout << c.process_name << " " << c.ms << " "
-      << std::fixed << std::setprecision(3) << c.area << "\n";
+    std::cout << c.process_name << " " << c.ms << " " << std::fixed << std::setprecision(3) << c.area << "\n";
     std::cout << std::defaultfloat;
     return;
   }
@@ -360,8 +359,7 @@ void madieva::wait(madieva::state_t & state, const madieva::Args & args)
     madieva::applyAreaResponse(state, rargs);
     if (!c.in_progress)
     {
-      std::cout << c.process_name << " " << c.ms << " "
-        << std::fixed << std::setprecision(3) << c.area << "\n";
+      std::cout << c.process_name << " " << c.ms << " " << std::fixed << std::setprecision(3) << c.area << "\n";
       std::cout << std::defaultfloat;
       return;
     }

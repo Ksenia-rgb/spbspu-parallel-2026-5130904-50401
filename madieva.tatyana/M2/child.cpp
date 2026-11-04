@@ -11,7 +11,7 @@
 #include <vector>
 #include <functional>
 #include <stdexcept>
-#include <exception> 
+#include <exception>
 #include "file_descriptor.hpp"
 #include "message.hpp"
 #include "parser.hpp"
@@ -21,14 +21,14 @@ namespace
 {
   struct ThreadData
   {
-    const std::vector< madieva::Circle > * circles = nullptr;
+    const std::vector< madieva::Circle > *circles = nullptr;
     madieva::frame_t frame;
     std::size_t tries = 0;
     std::size_t seed = 0;
     std::size_t hits = 0;
   };
 
-  bool isInside(const double x, const double y, const madieva::Circle & c)
+  bool isInside(const double x, const double y, const madieva::Circle &c)
   {
     const double dx = static_cast< double >(c.getX()) - x;
     const double dy = static_cast< double >(c.getY()) - y;
@@ -36,13 +36,13 @@ namespace
     return (dx * dx + dy * dy) <= (r * r);
   }
 
-  void computeThread(ThreadData & d)
+  void computeThread(ThreadData &d)
   {
     std::default_random_engine engine(d.seed);
     std::uniform_real_distribution< double > dist_x(
-      static_cast< double >(d.frame.min_x), static_cast< double >(d.frame.max_x));
+        static_cast< double >(d.frame.min_x), static_cast< double >(d.frame.max_x));
     std::uniform_real_distribution< double > dist_y(
-      static_cast< double >(d.frame.min_y), static_cast< double >(d.frame.max_y));
+        static_cast< double >(d.frame.min_y), static_cast< double >(d.frame.max_y));
 
     std::size_t hits = 0;
     for (std::size_t i = 0; i < d.tries; ++i)
@@ -61,7 +61,7 @@ namespace
     d.hits = hits;
   }
 
-  double computeArea(const madieva::AreaRequest & req, long long seed)
+  double computeArea(const madieva::AreaRequest &req, long long seed)
   {
     if (req.circles.empty())
     {
@@ -71,7 +71,7 @@ namespace
     madieva::frame_t frame = computeFrame(req.circles[0]);
     for (std::size_t i = 1; i < req.circles.size(); ++i)
     {
-      const madieva::Circle & c = req.circles[i];
+      const madieva::Circle &c = req.circles[i];
       frame.min_x = std::min(frame.min_x, c.getX() - c.getRadius());
       frame.min_y = std::min(frame.min_y, c.getY() - c.getRadius());
       frame.max_x = std::max(frame.max_x, c.getX() + c.getRadius());
@@ -109,7 +109,6 @@ namespace
   }
 }
 
-
 void madieva::runChild(int cmd_fd, int res_fd, long long seed)
 {
   const madieva::FileDescriptor cmd_rd(cmd_fd);
@@ -141,7 +140,7 @@ void madieva::runChild(int cmd_fd, int res_fd, long long seed)
     {
       break;
     }
-    catch (const std::exception & e)
+    catch (const std::exception &e)
     {
       std::cerr << "child error: " << e.what() << "\n";
     }

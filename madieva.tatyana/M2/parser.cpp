@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <cstddef>
 
-madieva::Args madieva::split(const std::string & line)
+madieva::Args madieva::split(const std::string &line)
 {
   const std::string delimiters = " \n\r\t";
   Args args;
@@ -25,7 +25,7 @@ madieva::Args madieva::split(const std::string & line)
   return args;
 }
 
-long long madieva::parseInteger(const std::string & arg)
+long long madieva::parseInteger(const std::string &arg)
 {
   std::size_t pos = 0;
   long long res = 0;
@@ -44,7 +44,7 @@ long long madieva::parseInteger(const std::string & arg)
   return res;
 }
 
-void madieva::checkName(const std::string & name)
+void madieva::checkName(const std::string &name)
 {
   if (name.empty())
   {

@@ -9,9 +9,8 @@
 #include "circle.hpp"
 #include "state.hpp"
 
-std::string madieva::makeAreaRequest(const std::string & calc_name,
-  long long threads, long long tries,
-  const std::vector< const Circle * > & figures)
+std::string madieva::makeAreaRequest(
+    const std::string & calc_name, long long threads, long long tries, const std::vector< const Circle * > & figures)
 {
   std::string message;
   message += calc_name;

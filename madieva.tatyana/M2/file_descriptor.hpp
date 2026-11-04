@@ -8,9 +8,9 @@ namespace madieva
   public:
     FileDescriptor(int fd);
     FileDescriptor(const FileDescriptor &) = delete;
-    FileDescriptor & operator=(const FileDescriptor &) = delete;
+    FileDescriptor &operator=(const FileDescriptor &) = delete;
     FileDescriptor(FileDescriptor &&) noexcept;
-    FileDescriptor & operator=(FileDescriptor &&) noexcept;
+    FileDescriptor &operator=(FileDescriptor &&) noexcept;
     ~FileDescriptor();
 
     void close();

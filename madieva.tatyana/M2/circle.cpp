@@ -43,7 +43,7 @@ madieva::frame_t madieva::computeFrame(const madieva::Circle & circle)
   const long long min_y = circle.getY() - circle.getRadius();
   const long long max_x = circle.getX() + circle.getRadius();
   const long long max_y = circle.getY() + circle.getRadius();
-  return frame_t {min_x, min_y, max_x, max_y};
+  return frame_t{min_x, min_y, max_x, max_y};
 }
 
 madieva::frame_t madieva::computeFrame(const std::vector< const madieva::Circle * > & figures)
