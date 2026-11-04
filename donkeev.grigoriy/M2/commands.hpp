@@ -31,8 +31,7 @@ namespace donkeev
   void executeFrameSet(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens);
 
   void executeSpawn(ShapeManager&, ProcessManager& proc_manager, const std::vector< std::string >& tokens);
-  void executeAreaOn(
-    ShapeManager& manager, ProcessManager& proc_manager, const std::vector< std::string >& tokens);
+  void executeAreaOn( ShapeManager& manager, ProcessManager& proc_manager, const std::vector< std::string >& tokens);
   void executeStatus(ShapeManager&, ProcessManager& proc_manager, const std::vector< std::string >& tokens);
   void executeWait(ShapeManager&, ProcessManager& proc_manager, const std::vector< std::string >& tokens);
 }
