@@ -19,22 +19,21 @@
 
 namespace
 {
+  struct CircleFast
+  {
+    double cx = 0;
+    double cy = 0;
+    double r2 = 0;
+  };
+
   struct ThreadData
   {
-    const std::vector< madieva::Circle > *circles = nullptr;
+    const std::vector< CircleFast > *circles = nullptr;
     madieva::frame_t frame;
     std::size_t tries = 0;
     std::size_t seed = 0;
     std::size_t hits = 0;
   };
-
-  bool isInside(const double x, const double y, const madieva::Circle &c)
-  {
-    const double dx = static_cast< double >(c.getX()) - x;
-    const double dy = static_cast< double >(c.getY()) - y;
-    const double r = static_cast< double >(c.getRadius());
-    return (dx * dx + dy * dy) <= (r * r);
-  }
 
   void computeThread(ThreadData &d)
   {
@@ -44,14 +43,19 @@ namespace
     std::uniform_real_distribution< double > dist_y(
         static_cast< double >(d.frame.min_y), static_cast< double >(d.frame.max_y));
 
+    const std::vector< CircleFast > & circles = *d.circles;
+    const std::size_t n = circles.size();
     std::size_t hits = 0;
     for (std::size_t i = 0; i < d.tries; ++i)
     {
       const double x = dist_x(engine);
       const double y = dist_y(engine);
-      for (std::size_t j = 0; j < d.circles->size(); ++j)
+      for (std::size_t j = 0; j < n; ++j)
       {
-        if (isInside(x, y, (*d.circles)[j]))
+        const CircleFast & c = circles[j];
+        const double dx = x - c.cx;
+        const double dy = y - c.cy;
+        if (dx * dx + dy * dy <= c.r2)
         {
           ++hits;
           break;
@@ -78,6 +82,19 @@ namespace
       frame.max_y = std::max(frame.max_y, c.getY() + c.getRadius());
     }
 
+    std::vector< CircleFast > fast;
+    fast.reserve(req.circles.size());
+    for (std::size_t i = 0; i < req.circles.size(); ++i)
+    {
+      const madieva::Circle & c = req.circles[i];
+      const double r = static_cast< double >(c.getRadius());
+      fast.push_back(CircleFast{
+        static_cast< double >(c.getX()),
+        static_cast< double >(c.getY()),
+        r * r
+      });
+    }
+
     const std::size_t total = static_cast< std::size_t >(req.tries);
     const std::size_t nthreads = static_cast< std::size_t >(req.threads);
     const std::size_t per_thread = total / nthreads;
@@ -89,7 +106,7 @@ namespace
 
     for (std::size_t i = 0; i < nthreads; ++i)
     {
-      data[i].circles = &req.circles;
+      data[i].circles = &fast;
       data[i].frame = frame;
       data[i].tries = per_thread + (i == 0 ? remainder : 0);
       data[i].seed = static_cast< std::size_t >(seed) + i;
