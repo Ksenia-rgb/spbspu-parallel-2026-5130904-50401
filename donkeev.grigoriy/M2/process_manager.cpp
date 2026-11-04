@@ -72,7 +72,7 @@ namespace
   void monteCarloWorker(const std::vector< donkeev::circle_t >& circles, const donkeev::rectangle_t& bbox,
       size_t thread_tries, size_t thread_seed, size_t& out_hits)
   {
-    std::vector<donkeev::FlatCircle> flat_circles;
+    std::vector< donkeev::FlatCircle > flat_circles;
     flat_circles.reserve(circles.size());
     for (const auto& c : circles)
     {

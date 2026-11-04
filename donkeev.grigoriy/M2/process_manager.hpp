@@ -12,7 +12,8 @@
 
 namespace donkeev
 {
-  struct FlatCircle {
+  struct FlatCircle
+  {
     int cx, cy, r2;
   };
 
