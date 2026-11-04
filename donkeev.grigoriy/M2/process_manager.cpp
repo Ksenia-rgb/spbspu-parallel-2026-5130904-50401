@@ -391,14 +391,14 @@ void donkeev::ProcessManager::readOneResultBlocking(const std::string& process_n
 
 void donkeev::ProcessManager::pollProcessResults(const std::string& process_name)
 {
-  auto procIt = processes_.find(process_name);
+  auto proc_it = processes_.find(process_name);
   auto& queue = pending_calcs_[process_name];
-  if (procIt == processes_.end())
+  if (proc_it == processes_.end())
   {
     return;
   }
 
-  const int read_fd = procIt->second.pipe_from_child[0];
+  const int read_fd = proc_it->second.pipe_from_child[0];
 
   while (!queue.empty())
   {
