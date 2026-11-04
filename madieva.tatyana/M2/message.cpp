@@ -1,6 +1,9 @@
 #include "message.hpp"
-
 #include <string>
+#include <stdexcept>
+#include <cstring>
+#include <unistd.h>
+#include "parser.hpp"
 
 std::string madieva::makeAreaRequest(const std::string & calc_name,
   long long threads, long long tries,
@@ -27,6 +30,41 @@ std::string madieva::makeAreaRequest(const std::string & calc_name,
   return message;
 }
 
+madieva::AreaRequest madieva::parseAreaRequest(const madieva::Args & args)
+{
+  if (args.size() < 4)
+  {
+    throw std::invalid_argument("area request: too few fields");
+  }
+
+  AreaRequest req;
+  req.calc_name = args[0];
+  checkName(req.calc_name);
+  req.threads = parseInteger(args[1]);
+  req.tries = parseInteger(args[2]);
+  const long long count = parseInteger(args[3]);
+
+  if (req.threads <= 0 || req.tries <= 0 || count < 0)
+  {
+    throw std::invalid_argument("area request: invalid parameters");
+  }
+
+  const std::size_t expected = 4 + 3 * static_cast< std::size_t >(count);
+  if (args.size() != expected)
+  {
+    throw std::invalid_argument("area request: wrong number of circle fields");
+  }
+
+  req.circles.reserve(static_cast< std::size_t >(count));
+  for (std::size_t i = 0; i < static_cast< std::size_t >(count); ++i)
+  {
+    const long long r = parseInteger(args[4 + 3 * i + 0]);
+    const long long x = parseInteger(args[4 + 3 * i + 1]);
+    const long long y = parseInteger(args[4 + 3 * i + 2]);
+    req.circles.emplace_back(r, x, y);
+  }
+  return req;
+}
 
 void madieva::sendAll(int fd, const char * data, std::size_t k)
 {
