@@ -29,12 +29,13 @@ namespace donkeev
     double time_ms;
   };
 
-  void monteCarloWorker(const std::vector< donkeev::circle_t >&, const donkeev::rectangle_t&,
-      size_t, size_t, size_t&);
+  void donkeev::monteCarloWorker(const std::vector< donkeev::circle_t >&, 
+    const donkeev::rectangle_t&,
+    size_t, 
+    size_t, 
+    size_t&);
 
   void runChildLoop(int, int, size_t);
-
-
 
   struct FlatCircle
   {
@@ -63,8 +64,12 @@ namespace donkeev
     bool hasCalculation(const std::string&) const;
     std::vector< Process > getAllProcesses() const;
 
-    void startCalculation(const std::string&, const std::string&, const std::string&,
-        const ShapeManager&, size_t, size_t);
+    void startCalculation(const std::string&, 
+                          const std::string&, 
+                          const std::string&,
+                          const ShapeManager&, 
+                          size_t, 
+                          size_t);
 
     void printStatus(const std::string&, std::ostream&);
     void waitCalculation(const std::string&, std::ostream&);

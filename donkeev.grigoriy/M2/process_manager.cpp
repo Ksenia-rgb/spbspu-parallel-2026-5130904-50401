@@ -18,11 +18,11 @@ namespace
 
 bool donkeev::writeAll(int fd, const void* buffer, size_t count)
 {
-  const char* ptr = static_cast< const char* >(buffer);
+  const char* const ptr = static_cast< const char* >(buffer);
   size_t total_written = 0;
   while (total_written < count)
   {
-    ssize_t written = write(fd, ptr + total_written, count - total_written);
+    const ssize_t written = write(fd, ptr + total_written, count - total_written);
     if (written < 0)
     {
       if (errno == EINTR)
@@ -38,11 +38,11 @@ bool donkeev::writeAll(int fd, const void* buffer, size_t count)
 
 bool donkeev::readAll(int fd, void* buffer, size_t count)
 {
-  char* ptr = static_cast< char* >(buffer);
+  char* const ptr = static_cast< char* >(buffer);
   size_t total_read = 0;
   while (total_read < count)
   {
-    ssize_t bytes_read = read(fd, ptr + total_read, count - total_read);
+    const ssize_t bytes_read = read(fd, ptr + total_read, count - total_read);
     if (bytes_read < 0)
     {
       if (errno == EINTR)
@@ -68,7 +68,7 @@ void donkeev::monteCarloWorker(const std::vector< donkeev::circle_t >& circles, 
   for (const auto& c : circles)
   {
     auto center = c.getCenter();
-    double r = c.getRadius();
+    const double r = c.getRadius();
 
     donkeev::FlatCircle fc;
     fc.cx = center.x;
@@ -91,13 +91,13 @@ void donkeev::monteCarloWorker(const std::vector< donkeev::circle_t >& circles, 
   size_t local_hits = 0;
   for (size_t i = 0; i < thread_tries; ++i)
   {
-    double px = min_x + (rng() >> kRngShift) * kInv * range_x;
-    double py = min_y + (rng() >> kRngShift) * kInv * range_y;
+    const double px = min_x + (rng() >> kRngShift) * kInv * range_x;
+    const double py = min_y + (rng() >> kRngShift) * kInv * range_y;
 
     for (const auto& fc : flat_circles)
     {
-      double dx = px - fc.cx;
-      double dy = py - fc.cy;
+      const double dx = px - fc.cx;
+      const double dy = py - fc.cy;
       if (dx * dx + dy * dy <= fc.r2)
       {
         ++local_hits;
@@ -144,7 +144,7 @@ void donkeev::runChildLoop(const int read_fd, const int write_fd, size_t seed)
     donkeev::rectangle_t bbox = circles[0].getBoundingBox();
     for (size_t i = 1; i < circles.size(); ++i)
     {
-      donkeev::rectangle_t curr = circles[i].getBoundingBox();
+      const donkeev::rectangle_t curr = circles[i].getBoundingBox();
       if (curr.bottom_left.x < bbox.bottom_left.x)
       {
         bbox.bottom_left.x = curr.bottom_left.x;
@@ -300,9 +300,9 @@ bool donkeev::ProcessManager::hasProcess(const std::string& name) const
   return processes_.count(name) > 0;
 }
 
-bool donkeev::ProcessManager::hasCalculation(const std::string& calcName) const
+bool donkeev::ProcessManager::hasCalculation(const std::string& calc_name) const
 {
-  return calculations_.count(calcName) > 0;
+  return calculations_.count(calc_name) > 0;
 }
 
 std::vector< donkeev::Process > donkeev::ProcessManager::getAllProcesses() const
@@ -331,8 +331,8 @@ void donkeev::ProcessManager::startCalculation(const std::string& process_name, 
   }
 
   const auto& shape_set = shape_manager.getSet(set_name);
-  const auto& shapeNames = shape_set.shape_names;
-  size_t num_circles = shapeNames.size();
+  const auto& shape_names = shape_set.shape_names;
+  size_t num_circles = shape_names.size();
 
   const int write_fd = proc_it->second.pipe_to_child[1];
 
@@ -341,10 +341,10 @@ void donkeev::ProcessManager::startCalculation(const std::string& process_name, 
     throw std::runtime_error("Failed to write to process pipe");
   }
 
-  for (const auto& sName : shapeNames)
+  for (const auto& s_name : shape_names)
   {
-    const auto& circle = shape_manager.getCircle(sName);
-    point_t center = circle.getCenter();
+    const auto& circle = shape_manager.getCircle(s_name);
+    const point_t center = circle.getCenter();
     RawCircleData raw{circle.getRadius(), center.x, center.y};
     if (!writeAll(write_fd, &raw, sizeof(raw)))
     {
@@ -363,15 +363,15 @@ void donkeev::ProcessManager::startCalculation(const std::string& process_name, 
 
 void donkeev::ProcessManager::readOneResultBlocking(const std::string& process_name)
 {
-  auto procIt = processes_.find(process_name);
+  auto proc_it = processes_.find(process_name);
   auto& queue = pending_calcs_[process_name];
-  if (procIt == processes_.end() || queue.empty())
+  if (proc_it == processes_.end() || queue.empty())
   {
     return;
   }
 
   RawResultData raw{};
-  const int read_fd = procIt->second.pipe_from_child[0];
+  const int read_fd = proc_it->second.pipe_from_child[0];
   if (!readAll(read_fd, &raw, sizeof(raw)))
   {
     throw std::runtime_error("Failed to read calculation result from child");

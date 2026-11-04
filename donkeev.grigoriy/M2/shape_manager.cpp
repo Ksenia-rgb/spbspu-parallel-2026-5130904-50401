@@ -17,9 +17,9 @@ void donkeev::ShapeManager::addSet(const std::string& name, const std::vector< s
     throw std::invalid_argument("Set with this name already exists");
   }
 
-  for (const auto& shapeName : shape_names)
+  for (const auto& shape_name : shape_names)
   {
-    if (circles_.count(shapeName) == 0)
+    if (circles_.count(shape_name) == 0)
     {
       throw std::invalid_argument("Referenced shape does not exist");
     }

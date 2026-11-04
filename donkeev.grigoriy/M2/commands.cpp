@@ -3,7 +3,8 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace {
+namespace
+{
   constexpr size_t kCircleTokens = 5;
   constexpr size_t kAreaOnTokens = 6;
   constexpr size_t kTriesIndex = 5;
@@ -23,8 +24,8 @@ bool donkeev::validateSet(const std::vector< std::string >& tokens)
   }
   try
   {
-    size_t setSize = std::stoul(tokens[2]);
-    if (tokens.size() != 3 + setSize)
+    const size_t set_size = std::stoul(tokens[2]);
+    if (tokens.size() != 3 + set_size)
     {
       return false;
     }
@@ -66,9 +67,9 @@ void donkeev::executeCircle(ShapeManager& manager, ProcessManager&, const std::v
 
 void donkeev::executeSet(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
 {
-  size_t size = std::stoul(tokens[2]);
-  std::vector< std::string > shapeNames(tokens.begin() + 3, tokens.begin() + 3 + size);
-  manager.addSet(tokens[1], shapeNames);
+  const size_t size = std::stoul(tokens[2]);
+  const std::vector< std::string > shape_names(tokens.begin() + 3, tokens.begin() + 3 + size);
+  manager.addSet(tokens[1], shape_names);
 }
 
 void donkeev::executeShow(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
@@ -80,10 +81,10 @@ void donkeev::executeShow(ShapeManager& manager, ProcessManager&, const std::vec
 
 void donkeev::executeShowSet(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
 {
-  const auto& shapeSet = manager.getSet(tokens[1]);
-  for (const auto& shapeName : shapeSet.shape_names)
+  const auto& shape_set = manager.getSet(tokens[1]);
+  for (const auto& shape_name : shape_set.shape_names)
   {
-    const auto& circle = manager.getCircle(shapeName);
+    const auto& circle = manager.getCircle(shape_name);
     auto center = circle.getCenter();
     std::cout << circle.getRadius() << " (" << center.x << " " << center.y << ")\n";
   }
@@ -92,39 +93,39 @@ void donkeev::executeShowSet(ShapeManager& manager, ProcessManager&, const std::
 void donkeev::executeFrame(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
 {
   const auto& circle = manager.getCircle(tokens[1]);
-  rectangle_t bbox = circle.getBoundingBox();
+  const rectangle_t bbox = circle.getBoundingBox();
   std::cout << "(" << bbox.bottom_left.x << " " << bbox.bottom_left.y << ") "
             << "(" << bbox.top_right.x << " " << bbox.top_right.y << ")\n";
 }
 
 void donkeev::executeFrameSet(ShapeManager& manager, ProcessManager&, const std::vector< std::string >& tokens)
 {
-  rectangle_t bbox = manager.getSetBoundingBox(tokens[1]);
+  const rectangle_t bbox = manager.getSetBoundingBox(tokens[1]);
   std::cout << "(" << bbox.bottom_left.x << " " << bbox.bottom_left.y << ") "
             << "(" << bbox.top_right.x << " " << bbox.top_right.y << ")\n";
 }
 
-void donkeev::executeSpawn(ShapeManager&, ProcessManager& procManager, const std::vector< std::string >& tokens)
+void donkeev::executeSpawn(ShapeManager&, ProcessManager& proc_manager, const std::vector< std::string >& tokens)
 {
   const std::string& name = tokens[1];
-  long long seed_input = std::stoll(tokens[2]);
+  const long long seed_input = std::stoll(tokens[2]);
   if (seed_input < 0)
   {
     throw std::invalid_argument("Seed cannot be negative");
   }
 
-  if (procManager.hasProcess(name))
+  if (proc_manager.hasProcess(name))
   {
     throw std::invalid_argument("Process already exists");
   }
 
   const size_t seed = static_cast< size_t >(seed_input);
-  std::vector< Process > existing_processes = procManager.getAllProcesses();
+  const std::vector< Process > existing_processes = proc_manager.getAllProcesses();
 
   Process process = spawnProcess(seed, existing_processes);
   try
   {
-    procManager.addProcess(name, process);
+    proc_manager.addProcess(name, process);
   }
   catch (...)
   {
@@ -134,23 +135,23 @@ void donkeev::executeSpawn(ShapeManager&, ProcessManager& procManager, const std
 }
 
 void donkeev::executeAreaOn(
-    ShapeManager& manager, ProcessManager& procManager, const std::vector< std::string >& tokens)
+    ShapeManager& manager, ProcessManager& proc_manager, const std::vector< std::string >& tokens)
 {
-  const std::string& processName = tokens[1];
-  const std::string& calcName = tokens[2];
-  const std::string& setName = tokens[3];
-  size_t threads = std::stoul(tokens[4]);
-  size_t tries = std::stoul(tokens[kTriesIndex]);
+  const std::string& process_name = tokens[1];
+  const std::string& calc_name = tokens[2];
+  const std::string& set_name = tokens[3];
+  const size_t threads = std::stoul(tokens[4]);
+  const size_t tries = std::stoul(tokens[kTriesIndex]);
 
-  procManager.startCalculation(processName, calcName, setName, manager, threads, tries);
+  proc_manager.startCalculation(process_name, calc_name, set_name, manager, threads, tries);
 }
 
-void donkeev::executeStatus(ShapeManager&, ProcessManager& procManager, const std::vector< std::string >& tokens)
+void donkeev::executeStatus(ShapeManager&, ProcessManager& proc_manager, const std::vector< std::string >& tokens)
 {
-  procManager.printStatus(tokens[1], std::cout);
+  proc_manager.printStatus(tokens[1], std::cout);
 }
 
-void donkeev::executeWait(ShapeManager&, ProcessManager& procManager, const std::vector< std::string >& tokens)
+void donkeev::executeWait(ShapeManager&, ProcessManager& proc_manager, const std::vector< std::string >& tokens)
 {
-  procManager.waitCalculation(tokens[1], std::cout);
+  proc_manager.waitCalculation(tokens[1], std::cout);
 }

@@ -12,7 +12,8 @@ int main()
   donkeev::ShapeManager shape_manager;
   donkeev::ProcessManager proc_manager;
 
-  std::map< std::string, donkeev::Command > command_map = {{"circle", {donkeev::validateCircle, donkeev::executeCircle}},
+  std::map< std::string, donkeev::Command > command_map = {
+      {"circle", {donkeev::validateCircle, donkeev::executeCircle}},
       {"set", {donkeev::validateSet, donkeev::executeSet}},
       {"show", {donkeev::validateTwoTokens, donkeev::executeShow}},
       {"showset", {donkeev::validateTwoTokens, donkeev::executeShowSet}},
@@ -21,7 +22,8 @@ int main()
       {"spawn", {donkeev::validateSpawn, donkeev::executeSpawn}},
       {"area-on", {donkeev::validateAreaOn, donkeev::executeAreaOn}},
       {"status", {donkeev::validateTwoTokens, donkeev::executeStatus}},
-      {"wait", {donkeev::validateTwoTokens, donkeev::executeWait}}};
+      {"wait", {donkeev::validateTwoTokens, donkeev::executeWait}}
+  };
 
   std::string line;
   while (std::getline(std::cin, line))
