@@ -34,7 +34,7 @@ namespace donkeev
 
   void runChildLoop(int, int, size_t);
 
-  
+
 
   struct FlatCircle
   {
