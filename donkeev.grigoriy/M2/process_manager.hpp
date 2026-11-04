@@ -29,8 +29,8 @@ namespace donkeev
     double time_ms;
   };
 
-  void donkeev::monteCarloWorker(const std::vector< donkeev::circle_t >&,
-    const donkeev::rectangle_t&,
+  void monteCarloWorker(const std::vector< circle_t >&,
+    const rectangle_t&,
     size_t,
     size_t,
     size_t&);
