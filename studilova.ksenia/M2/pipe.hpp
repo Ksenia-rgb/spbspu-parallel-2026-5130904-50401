@@ -1,5 +1,5 @@
-#ifndef STUDILOVA_PIPE_IO_HPP
-#define STUDILOVA_PIPE_IO_HPP
+#ifndef PIPE_HPP
+#define PIPE_HPP
 
 #include <cstddef>
 

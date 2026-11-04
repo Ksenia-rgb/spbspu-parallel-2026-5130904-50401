@@ -1,5 +1,5 @@
-#ifndef STUDILOVA_AREA_HPP
-#define STUDILOVA_AREA_HPP
+#ifndef AREA_HPP
+#define AREA_HPP
 
 #include <cstddef>
 #include <vector>
