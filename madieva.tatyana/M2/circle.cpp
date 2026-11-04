@@ -50,22 +50,10 @@ madieva::frame_t madieva::computeFrame(const std::vector< const madieva::Circle 
   for (std::size_t i = 1; i < figures.size(); ++i)
   {
     const frame_t current = computeFrame(*figures[i]);
-    if (frame.min_x > current.min_x)
-    {
-      frame.min_x = current.min_x;
-    }
-    if (frame.max_x < current.max_x)
-    {
-      frame.max_x = current.max_x;
-    }
-    if (frame.min_y > current.min_y)
-    {
-      frame.min_y = current.min_y;
-    }
-    if (frame.max_y < current.max_y)
-    {
-      frame.max_y = current.max_y;
-    }
+    frame.min_x = std::min(frame.min_x, current.min_x);
+    frame.min_y = std::min(frame.min_y, current.min_y);
+    frame.max_x = std::max(frame.max_x, current.max_x);
+    frame.max_y = std::max(frame.max_y, current.max_y);
   }
   return frame;
 }

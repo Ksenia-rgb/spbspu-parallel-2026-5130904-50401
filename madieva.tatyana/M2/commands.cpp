@@ -8,6 +8,7 @@
 #include "parser.hpp"
 #include "file_descriptor.hpp"
 #include "message.hpp"
+#include "child.hpp"
 
 void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
 {
@@ -191,19 +192,8 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
   if (pid == 0) {
     cmd_wr.close();
     res_rd.close();
-    try
-    {
-      const std::string cmd_fd_s = std::to_string(cmd_rd.get());
-      const std::string res_fd_s = std::to_string(res_wr.get());
-      const std::string seed_s = std::to_string(seed);
-      execl("./child", "child", cmd_fd_s.c_str(), res_fd_s.c_str(), seed_s.c_str(), nullptr);
-    }
-    catch (...)
-    {}
-
-    const char msg[] = "exec failed\n";
-    write(STDERR_FILENO, msg, sizeof(msg) - 1);
-    _exit(127);
+    madieva::runChild(cmd_rd.get(), res_wr.get(), seed);
+    _exit(0);
   }
 
   cmd_rd.close();

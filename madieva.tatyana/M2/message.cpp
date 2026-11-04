@@ -17,15 +17,14 @@ std::string madieva::makeAreaRequest(const std::string & calc_name,
   message += std::to_string(tries);
   message += ' ';
   message += std::to_string(figures.size());
-  message += ' ';
   for (const Circle * circle : figures)
   {
+    message += ' ';
     message += std::to_string(circle->getRadius());
     message += ' ';
     message += std::to_string(circle->getX());
     message += ' ';
     message += std::to_string(circle->getY());
-    message += ' ';
   }
   return message;
 }
@@ -64,6 +63,17 @@ madieva::AreaRequest madieva::parseAreaRequest(const madieva::Args & args)
     req.circles.emplace_back(r, x, y);
   }
   return req;
+}
+
+std::string madieva::makeAreaResponse(const std::string & calc_name, long long ms, double area)
+{
+  std::string message;
+  message += calc_name;
+  message += ' ';
+  message += std::to_string(ms);
+  message += ' ';
+  message += std::to_string(area);
+  return message;
 }
 
 void madieva::sendAll(int fd, const char * data, std::size_t k)
