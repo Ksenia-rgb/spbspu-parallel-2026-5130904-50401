@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstring>
+#include <signal.h>
 #include "parser.hpp"
 #include "file_descriptor.hpp"
+#include "message.hpp"
 
 void madieva::addCircle(madieva::state_t & state, const madieva::Args & args)
 {
@@ -156,7 +158,7 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
     throw std::invalid_argument("seed must be non-negative");
   }
   const auto it = state.processes.find(process_name);
-  if (it == state.processes.end())
+  if (it != state.processes.end())
   {
     throw std::invalid_argument("process with this name already exists");
   }
@@ -189,20 +191,33 @@ void madieva::spawn(madieva::state_t & state, const madieva::Args & args)
   if (pid == 0) {
     cmd_wr.close();
     res_rd.close();
-    std::string cmd_fd_s = std::to_string(cmd_rd.get());
-    std::string res_fd_s = std::to_string(res_wr.get());
-    std::string seed_s = std::to_string(seed);
+    try
+    {
+      const std::string cmd_fd_s = std::to_string(cmd_rd.get());
+      const std::string res_fd_s = std::to_string(res_wr.get());
+      const std::string seed_s = std::to_string(seed);
+      execl("./child", "child", cmd_fd_s.c_str(), res_fd_s.c_str(), seed_s.c_str(), nullptr);
+    }
+    catch (...)
+    {}
 
-    execl("./child", "child", cmd_fd_s.c_str(), res_fd_s.c_str(), seed_s.c_str(), nullptr);
-
-    std::cerr << "exec failed: " << strerror(errno) << "\n";
+    const char msg[] = "exec failed\n";
+    write(STDERR_FILENO, msg, sizeof(msg) - 1);
     _exit(127);
   }
 
   cmd_rd.close();
   res_wr.close();
 
-  state.processes.insert({process_name, Process{pid, std::move(cmd_wr), std::move(res_rd), seed}});
+  try
+  {
+    state.processes.insert({process_name, Process{pid, std::move(cmd_wr), std::move(res_rd), seed}});
+  }
+  catch (...)
+  {
+    kill(pid, SIGKILL);
+    throw;
+  }
 }
 
 void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
@@ -213,6 +228,7 @@ void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
   }
   const std::string & process_name = args[1];
   const std::string & calc_name = args[2];
+  checkName(calc_name);
   const std::string & set_name = args[3];
   const long long threads = parseInteger(args[4]);
   const long long tries = parseInteger(args[5]);
@@ -223,8 +239,7 @@ void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
     throw std::invalid_argument("process with this name does not exist");
   }
 
-  const auto it = state.calc.find(calc_name);
-  if (it != state.calc.end())
+  if (state.calc.find(calc_name) != state.calc.end())
   {
     throw std::invalid_argument("calc with this name already exists");
   }
@@ -244,7 +259,12 @@ void madieva::area_on(madieva::state_t & state, const madieva::Args & args)
     throw std::invalid_argument("the number of tries must be positive");
   }
 
-//пайп
+  const auto & figures = state.sets.at(set_name);
+  const std::string msg = madieva::makeAreaRequest(calc_name, threads, tries, figures);
+  const std::size_t size = msg.size();
+
+  madieva::sendAll(proc_it->second.cmd_wr.get(), reinterpret_cast< const char * >(&size), sizeof(size));
+  madieva::sendAll(proc_it->second.cmd_wr.get(), msg.data(), msg.size());
 
   state.calc.insert({calc_name, calc_t{process_name, threads, tries, true, 0.0, 0}});
 }
