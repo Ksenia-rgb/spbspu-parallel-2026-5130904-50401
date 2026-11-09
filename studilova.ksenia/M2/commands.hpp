@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "storage.hpp"
+#include "process.hpp"
 
 namespace studilova
 {
@@ -12,6 +13,7 @@ namespace studilova
   void showSet(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets);
   void showFrame(std::istream& in, std::ostream& out, const circles_t& circles);
   void showSetFrame(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets);
+  void spawnProcess(std::istream& in, processes_t& processes);
 }
 
 #endif

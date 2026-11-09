@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdio>
 #include <iomanip>
+#include <limits>
 
 namespace studilova
 {
@@ -214,4 +215,50 @@ void studilova::showSetFrame(std::istream& in, std::ostream& out, const circles_
   const rectangle_t frame = findFrame(shapes);
 
   out << frame << '\n';
+}
+
+void studilova::spawnProcess(std::istream& in, processes_t& processes)
+{
+  const std::string name = detail::readArgument(in);
+  const std::string seedArgument = detail::readArgument(in);
+  detail::lineEnd(in);
+
+  if (!detail::isValidName(name) || seedArgument.front() == '-')
+  {
+    throw std::invalid_argument("Invalid process parameters");
+  }
+
+  std::size_t position = 0;
+  unsigned long long seed = 0;
+
+  try
+  {
+    seed = std::stoull(seedArgument, &position);
+  }
+  catch (const std::out_of_range&)
+  {
+    throw std::invalid_argument("Seed is out of range");
+  }
+
+  if (position != seedArgument.size() || seed > std::numeric_limits< unsigned int >::max())
+  {
+    throw std::invalid_argument("Invalid seed");
+  }
+
+  if (processes.find(name) != processes.end())
+  {
+    throw std::invalid_argument("Process already exists");
+  }
+
+  const auto inserted = processes.emplace(name, process_t{-1, Descriptor(), Descriptor()});
+
+  try
+  {
+    inserted.first->second = startProcess(static_cast< unsigned int >(seed), processes);
+  }
+  catch (...)
+  {
+    processes.erase(inserted.first);
+    throw;
+  }
 }
