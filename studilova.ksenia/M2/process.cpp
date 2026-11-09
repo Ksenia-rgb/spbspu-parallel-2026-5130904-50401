@@ -5,6 +5,10 @@
 #include <stdexcept>
 #include <exception>
 #include <vector>
+#include <cerrno>
+#include <exception>
+#include <utility>
+#include <unistd.h>
 
 #include "area.hpp"
 #include "geometry.hpp"
@@ -110,4 +114,74 @@ void studilova::runProcess(int readDescriptor, int writeDescriptor,
       throw std::runtime_error("Incomplete response");
     }
   }
+}
+
+studilova::process_t studilova::startProcess(unsigned int seed, const processes_t& processes)
+{
+  int requestPipe[2] = {-1, -1};
+
+  if (pipe(requestPipe) == -1)
+  {
+    throw std::runtime_error(std::strerror(errno));
+  }
+
+  Descriptor requestRead(requestPipe[0]);
+  Descriptor requestWrite(requestPipe[1]);
+
+  int responsePipe[2] = {-1, -1};
+
+  if (pipe(responsePipe) == -1)
+  {
+    throw std::runtime_error(std::strerror(errno));
+  }
+
+  Descriptor responseRead(responsePipe[0]);
+  Descriptor responseWrite(responsePipe[1]);
+
+  const pid_t pid = fork();
+
+  if (pid == -1)
+  {
+    throw std::runtime_error(std::strerror(errno));
+  }
+
+  if (pid == 0)
+  {
+    requestWrite = Descriptor();
+    responseRead = Descriptor();
+
+    for (const auto& entry: processes)
+    {
+      const int writeDescriptor = entry.second.writeDescriptor.get();
+      const int readDescriptor = entry.second.readDescriptor.get();
+
+      if (writeDescriptor != -1)
+      {
+        close(writeDescriptor);
+      }
+
+      if (readDescriptor != -1)
+      {
+        close(readDescriptor);
+      }
+    }
+
+    int exitCode = 0;
+
+    try
+    {
+      runProcess(requestRead.get(), responseWrite.get(), seed);
+    }
+    catch (const std::exception&)
+    {
+      exitCode = 1;
+    }
+
+    _exit(exitCode);
+  }
+
+  requestRead = Descriptor();
+  responseWrite = Descriptor();
+
+  return process_t{pid, std::move(requestWrite), std::move(responseRead)};
 }
