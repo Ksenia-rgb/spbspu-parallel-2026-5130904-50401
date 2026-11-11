@@ -15,10 +15,10 @@ namespace studilova
 
   struct rectangle_t
   {
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
   };
 
   std::ostream& operator<<(std::ostream& out, const circle_t& circle);

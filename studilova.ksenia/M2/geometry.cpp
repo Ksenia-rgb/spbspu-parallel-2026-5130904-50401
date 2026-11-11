@@ -17,8 +17,8 @@ std::ostream& studilova::operator<<(std::ostream& out, const rectangle_t& rectan
   const std::streamsize oldPrecision = out.precision();
 
   out << std::fixed << std::setprecision(0);
-  out << '(' << rectangle.minX << ' ' << rectangle.minY << ") (";
-  out << rectangle.maxX << ' ' << rectangle.maxY << ')';
+  out << '(' << rectangle.min_x << ' ' << rectangle.min_y << ") (";
+  out << rectangle.max_x << ' ' << rectangle.max_y << ')';
 
   out.flags(oldFlags);
   out.precision(oldPrecision);
@@ -47,17 +47,17 @@ studilova::rectangle_t studilova::findFrame(const std::vector< circle_t >& circl
   {
     const rectangle_t current = findFrame(circles[i]);
 
-    frame.minX = std::min(frame.minX, current.minX);
-    frame.minY = std::min(frame.minY, current.minY);
-    frame.maxX = std::max(frame.maxX, current.maxX);
-    frame.maxY = std::max(frame.maxY, current.maxY);
+    frame.min_x = std::min(frame.min_x, current.min_x);
+    frame.min_y = std::min(frame.min_y, current.min_y);
+    frame.max_x = std::max(frame.max_x, current.max_x);
+    frame.max_y = std::max(frame.max_y, current.max_y);
   }
   return frame;
 }
 
 bool studilova::isInside(double x, double y, const std::vector< circle_t >& circles)
 {
-  for (const circle_t& circle: circles)
+  for (const circle_t& circle : circles)
   {
     const double dx = x - circle.x;
     const double dy = y - circle.y;

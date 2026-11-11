@@ -6,7 +6,7 @@
 
 namespace studilova
 {
-  void createCircle(std::istream& in,  std::ostream& out, State& state);
+  void createCircle(std::istream& in, std::ostream& out, State& state);
   void showCircle(std::istream& in, std::ostream& out, State& state);
   void createSet(std::istream& in, std::ostream& out, State& state);
   void showSet(std::istream& in, std::ostream& out, State& state);

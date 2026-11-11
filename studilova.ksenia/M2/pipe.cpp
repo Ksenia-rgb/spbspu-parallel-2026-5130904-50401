@@ -4,10 +4,9 @@
 #include <cstring>
 #include <stdexcept>
 
-std::size_t studilova::readAll(int& error, int descriptor,
-    void* data, std::size_t size)
+std::size_t studilova::readAll(int& error, int descriptor, void* data, std::size_t size)
 {
-  char* bytes = static_cast< char* >(data);
+  char* const bytes = static_cast< char* >(data);
   size_t received = 0;
   error = 0;
 
@@ -30,10 +29,9 @@ std::size_t studilova::readAll(int& error, int descriptor,
   return received;
 }
 
-std::size_t studilova::writeAll(int& error, int descriptor,
-    const void* data, std::size_t size)
+std::size_t studilova::writeAll(int& error, int descriptor, const void* data, std::size_t size)
 {
-  const char* bytes = static_cast< const char* >(data);
+  const char* const bytes = static_cast< const char* >(data);
   size_t sent = 0;
   error = 0;
 
@@ -58,7 +56,7 @@ std::size_t studilova::writeAll(int& error, int descriptor,
 
 void studilova::sendRequest(int descriptor, const request_t& request, const std::vector< circle_t >& circles)
 {
-  if (request.circleCount != circles.size())
+  if (request.circle_count != circles.size())
   {
     throw std::invalid_argument("Incorrect circle count");
   }
@@ -77,7 +75,7 @@ void studilova::sendRequest(int descriptor, const request_t& request, const std:
     throw std::runtime_error("Incomplete request");
   }
 
-  for (const circle_t& circle: circles)
+  for (const circle_t& circle : circles)
   {
     const auto circleBytes = writeAll(error, descriptor, &circle, sizeof(circle));
 

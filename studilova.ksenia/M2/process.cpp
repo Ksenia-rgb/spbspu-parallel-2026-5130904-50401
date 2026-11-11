@@ -23,12 +23,12 @@ namespace studilova
   {
     class Clicker
     {
-      public:
-        Clicker();
-        double millisec() const;
+    public:
+      Clicker();
+      double millisec() const;
 
-      private:
-        std::chrono::time_point< std::chrono::steady_clock > start_;
+    private:
+      std::chrono::time_point< std::chrono::steady_clock > start_;
     };
   }
 }
@@ -44,15 +44,14 @@ double studilova::detail::Clicker::millisec() const
   return std::chrono::duration< double, std::milli >(finish - start_).count();
 }
 
-void studilova::runProcess(int readDescriptor, int writeDescriptor,
-    unsigned int seed)
+void studilova::runProcess(int read_descriptor, int write_descriptor, unsigned int seed)
 {
   while (true)
   {
     request_t request{};
     int error = 0;
 
-    const auto received = readAll(error, readDescriptor, &request, sizeof(request));
+    const auto received = readAll(error, read_descriptor, &request, sizeof(request));
 
     if (error != 0)
     {
@@ -69,11 +68,11 @@ void studilova::runProcess(int readDescriptor, int writeDescriptor,
       throw std::runtime_error("Incomplete request");
     }
 
-    std::vector< circle_t > circles(request.circleCount);
+    std::vector< circle_t > circles(request.circle_count);
 
-    for (circle_t& circle: circles)
+    for (circle_t& circle : circles)
     {
-      const auto circleBytes = readAll(error, readDescriptor, &circle, sizeof(circle));
+      const auto circleBytes = readAll(error, read_descriptor, &circle, sizeof(circle));
 
       if (error != 0)
       {
@@ -87,7 +86,7 @@ void studilova::runProcess(int readDescriptor, int writeDescriptor,
     }
 
     response_t response{};
-    response.calculationId = request.calculationId;
+    response.calculation_id = request.calculation_id;
 
     try
     {
@@ -105,7 +104,7 @@ void studilova::runProcess(int readDescriptor, int writeDescriptor,
       response.milliseconds = 0.0;
     }
 
-    const auto sent = writeAll(error, writeDescriptor, &response, sizeof(response));
+    const auto sent = writeAll(error, write_descriptor, &response, sizeof(response));
 
     if (error != 0)
     {
@@ -121,25 +120,25 @@ void studilova::runProcess(int readDescriptor, int writeDescriptor,
 
 studilova::process_t studilova::startProcess(unsigned int seed, const processes_t& processes)
 {
-  int requestPipe[2] = {-1, -1};
+  int request_pipe[2] = {-1, -1};
 
-  if (pipe(requestPipe) == -1)
+  if (pipe(request_pipe) == -1)
   {
     throw std::runtime_error(std::strerror(errno));
   }
 
-  Descriptor requestRead(requestPipe[0]);
-  Descriptor requestWrite(requestPipe[1]);
+  Descriptor request_read(request_pipe[0]);
+  Descriptor request_write(request_pipe[1]);
 
-  int responsePipe[2] = {-1, -1};
+  int response_pipe[2] = {-1, -1};
 
-  if (pipe(responsePipe) == -1)
+  if (pipe(response_pipe) == -1)
   {
     throw std::runtime_error(std::strerror(errno));
   }
 
-  Descriptor responseRead(responsePipe[0]);
-  Descriptor responseWrite(responsePipe[1]);
+  Descriptor response_read(response_pipe[0]);
+  Descriptor response_write(response_pipe[1]);
 
   const pid_t pid = fork();
 
@@ -150,50 +149,50 @@ studilova::process_t studilova::startProcess(unsigned int seed, const processes_
 
   if (pid == 0)
   {
-    requestWrite = Descriptor();
-    responseRead = Descriptor();
+    request_write = Descriptor();
+    response_read = Descriptor();
 
-    for (const auto& entry: processes)
+    for (const auto& entry : processes)
     {
-      const int writeDescriptor = entry.second.writeDescriptor.get();
-      const int readDescriptor = entry.second.readDescriptor.get();
+      const int write_descriptor = entry.second.write_descriptor.get();
+      const int read_descriptor = entry.second.read_descriptor.get();
 
-      if (writeDescriptor != -1)
+      if (write_descriptor != -1)
       {
-        close(writeDescriptor);
+        close(write_descriptor);
       }
 
-      if (readDescriptor != -1)
+      if (read_descriptor != -1)
       {
-        close(readDescriptor);
+        close(read_descriptor);
       }
     }
 
-    int exitCode = 0;
+    int exit_code = 0;
 
     try
     {
-      runProcess(requestRead.get(), responseWrite.get(), seed);
+      runProcess(request_read.get(), response_write.get(), seed);
     }
     catch (const std::exception&)
     {
-      exitCode = 1;
+      exit_code = 1;
     }
 
-    _exit(exitCode);
+    _exit(exit_code);
   }
 
-  requestRead = Descriptor();
-  responseWrite = Descriptor();
+  request_read = Descriptor();
+  response_write = Descriptor();
 
-  return process_t{pid, std::move(requestWrite), std::move(responseRead)};
+  return process_t{pid, std::move(request_write), std::move(response_read)};
 }
 
-void studilova::receiveResult(process_t& process, const std::string& processName, calculations_t& calculations)
+void studilova::receiveResult(process_t& process, const std::string& process_name, calculations_t& calculations)
 {
   try
   {
-    if (process.readDescriptor.get() == -1)
+    if (process.read_descriptor.get() == -1)
     {
       throw std::runtime_error("Process is unavailable");
     }
@@ -201,7 +200,7 @@ void studilova::receiveResult(process_t& process, const std::string& processName
     response_t response{};
     int error = 0;
 
-    const auto received = readAll(error, process.readDescriptor.get(), &response, sizeof(response));
+    const auto received = readAll(error, process.read_descriptor.get(), &response, sizeof(response));
 
     if (error != 0)
     {
@@ -213,11 +212,11 @@ void studilova::receiveResult(process_t& process, const std::string& processName
       throw std::runtime_error("Cannot receive calculation result");
     }
 
-    for (auto& entry: calculations)
+    for (auto& entry : calculations)
     {
       calculation_t& calculation = entry.second;
 
-      if (calculation.id == response.calculationId && calculation.processName == processName)
+      if (calculation.id == response.calculation_id && calculation.process_name == process_name)
       {
         calculation.completed = true;
         calculation.success = response.success;
@@ -231,14 +230,14 @@ void studilova::receiveResult(process_t& process, const std::string& processName
   }
   catch (...)
   {
-    process.writeDescriptor = Descriptor();
-    process.readDescriptor = Descriptor();
+    process.write_descriptor = Descriptor();
+    process.read_descriptor = Descriptor();
 
-    for (auto& entry: calculations)
+    for (auto& entry : calculations)
     {
       calculation_t& calculation = entry.second;
 
-      if (calculation.processName == processName && !calculation.completed)
+      if (calculation.process_name == process_name && !calculation.completed)
       {
         calculation.completed = true;
         calculation.success = false;
@@ -250,47 +249,47 @@ void studilova::receiveResult(process_t& process, const std::string& processName
 
 int studilova::finishProcesses(processes_t& processes, calculations_t& calculations, std::ostream& errors)
 {
-  for (auto& entry: processes)
+  for (auto& entry : processes)
   {
-    entry.second.writeDescriptor = Descriptor();
+    entry.second.write_descriptor = Descriptor();
   }
 
-  int exitCode = 0;
+  int exit_code = 0;
 
-  for (auto& entry: processes)
+  for (auto& entry : processes)
   {
-    const std::string& processName = entry.first;
+    const std::string& process_name = entry.first;
     process_t& process = entry.second;
 
     try
     {
-      for (auto& calculationEntry: calculations)
+      for (auto& calculation_entry : calculations)
       {
-        calculation_t& calculation = calculationEntry.second;
+        const calculation_t& calculation = calculation_entry.second;
 
-        if (calculation.processName != processName)
+        if (calculation.process_name != process_name)
         {
           continue;
         }
 
         while (!calculation.completed)
         {
-          receiveResult(process, processName, calculations);
+          receiveResult(process, process_name, calculations);
         }
 
         if (!calculation.success)
         {
-          exitCode = 1;
+          exit_code = 1;
         }
       }
     }
     catch (const std::exception& e)
     {
       errors << e.what() << '\n';
-      exitCode = 1;
+      exit_code = 1;
     }
 
-    process.readDescriptor = Descriptor();
+    process.read_descriptor = Descriptor();
 
     int status = 0;
     pid_t waited = -1;
@@ -304,13 +303,13 @@ int studilova::finishProcesses(processes_t& processes, calculations_t& calculati
     if (waited == -1)
     {
       errors << std::strerror(errno) << '\n';
-      exitCode = 1;
+      exit_code = 1;
     }
     else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
     {
       errors << "Child process failed\n";
-      exitCode = 1;
+      exit_code = 1;
     }
   }
-  return exitCode;
+  return exit_code;
 }

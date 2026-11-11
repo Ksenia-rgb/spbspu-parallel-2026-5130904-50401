@@ -96,7 +96,7 @@ void studilova::detail::printCalculation(std::ostream& out, const calculation_t&
 {
   if (!calculation.completed)
   {
-    out << calculation.processName << " <IN PROGRESS>\n";
+    out << calculation.process_name << " <IN PROGRESS>\n";
     return;
   }
 
@@ -108,7 +108,7 @@ void studilova::detail::printCalculation(std::ostream& out, const calculation_t&
   const auto oldFlags = out.flags();
   const auto oldPrecision = out.precision();
 
-  out << calculation.processName << ' ' << std::fixed << std::setprecision(3) << calculation.milliseconds << ' '
+  out << calculation.process_name << ' ' << std::fixed << std::setprecision(3) << calculation.milliseconds << ' '
       << calculation.area << '\n';
 
   out.flags(oldFlags);
@@ -171,22 +171,22 @@ void studilova::createSet(std::istream& in, std::ostream&, State& state)
     throw std::invalid_argument("Set already exists");
   }
 
-  circle_set_t circleSet;
+  circle_set_t circle_set;
 
   for (int i = 0; i < size; ++i)
   {
-    const std::string circleName = detail::readArgument(in);
+    const std::string circle_name = detail::readArgument(in);
 
-    if (circles.find(circleName) == circles.end())
+    if (circles.find(circle_name) == circles.end())
     {
       throw std::invalid_argument("Circle does not exist");
     }
 
-    circleSet.push_back(circleName);
+    circle_set.push_back(circle_name);
   }
 
   detail::lineEnd(in);
-  sets.emplace(name, circleSet);
+  sets.emplace(name, circle_set);
 }
 
 void studilova::showSet(std::istream& in, std::ostream& out, State& state)
@@ -202,11 +202,11 @@ void studilova::showSet(std::istream& in, std::ostream& out, State& state)
     throw std::invalid_argument("Set does not exist");
   }
 
-  const circle_set_t& circleSet = found->second;
+  const circle_set_t& circle_set = found->second;
 
-  for (const std::string& circleName: circleSet)
+  for (const std::string& circle_name : circle_set)
   {
-    const circle_t& circle = circles.at(circleName);
+    const circle_t& circle = circles.at(circle_name);
     out << circle << '\n';
   }
 }
@@ -244,9 +244,9 @@ void studilova::showSetFrame(std::istream& in, std::ostream& out, State& state)
   std::vector< circle_t > shapes;
   shapes.reserve(found->second.size());
 
-  for (const std::string& circleName: found->second)
+  for (const std::string& circle_name : found->second)
   {
-    shapes.push_back(circles.at(circleName));
+    shapes.push_back(circles.at(circle_name));
   }
 
   const rectangle_t frame = findFrame(shapes);
@@ -307,7 +307,7 @@ void studilova::areaOn(std::istream& in, std::ostream&, State& state)
   const sets_t& sets = state.sets;
   processes_t& processes = state.processes;
   calculations_t& calculations = state.calculations;
-  const std::string processName = detail::readArgument(in);
+  const std::string process_name = detail::readArgument(in);
   const std::string calculationName = detail::readArgument(in);
   const std::string setName = detail::readArgument(in);
   const int threads = detail::readInteger(in);
@@ -324,7 +324,7 @@ void studilova::areaOn(std::istream& in, std::ostream&, State& state)
     throw std::invalid_argument("Calculation already exists");
   }
 
-  const auto processFound = processes.find(processName);
+  const auto processFound = processes.find(process_name);
   if (processFound == processes.end())
   {
     throw std::invalid_argument("Process does not exist");
@@ -332,7 +332,7 @@ void studilova::areaOn(std::istream& in, std::ostream&, State& state)
 
   process_t& process = processFound->second;
 
-  if (process.writeDescriptor.get() == -1)
+  if (process.write_descriptor.get() == -1)
   {
     throw std::invalid_argument("Process is unavailable");
   }
@@ -346,26 +346,27 @@ void studilova::areaOn(std::istream& in, std::ostream&, State& state)
   std::vector< circle_t > shapes;
   shapes.reserve(setFound->second.size());
 
-  for (const std::string& name: setFound->second)
+  for (const std::string& name : setFound->second)
   {
     shapes.push_back(circles.at(name));
   }
 
-  const std::size_t calculationId = calculations.size();
+  const std::size_t calculation_id = calculations.size();
 
-  const request_t request{calculationId, static_cast< std::size_t >(threads), static_cast< std::size_t >(tries), shapes.size()};
+  const request_t request{
+      calculation_id, static_cast< std::size_t >(threads), static_cast< std::size_t >(tries), shapes.size()};
 
-  const calculation_t calculation{calculationId, processName, false, false, 0.0, 0.0};
+  const calculation_t calculation{calculation_id, process_name, false, false, 0.0, 0.0};
 
   const auto inserted = calculations.emplace(calculationName, calculation);
 
   try
   {
-    sendRequest(process.writeDescriptor.get(), request, shapes);
+    sendRequest(process.write_descriptor.get(), request, shapes);
   }
   catch (...)
   {
-    process.writeDescriptor = Descriptor();
+    process.write_descriptor = Descriptor();
     inserted.first->second.completed = true;
     throw;
   }
@@ -385,11 +386,11 @@ void studilova::waitCalculation(std::istream& in, std::ostream& out, State& stat
     throw std::invalid_argument("Calculation does not exist");
   }
 
-  calculation_t& calculation = found->second;
+  const calculation_t& calculation = found->second;
 
   if (!calculation.completed)
   {
-    const auto processFound = processes.find(calculation.processName);
+    const auto processFound = processes.find(calculation.process_name);
 
     if (processFound == processes.end())
     {
@@ -400,7 +401,7 @@ void studilova::waitCalculation(std::istream& in, std::ostream& out, State& stat
 
     while (!calculation.completed)
     {
-      receiveResult(process, calculation.processName, calculations);
+      receiveResult(process, calculation.process_name, calculations);
     }
   }
   detail::printCalculation(out, calculation);
@@ -420,11 +421,11 @@ void studilova::showStatus(std::istream& in, std::ostream& out, State& state)
     throw std::invalid_argument("Calculation does not exist");
   }
 
-  calculation_t& calculation = found->second;
+  const calculation_t& calculation = found->second;
 
   if (!calculation.completed)
   {
-    const auto processFound = processes.find(calculation.processName);
+    const auto processFound = processes.find(calculation.process_name);
 
     if (processFound == processes.end())
     {
@@ -435,13 +436,13 @@ void studilova::showStatus(std::istream& in, std::ostream& out, State& state)
 
     while (!calculation.completed)
     {
-      if (process.readDescriptor.get() == -1)
+      if (process.read_descriptor.get() == -1)
       {
         throw std::runtime_error("Process is unavailable");
       }
 
       pollfd descriptor{};
-      descriptor.fd = process.readDescriptor.get();
+      descriptor.fd = process.read_descriptor.get();
       descriptor.events = POLLIN;
 
       const int result = poll(&descriptor, 1, 0);
@@ -463,11 +464,11 @@ void studilova::showStatus(std::istream& in, std::ostream& out, State& state)
 
       if (descriptor.revents & POLLIN)
       {
-        receiveResult(process, calculation.processName, calculations);
+        receiveResult(process, calculation.process_name, calculations);
       }
       else if (descriptor.revents & POLLHUP)
       {
-        receiveResult(process, calculation.processName, calculations);
+        receiveResult(process, calculation.process_name, calculations);
       }
       else
       {

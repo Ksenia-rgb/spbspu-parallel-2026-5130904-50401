@@ -18,26 +18,25 @@ namespace studilova
       size_t hits;
     };
 
-    size_t countHits(const std::vector< circle_t >& circles,
-        const rectangle_t& frame, size_t tries, unsigned int seed);
+    size_t countHits(const std::vector< circle_t >& circles, const rectangle_t& frame, size_t tries, unsigned int seed);
 
     void* runThread(void* data);
   }
 }
 
-size_t studilova::detail::countHits(const std::vector< circle_t >& circles,
-    const rectangle_t& frame, size_t tries, unsigned int seed)
+size_t studilova::detail::countHits(
+    const std::vector< circle_t >& circles, const rectangle_t& frame, size_t tries, unsigned int seed)
 {
   std::default_random_engine engine(seed);
-  std::uniform_real_distribution< double > distributionX(frame.minX, frame.maxX);
-  std::uniform_real_distribution< double > distributionY(frame.minY, frame.maxY);
+  std::uniform_real_distribution< double > distribution_x(frame.min_x, frame.max_x);
+  std::uniform_real_distribution< double > distribution_y(frame.min_y, frame.max_y);
 
   size_t hits = 0;
 
   for (size_t i = 0; i < tries; ++i)
   {
-    const double x = distributionX(engine);
-    const double y = distributionY(engine);
+    const double x = distribution_x(engine);
+    const double y = distribution_y(engine);
 
     if (isInside(x, y, circles))
     {
@@ -50,19 +49,14 @@ size_t studilova::detail::countHits(const std::vector< circle_t >& circles,
 
 void* studilova::detail::runThread(void* data)
 {
-  thread_data_t* threadData = static_cast< thread_data_t* >(data);
+  thread_data_t* const thread_data = static_cast< thread_data_t* >(data);
 
-  threadData->hits = countHits(
-      *threadData->circles,
-      threadData->frame,
-      threadData->tries,
-      threadData->seed);
+  thread_data->hits = countHits(*thread_data->circles, thread_data->frame, thread_data->tries, thread_data->seed);
 
   return nullptr;
 }
 
-double studilova::calculateArea(const std::vector< circle_t >& circles,
-    size_t threads, size_t tries, unsigned int seed)
+double studilova::calculateArea(const std::vector< circle_t >& circles, size_t threads, size_t tries, unsigned int seed)
 {
   if (threads == 0 || tries == 0)
   {
@@ -74,37 +68,37 @@ double studilova::calculateArea(const std::vector< circle_t >& circles,
   const size_t remainder = tries % threads;
 
   std::vector< pthread_t > th(threads);
-  std::vector< detail::thread_data_t > threadData(threads);
+  std::vector< detail::thread_data_t > thread_data(threads);
 
   std::size_t created = 0;
-  int createError = 0;
+  int create_error = 0;
 
   for (size_t i = 0; i < threads; ++i)
   {
-    threadData[i].circles = &circles;
-    threadData[i].frame = frame;
-    threadData[i].tries = partSize;
+    thread_data[i].circles = &circles;
+    thread_data[i].frame = frame;
+    thread_data[i].tries = partSize;
 
     if (i == threads - 1)
     {
-      threadData[i].tries += remainder;
+      thread_data[i].tries += remainder;
     }
 
-    threadData[i].seed = seed + static_cast< unsigned int >(i);
-    threadData[i].hits = 0;
+    thread_data[i].seed = seed + static_cast< unsigned int >(i);
+    thread_data[i].hits = 0;
 
-    const int error = pthread_create(&th[i], nullptr, detail::runThread, &threadData[i]);
+    const int error = pthread_create(&th[i], nullptr, detail::runThread, &thread_data[i]);
 
     if (error != 0)
     {
-      createError = error;
+      create_error = error;
       break;
     }
 
     ++created;
   }
 
-  size_t totalHits = 0;
+  size_t total_hits = 0;
   for (size_t i = 0; i < created; ++i)
   {
     const int error = pthread_join(th[i], nullptr);
@@ -112,18 +106,18 @@ double studilova::calculateArea(const std::vector< circle_t >& circles,
     {
       std::terminate();
     }
-    totalHits += threadData[i].hits;
+    total_hits += thread_data[i].hits;
   }
 
-  if (createError != 0)
+  if (create_error != 0)
   {
-    throw std::runtime_error(std::strerror(createError));
+    throw std::runtime_error(std::strerror(create_error));
   }
 
-  const double width = frame.maxX - frame.minX;
-  const double height = frame.maxY - frame.minY;
+  const double width = frame.max_x - frame.min_x;
+  const double height = frame.max_y - frame.min_y;
   const double rectangleArea = width * height;
-  const double hitRatio = static_cast< double >(totalHits) / tries;
+  const double hitRatio = static_cast< double >(total_hits) / tries;
 
   return rectangleArea * hitRatio;
 }

@@ -9,15 +9,15 @@ namespace studilova
 {
   struct request_t
   {
-    size_t calculationId;
+    size_t calculation_id;
     size_t threads;
     size_t tries;
-    size_t circleCount;
+    size_t circle_count;
   };
 
   struct response_t
   {
-    size_t calculationId;
+    size_t calculation_id;
     bool success;
     double area;
     double milliseconds;
