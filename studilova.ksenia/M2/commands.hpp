@@ -14,6 +14,7 @@ namespace studilova
   void showFrame(std::istream& in, std::ostream& out, const circles_t& circles);
   void showSetFrame(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets);
   void spawnProcess(std::istream& in, processes_t& processes);
+  void areaOn(std::istream& in, const circles_t& circles, const sets_t& sets, processes_t& processes, calculations_t& calculations);
 }
 
 #endif

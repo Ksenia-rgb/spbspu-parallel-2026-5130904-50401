@@ -1,5 +1,6 @@
 #include "commands.hpp"
 #include "geometry.hpp"
+#include "pipe.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -259,6 +260,73 @@ void studilova::spawnProcess(std::istream& in, processes_t& processes)
   catch (...)
   {
     processes.erase(inserted.first);
+    throw;
+  }
+}
+
+void studilova::areaOn(std::istream& in, const circles_t& circles, const sets_t& sets,
+    processes_t& processes, calculations_t& calculations)
+{
+  const std::string processName = detail::readArgument(in);
+  const std::string calculationName = detail::readArgument(in);
+  const std::string setName = detail::readArgument(in);
+  const int threads = detail::readInteger(in);
+  const int tries = detail::readInteger(in);
+  detail::lineEnd(in);
+
+  if (!detail::isValidName(calculationName) || threads <= 0 || tries <= 0)
+  {
+    throw std::invalid_argument("Invalid calculation parameters");
+  }
+
+  if (calculations.find(calculationName) != calculations.end())
+  {
+    throw std::invalid_argument("Calculation already exists");
+  }
+
+  const auto processFound = processes.find(processName);
+  if (processFound == processes.end())
+  {
+    throw std::invalid_argument("Process does not exist");
+  }
+
+  process_t& process = processFound->second;
+
+  if (process.writeDescriptor.get() == -1)
+  {
+    throw std::invalid_argument("Process is unavailable");
+  }
+
+  const auto setFound = sets.find(setName);
+  if (setFound == sets.end())
+  {
+    throw std::invalid_argument("Set does not exist");
+  }
+
+  std::vector< circle_t > shapes;
+  shapes.reserve(setFound->second.size());
+
+  for (const std::string& name: setFound->second)
+  {
+    shapes.push_back(circles.at(name));
+  }
+
+  const std::size_t calculationId = calculations.size();
+
+  const request_t request{calculationId, static_cast< std::size_t >(threads), static_cast< std::size_t >(tries), shapes.size()};
+
+  const calculation_t calculation{calculationId, processName, false, false, 0.0, 0.0};
+
+  const auto inserted = calculations.emplace(calculationName, calculation);
+
+  try
+  {
+    sendRequest(process.writeDescriptor.get(), request, shapes);
+  }
+  catch (...)
+  {
+    process.writeDescriptor = Descriptor();
+    inserted.first->second.completed = true;
     throw;
   }
 }
