@@ -115,8 +115,9 @@ void studilova::detail::printCalculation(std::ostream& out, const calculation_t&
   out.precision(oldPrecision);
 }
 
-void studilova::createCircle(std::istream& in, circles_t& circles)
+void studilova::createCircle(std::istream& in, std::ostream&, State& state)
 {
+  circles_t& circles = state.circles;
   const std::string name = detail::readArgument(in);
   const int radius = detail::readInteger(in);
   const int x = detail::readInteger(in);
@@ -137,8 +138,9 @@ void studilova::createCircle(std::istream& in, circles_t& circles)
   circles.emplace(name, circle);
 }
 
-void studilova::showCircle(std::istream& in, std::ostream& out, const circles_t& circles)
+void studilova::showCircle(std::istream& in, std::ostream& out, State& state)
 {
+  const circles_t& circles = state.circles;
   const std::string name = detail::readArgument(in);
   detail::lineEnd(in);
 
@@ -152,8 +154,10 @@ void studilova::showCircle(std::istream& in, std::ostream& out, const circles_t&
   out << circle << '\n';
 }
 
-void studilova::createSet(std::istream& in, const circles_t& circles, sets_t& sets)
+void studilova::createSet(std::istream& in, std::ostream&, State& state)
 {
+  const circles_t& circles = state.circles;
+  sets_t& sets = state.sets;
   const std::string name = detail::readArgument(in);
   const int size = detail::readInteger(in);
 
@@ -185,8 +189,10 @@ void studilova::createSet(std::istream& in, const circles_t& circles, sets_t& se
   sets.emplace(name, circleSet);
 }
 
-void studilova::showSet(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets)
+void studilova::showSet(std::istream& in, std::ostream& out, State& state)
 {
+  const circles_t& circles = state.circles;
+  const sets_t& sets = state.sets;
   const std::string name = detail::readArgument(in);
   detail::lineEnd(in);
 
@@ -205,8 +211,9 @@ void studilova::showSet(std::istream& in, std::ostream& out, const circles_t& ci
   }
 }
 
-void studilova::showFrame(std::istream& in, std::ostream& out, const circles_t& circles)
+void studilova::showFrame(std::istream& in, std::ostream& out, State& state)
 {
+  const circles_t& circles = state.circles;
   const std::string name = detail::readArgument(in);
   detail::lineEnd(in);
 
@@ -221,8 +228,10 @@ void studilova::showFrame(std::istream& in, std::ostream& out, const circles_t& 
   out << frame << '\n';
 }
 
-void studilova::showSetFrame(std::istream& in, std::ostream& out, const circles_t& circles, const sets_t& sets)
+void studilova::showSetFrame(std::istream& in, std::ostream& out, State& state)
 {
+  const circles_t& circles = state.circles;
+  const sets_t& sets = state.sets;
   const std::string name = detail::readArgument(in);
   detail::lineEnd(in);
 
@@ -245,8 +254,9 @@ void studilova::showSetFrame(std::istream& in, std::ostream& out, const circles_
   out << frame << '\n';
 }
 
-void studilova::spawnProcess(std::istream& in, processes_t& processes)
+void studilova::spawnProcess(std::istream& in, std::ostream&, State& state)
 {
+  processes_t& processes = state.processes;
   const std::string name = detail::readArgument(in);
   const std::string seedArgument = detail::readArgument(in);
   detail::lineEnd(in);
@@ -291,9 +301,12 @@ void studilova::spawnProcess(std::istream& in, processes_t& processes)
   }
 }
 
-void studilova::areaOn(std::istream& in, const circles_t& circles, const sets_t& sets,
-    processes_t& processes, calculations_t& calculations)
+void studilova::areaOn(std::istream& in, std::ostream&, State& state)
 {
+  const circles_t& circles = state.circles;
+  const sets_t& sets = state.sets;
+  processes_t& processes = state.processes;
+  calculations_t& calculations = state.calculations;
   const std::string processName = detail::readArgument(in);
   const std::string calculationName = detail::readArgument(in);
   const std::string setName = detail::readArgument(in);
@@ -358,8 +371,10 @@ void studilova::areaOn(std::istream& in, const circles_t& circles, const sets_t&
   }
 }
 
-void studilova::waitCalculation(std::istream& in, std::ostream& out, processes_t& processes, calculations_t& calculations)
+void studilova::waitCalculation(std::istream& in, std::ostream& out, State& state)
 {
+  processes_t& processes = state.processes;
+  calculations_t& calculations = state.calculations;
   const std::string name = detail::readArgument(in);
   detail::lineEnd(in);
 
@@ -391,8 +406,10 @@ void studilova::waitCalculation(std::istream& in, std::ostream& out, processes_t
   detail::printCalculation(out, calculation);
 }
 
-void studilova::showStatus(std::istream& in, std::ostream& out, processes_t& processes, calculations_t& calculations)
+void studilova::showStatus(std::istream& in, std::ostream& out, State& state)
 {
+  processes_t& processes = state.processes;
+  calculations_t& calculations = state.calculations;
   const std::string name = detail::readArgument(in);
   detail::lineEnd(in);
 
