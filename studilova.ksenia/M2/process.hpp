@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <map>
 #include <string>
-#include <sys/types.h>
+#include <iosfwd>
 #include "descriptor.hpp"
 
 
@@ -33,6 +33,7 @@ namespace studilova
   void runProcess(int readDescriptor, int writeDescriptor, unsigned int seed);
   process_t startProcess(unsigned int seed, const processes_t& processes);
   void receiveResult(process_t& process, const std::string& processName, calculations_t& calculations);
+  int finishProcesses(processes_t& processes, calculations_t& calculations, std::ostream& errors);
 }
 
 #endif

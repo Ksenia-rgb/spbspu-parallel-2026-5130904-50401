@@ -9,6 +9,9 @@
 #include <exception>
 #include <utility>
 #include <unistd.h>
+#include <ostream>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "area.hpp"
 #include "geometry.hpp"
@@ -243,4 +246,71 @@ void studilova::receiveResult(process_t& process, const std::string& processName
     }
     throw;
   }
+}
+
+int studilova::finishProcesses(processes_t& processes, calculations_t& calculations, std::ostream& errors)
+{
+  for (auto& entry: processes)
+  {
+    entry.second.writeDescriptor = Descriptor();
+  }
+
+  int exitCode = 0;
+
+  for (auto& entry: processes)
+  {
+    const std::string& processName = entry.first;
+    process_t& process = entry.second;
+
+    try
+    {
+      for (auto& calculationEntry: calculations)
+      {
+        calculation_t& calculation = calculationEntry.second;
+
+        if (calculation.processName != processName)
+        {
+          continue;
+        }
+
+        while (!calculation.completed)
+        {
+          receiveResult(process, processName, calculations);
+        }
+
+        if (!calculation.success)
+        {
+          exitCode = 1;
+        }
+      }
+    }
+    catch (const std::exception& e)
+    {
+      errors << e.what() << '\n';
+      exitCode = 1;
+    }
+
+    process.readDescriptor = Descriptor();
+
+    int status = 0;
+    pid_t waited = -1;
+
+    do
+    {
+      waited = waitpid(process.pid, &status, 0);
+    }
+    while (waited == -1 && errno == EINTR);
+
+    if (waited == -1)
+    {
+      errors << std::strerror(errno) << '\n';
+      exitCode = 1;
+    }
+    else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+    {
+      errors << "Child process failed\n";
+      exitCode = 1;
+    }
+  }
+  return exitCode;
 }
