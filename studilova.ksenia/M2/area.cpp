@@ -79,7 +79,7 @@ double studilova::calculateArea(const std::vector< circle_t >& circles,
   std::size_t created = 0;
   int createError = 0;
 
-  for (size_t i = 0; i < threads; ++i) 
+  for (size_t i = 0; i < threads; ++i)
   {
     threadData[i].circles = &circles;
     threadData[i].frame = frame;
