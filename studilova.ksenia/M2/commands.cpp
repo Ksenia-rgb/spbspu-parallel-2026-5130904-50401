@@ -7,6 +7,9 @@
 #include <cstdio>
 #include <iomanip>
 #include <limits>
+#include <cerrno>
+#include <cstring>
+#include <poll.h>
 
 namespace studilova
 {
@@ -17,6 +20,7 @@ namespace studilova
     int readInteger(std::istream& in);
     void lineEnd(std::istream& in);
     bool isValidName(const std::string& name);
+    void printCalculation(std::ostream& out, const calculation_t& calculation);
   }
 }
 
@@ -86,6 +90,29 @@ bool studilova::detail::isValidName(const std::string& name)
 
   const char first = name.front();
   return (first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z');
+}
+
+void studilova::detail::printCalculation(std::ostream& out, const calculation_t& calculation)
+{
+  if (!calculation.completed)
+  {
+    out << calculation.processName << " <IN PROGRESS>\n";
+    return;
+  }
+
+  if (!calculation.success)
+  {
+    throw std::runtime_error("Calculation failed");
+  }
+
+  const auto oldFlags = out.flags();
+  const auto oldPrecision = out.precision();
+
+  out << calculation.processName << ' ' << std::fixed << std::setprecision(3) << calculation.milliseconds << ' '
+      << calculation.area << '\n';
+
+  out.flags(oldFlags);
+  out.precision(oldPrecision);
 }
 
 void studilova::createCircle(std::istream& in, circles_t& circles)
@@ -329,4 +356,107 @@ void studilova::areaOn(std::istream& in, const circles_t& circles, const sets_t&
     inserted.first->second.completed = true;
     throw;
   }
+}
+
+void studilova::waitCalculation(std::istream& in, std::ostream& out, processes_t& processes, calculations_t& calculations)
+{
+  const std::string name = detail::readArgument(in);
+  detail::lineEnd(in);
+
+  const auto found = calculations.find(name);
+
+  if (found == calculations.end())
+  {
+    throw std::invalid_argument("Calculation does not exist");
+  }
+
+  calculation_t& calculation = found->second;
+
+  if (!calculation.completed)
+  {
+    const auto processFound = processes.find(calculation.processName);
+
+    if (processFound == processes.end())
+    {
+      throw std::runtime_error("Process does not exist");
+    }
+
+    process_t& process = processFound->second;
+
+    while (!calculation.completed)
+    {
+      receiveResult(process, calculation.processName, calculations);
+    }
+  }
+  detail::printCalculation(out, calculation);
+}
+
+void studilova::showStatus(std::istream& in, std::ostream& out, processes_t& processes, calculations_t& calculations)
+{
+  const std::string name = detail::readArgument(in);
+  detail::lineEnd(in);
+
+  const auto found = calculations.find(name);
+
+  if (found == calculations.end())
+  {
+    throw std::invalid_argument("Calculation does not exist");
+  }
+
+  calculation_t& calculation = found->second;
+
+  if (!calculation.completed)
+  {
+    const auto processFound = processes.find(calculation.processName);
+
+    if (processFound == processes.end())
+    {
+      throw std::runtime_error("Process does not exist");
+    }
+
+    process_t& process = processFound->second;
+
+    while (!calculation.completed)
+    {
+      if (process.readDescriptor.get() == -1)
+      {
+        throw std::runtime_error("Process is unavailable");
+      }
+
+      pollfd descriptor{};
+      descriptor.fd = process.readDescriptor.get();
+      descriptor.events = POLLIN;
+
+      const int result = poll(&descriptor, 1, 0);
+
+      if (result == -1)
+      {
+        throw std::runtime_error(std::strerror(errno));
+      }
+
+      if (result == 0)
+      {
+        break;
+      }
+
+      if (descriptor.revents & POLLNVAL)
+      {
+        throw std::runtime_error("Invalid result descriptor");
+      }
+
+      if (descriptor.revents & POLLIN)
+      {
+        receiveResult(process, calculation.processName, calculations);
+      }
+      else if (descriptor.revents & POLLHUP)
+      {
+        receiveResult(process, calculation.processName, calculations);
+      }
+      else
+      {
+        throw std::runtime_error("Result pipe error");
+      }
+    }
+  }
+  detail::printCalculation(out, calculation);
 }

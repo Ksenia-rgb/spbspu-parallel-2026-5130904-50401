@@ -185,3 +185,62 @@ studilova::process_t studilova::startProcess(unsigned int seed, const processes_
 
   return process_t{pid, std::move(requestWrite), std::move(responseRead)};
 }
+
+void studilova::receiveResult(process_t& process, const std::string& processName, calculations_t& calculations)
+{
+  try
+  {
+    if (process.readDescriptor.get() == -1)
+    {
+      throw std::runtime_error("Process is unavailable");
+    }
+
+    response_t response{};
+    int error = 0;
+
+    const auto received = readAll(error, process.readDescriptor.get(), &response, sizeof(response));
+
+    if (error != 0)
+    {
+      throw std::runtime_error(std::strerror(error));
+    }
+
+    if (received != sizeof(response))
+    {
+      throw std::runtime_error("Cannot receive calculation result");
+    }
+
+    for (auto& entry: calculations)
+    {
+      calculation_t& calculation = entry.second;
+
+      if (calculation.id == response.calculationId && calculation.processName == processName)
+      {
+        calculation.completed = true;
+        calculation.success = response.success;
+        calculation.area = response.area;
+        calculation.milliseconds = response.milliseconds;
+        return;
+      }
+    }
+
+    throw std::runtime_error("Unknown calculation result");
+  }
+  catch (...)
+  {
+    process.writeDescriptor = Descriptor();
+    process.readDescriptor = Descriptor();
+
+    for (auto& entry: calculations)
+    {
+      calculation_t& calculation = entry.second;
+
+      if (calculation.processName == processName && !calculation.completed)
+      {
+        calculation.completed = true;
+        calculation.success = false;
+      }
+    }
+    throw;
+  }
+}
