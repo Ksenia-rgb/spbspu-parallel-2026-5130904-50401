@@ -28,22 +28,22 @@ size_t studilova::detail::countHits(
     const std::vector< circle_t >& circles, const rectangle_t& frame, size_t tries, unsigned int seed)
 {
   std::default_random_engine engine(seed);
-  std::uniform_real_distribution< double > distribution_x(frame.min_x, frame.max_x);
-  std::uniform_real_distribution< double > distribution_y(frame.min_y, frame.max_y);
+  const double range = static_cast< double >(engine.max() - engine.min()) + 1.0;
+  const double width = frame.max_x - frame.min_x;
+  const double height = frame.max_y - frame.min_y;
 
   size_t hits = 0;
 
   for (size_t i = 0; i < tries; ++i)
   {
-    const double x = distribution_x(engine);
-    const double y = distribution_y(engine);
+    const double x = frame.min_x + width * static_cast< double >(engine() - engine.min()) / range;
+    const double y = frame.min_y + height * static_cast< double >(engine() - engine.min()) / range;
 
     if (isInside(x, y, circles))
     {
       ++hits;
     }
   }
-
   return hits;
 }
 
